@@ -7,13 +7,11 @@ Dify CloudからワークフローをDSL形式でエクスポートし、
 
 使用方法:
     環境変数を設定してから実行:
-    - DIFY_EMAIL: Dify Cloudのログイン用メールアドレス
-    - DIFY_PASSWORD: Dify Cloudのログイン用パスワード
+    - DIFY_REFRESH_TOKEN: Dify Cloudのリフレッシュトークン
     - DIFY_BASE_URL: Dify CloudのベースURL（デフォルト: https://cloud.dify.ai）
 
-認証方式:
-    Email/Passwordでログインし、access_tokenを取得してAPIを呼び出す。
-    参考: https://zenn.dev/zozotech/articles/42ddb735d9f3da
+トークン取得方法:
+    Claude Codeで /refresh-dify-token スキルを実行
 """
 
 import os
@@ -28,59 +26,69 @@ import yaml
 
 # 設定
 DIFY_BASE_URL = os.environ.get("DIFY_BASE_URL", "https://cloud.dify.ai")
-DIFY_EMAIL = os.environ.get("DIFY_EMAIL", "")
-DIFY_PASSWORD = os.environ.get("DIFY_PASSWORD", "")
+DIFY_REFRESH_TOKEN = os.environ.get("DIFY_REFRESH_TOKEN", "")
 INCLUDE_SECRET = os.environ.get("INCLUDE_SECRET", "false").lower() == "true"
-
-# グローバル変数（認証トークン）
-ACCESS_TOKEN = ""
 
 # 出力先ディレクトリ
 SCRIPT_DIR = Path(__file__).parent
 OUTPUT_DIR = SCRIPT_DIR.parent / "dsl" / "exported"
 
 
-def login(email: str, password: str) -> str:
-    """
-    Dify Console APIにログインしてaccess_tokenを取得
+def get_cookies():
+    """APIリクエスト用クッキーを生成"""
+    return {
+        "__Host-refresh_token": DIFY_REFRESH_TOKEN,
+    }
 
-    Args:
-        email: Dify Cloudのログイン用メールアドレス
-        password: Dify Cloudのログイン用パスワード
+
+def refresh_access_token() -> str:
+    """
+    リフレッシュトークンから新しいaccess_tokenを取得
 
     Returns:
         access_token: APIリクエストに使用するトークン
     """
-    url = f"{DIFY_BASE_URL}/console/api/login"
-    payload = {"email": email, "password": password}
+    url = f"{DIFY_BASE_URL}/console/api/refresh-token"
 
-    response = requests.post(url, json=payload)
+    response = requests.post(url, cookies=get_cookies())
     response.raise_for_status()
 
-    data = response.json()
-    # レスポンス形式: {"result": "success", "data": {"access_token": "...", ...}}
-    token = data.get("data", {}).get("access_token", "")
-    if not token:
+    # レスポンスのSet-Cookieからaccess_tokenを取得
+    access_token = response.cookies.get("__Host-access_token", "")
+    if not access_token:
         raise ValueError("access_tokenが取得できませんでした")
-    return token
+
+    return access_token
 
 
-def get_headers():
+def get_headers(access_token: str):
     """APIリクエスト用ヘッダーを生成"""
     return {
-        "Authorization": f"Bearer {ACCESS_TOKEN}",
         "Content-Type": "application/json",
     }
 
 
-def get_apps():
+def get_request_cookies(access_token: str):
+    """APIリクエスト用クッキーを生成"""
+    return {
+        "__Host-access_token": access_token,
+        "__Host-refresh_token": DIFY_REFRESH_TOKEN,
+    }
+
+
+def get_apps(access_token: str):
     """全アプリケーション一覧を取得"""
     url = f"{DIFY_BASE_URL}/console/api/apps"
     params = {"page": 1, "limit": 100}
 
     all_apps = []
     while True:
-        response = requests.get(url, headers=get_headers(), params=params)
+        response = requests.get(
+            url,
+            headers=get_headers(access_token),
+            cookies=get_request_cookies(access_token),
+            params=params
+        )
         response.raise_for_status()
         data = response.json()
 
@@ -95,12 +103,16 @@ def get_apps():
     return all_apps
 
 
-def export_app_dsl(app_id, app_name):
+def export_app_dsl(app_id, app_name, access_token: str):
     """アプリケーションのDSLをエクスポート"""
     include_param = "true" if INCLUDE_SECRET else "false"
     url = f"{DIFY_BASE_URL}/console/api/apps/{app_id}/export?include_secret={include_param}"
 
-    response = requests.get(url, headers=get_headers())
+    response = requests.get(
+        url,
+        headers=get_headers(access_token),
+        cookies=get_request_cookies(access_token)
+    )
     response.raise_for_status()
 
     return response.text
@@ -108,17 +120,8 @@ def export_app_dsl(app_id, app_name):
 
 def sanitize_filename(name):
     """ファイル名に使用できない文字を置換"""
-    # 日本語と英数字、アンダースコア、ハイフンを許可
     sanitized = re.sub(r'[<>:"/\\|?*]', "_", name)
-    return sanitized[:100]  # 長さ制限
-
-
-def normalize_dsl_version(dsl_content):
-    """DSLバージョンを0.1.2に正規化（Dify Cloud互換性のため）"""
-    # version: 0.5.0 などを version: 0.1.2 に変換
-    # 注: 実際のインポート時にはDifyが自動で変換するため、
-    # ここでは元のバージョンを保持する
-    return dsl_content
+    return sanitized[:100]
 
 
 def save_dsl(app_name, dsl_content, app_id):
@@ -128,7 +131,6 @@ def save_dsl(app_name, dsl_content, app_id):
     filename = f"{sanitize_filename(app_name)}_{app_id[:8]}.yml"
     filepath = OUTPUT_DIR / filename
 
-    # YAMLとして整形
     try:
         dsl_data = yaml.safe_load(dsl_content)
         formatted_content = yaml.dump(
@@ -139,7 +141,6 @@ def save_dsl(app_name, dsl_content, app_id):
             width=120,
         )
     except yaml.YAMLError:
-        # YAMLパースエラーの場合はそのまま保存
         formatted_content = dsl_content
 
     filepath.write_text(formatted_content, encoding="utf-8")
@@ -164,14 +165,10 @@ def create_manifest(apps_info):
 
 def main():
     """メイン処理"""
-    global ACCESS_TOKEN
-
     # 環境変数チェック
-    if not DIFY_EMAIL or not DIFY_PASSWORD:
-        print("ERROR: DIFY_EMAIL または DIFY_PASSWORD が設定されていません")
-        print("環境変数を設定してください:")
-        print("  - DIFY_EMAIL: Dify Cloudのログイン用メールアドレス")
-        print("  - DIFY_PASSWORD: Dify Cloudのログイン用パスワード")
+    if not DIFY_REFRESH_TOKEN:
+        print("ERROR: DIFY_REFRESH_TOKEN が設定されていません")
+        print("Claude Codeで /refresh-dify-token スキルを実行してトークンを取得してください")
         return 1
 
     print(f"Dify Base URL: {DIFY_BASE_URL}")
@@ -180,14 +177,15 @@ def main():
     print("-" * 50)
 
     try:
-        # ログインしてトークン取得
-        print("Dify Cloudにログイン中...")
-        ACCESS_TOKEN = login(DIFY_EMAIL, DIFY_PASSWORD)
-        print("ログイン成功")
+        # リフレッシュトークンからアクセストークンを取得
+        print("アクセストークンを取得中...")
+        access_token = refresh_access_token()
+        print("トークン取得成功")
         print("-" * 50)
+
         # アプリ一覧を取得
         print("アプリケーション一覧を取得中...")
-        apps = get_apps()
+        apps = get_apps(access_token)
         print(f"取得したアプリ数: {len(apps)}")
 
         if not apps:
@@ -208,7 +206,7 @@ def main():
 
             print(f"  Exporting: {app_name}...")
             try:
-                dsl_content = export_app_dsl(app_id, app_name)
+                dsl_content = export_app_dsl(app_id, app_name, access_token)
                 filepath = save_dsl(app_name, dsl_content, app_id)
                 apps_info.append({
                     "id": app_id,
@@ -236,6 +234,9 @@ def main():
         print(f"API Error: {e}")
         if e.response is not None:
             print(f"Response: {e.response.text}")
+        print("-" * 50)
+        print("トークンが期限切れの可能性があります。")
+        print("Claude Codeで /refresh-dify-token スキルを実行してトークンを更新してください。")
         return 1
     except Exception as e:
         print(f"Error: {e}")

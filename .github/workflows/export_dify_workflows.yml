@@ -31,8 +31,7 @@ jobs:
 
       - name: Export Dify Workflows
         env:
-          DIFY_EMAIL: ${{ secrets.DIFY_EMAIL }}
-          DIFY_PASSWORD: ${{ secrets.DIFY_PASSWORD }}
+          DIFY_REFRESH_TOKEN: ${{ secrets.DIFY_REFRESH_TOKEN }}
           DIFY_BASE_URL: ${{ secrets.DIFY_BASE_URL || 'https://cloud.dify.ai' }}
           INCLUDE_SECRET: ${{ github.event.inputs.include_secret || 'false' }}
         run: python scripts/export_dify_workflows.py
