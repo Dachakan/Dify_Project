@@ -7,14 +7,13 @@ Dify CloudからワークフローをDSL形式でエクスポートし、
 
 使用方法:
     環境変数を設定してから実行:
-    - DIFY_CONSOLE_TOKEN: Dify Consoleのアクセストークン
+    - DIFY_EMAIL: Dify Cloudのログイン用メールアドレス
+    - DIFY_PASSWORD: Dify Cloudのログイン用パスワード
     - DIFY_BASE_URL: Dify CloudのベースURL（デフォルト: https://cloud.dify.ai）
 
-トークン取得方法:
-    1. Dify Cloud (https://cloud.dify.ai) にログイン
-    2. ブラウザの開発者ツール（F12）を開く
-    3. Network タブで任意のAPIリクエストを確認
-    4. Request Headers の Authorization: Bearer <token> をコピー
+認証方式:
+    Email/Passwordでログインし、access_tokenを取得してAPIを呼び出す。
+    参考: https://zenn.dev/zozotech/articles/42ddb735d9f3da
 """
 
 import os
@@ -29,18 +28,47 @@ import yaml
 
 # 設定
 DIFY_BASE_URL = os.environ.get("DIFY_BASE_URL", "https://cloud.dify.ai")
-DIFY_CONSOLE_TOKEN = os.environ.get("DIFY_CONSOLE_TOKEN", "")
+DIFY_EMAIL = os.environ.get("DIFY_EMAIL", "")
+DIFY_PASSWORD = os.environ.get("DIFY_PASSWORD", "")
 INCLUDE_SECRET = os.environ.get("INCLUDE_SECRET", "false").lower() == "true"
+
+# グローバル変数（認証トークン）
+ACCESS_TOKEN = ""
 
 # 出力先ディレクトリ
 SCRIPT_DIR = Path(__file__).parent
 OUTPUT_DIR = SCRIPT_DIR.parent / "dsl" / "exported"
 
 
+def login(email: str, password: str) -> str:
+    """
+    Dify Console APIにログインしてaccess_tokenを取得
+
+    Args:
+        email: Dify Cloudのログイン用メールアドレス
+        password: Dify Cloudのログイン用パスワード
+
+    Returns:
+        access_token: APIリクエストに使用するトークン
+    """
+    url = f"{DIFY_BASE_URL}/console/api/login"
+    payload = {"email": email, "password": password}
+
+    response = requests.post(url, json=payload)
+    response.raise_for_status()
+
+    data = response.json()
+    # レスポンス形式: {"result": "success", "data": {"access_token": "...", ...}}
+    token = data.get("data", {}).get("access_token", "")
+    if not token:
+        raise ValueError("access_tokenが取得できませんでした")
+    return token
+
+
 def get_headers():
     """APIリクエスト用ヘッダーを生成"""
     return {
-        "Authorization": f"Bearer {DIFY_CONSOLE_TOKEN}",
+        "Authorization": f"Bearer {ACCESS_TOKEN}",
         "Content-Type": "application/json",
     }
 
@@ -136,9 +164,14 @@ def create_manifest(apps_info):
 
 def main():
     """メイン処理"""
-    if not DIFY_CONSOLE_TOKEN:
-        print("ERROR: DIFY_CONSOLE_TOKEN が設定されていません")
-        print("環境変数 DIFY_CONSOLE_TOKEN にDify Consoleのトークンを設定してください")
+    global ACCESS_TOKEN
+
+    # 環境変数チェック
+    if not DIFY_EMAIL or not DIFY_PASSWORD:
+        print("ERROR: DIFY_EMAIL または DIFY_PASSWORD が設定されていません")
+        print("環境変数を設定してください:")
+        print("  - DIFY_EMAIL: Dify Cloudのログイン用メールアドレス")
+        print("  - DIFY_PASSWORD: Dify Cloudのログイン用パスワード")
         return 1
 
     print(f"Dify Base URL: {DIFY_BASE_URL}")
@@ -147,6 +180,11 @@ def main():
     print("-" * 50)
 
     try:
+        # ログインしてトークン取得
+        print("Dify Cloudにログイン中...")
+        ACCESS_TOKEN = login(DIFY_EMAIL, DIFY_PASSWORD)
+        print("ログイン成功")
+        print("-" * 50)
         # アプリ一覧を取得
         print("アプリケーション一覧を取得中...")
         apps = get_apps()
