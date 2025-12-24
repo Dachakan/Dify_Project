@@ -1,0 +1,273 @@
+# Dify DSL Base Template
+# Version: 0.1.2 (Dify Cloud Compatible)
+# Reference: https://qiita.com/yuto-ida-stb/items/a06cab875174b0295cec
+#
+# このテンプレートはDSL生成時の基準として使用する
+# 全てのフィールドはQiita記事の推奨形式に準拠
+#
+# 使用方法:
+# 1. このテンプレートをコピー
+# 2. app.name, app.description を変更
+# 3. 必要なノードを追加
+# 4. edges を適切に接続
+
+app:
+  description: "ワークフローの説明"
+  icon: "\U0001F4CA"
+  icon_background: '#E4FBCC'
+  mode: workflow
+  name: "ワークフロー名"
+kind: app
+version: 0.1.2
+
+workflow:
+  conversation_variables: []
+
+  # 環境変数の定義
+  environment_variables: []
+  # 例:
+  # - name: api_url
+  #   value: ""
+  #   value_type: secret
+
+  features:
+    file_upload:
+      image:
+        enabled: false
+        number_limits: 3
+        transfer_methods:
+        - local_file
+        - remote_url
+    opening_statement: ''
+    retriever_resource:
+      enabled: false
+    sensitive_word_avoidance:
+      enabled: false
+    speech_to_text:
+      enabled: false
+    suggested_questions: []
+    suggested_questions_after_answer:
+      enabled: false
+    text_to_speech:
+      enabled: false
+      language: ''
+      voice: ''
+
+  graph:
+    # ==================================================
+    # EDGES（接続）定義
+    # 必須フィールド: isInIteration, isInLoop, zIndex
+    # ==================================================
+    edges:
+    - data:
+        isInIteration: false
+        isInLoop: false           # Qiita推奨: 必須
+        sourceType: start
+        targetType: end
+      id: edge-001
+      source: '1000000001'
+      sourceHandle: source
+      target: '1000000002'
+      targetHandle: target
+      type: custom
+      zIndex: 0                   # Qiita推奨: 必須
+
+    # ==================================================
+    # NODES（ノード）定義
+    # ==================================================
+    nodes:
+
+    # --------------------------------------------------
+    # START NODE（開始ノード）
+    # --------------------------------------------------
+    - data:
+        desc: ''
+        selected: false
+        title: "開始"
+        type: start
+        variables: []
+        # 入力変数の例:
+        # - label: "入力テキスト"
+        #   max_length: 1000
+        #   options: []
+        #   required: true
+        #   type: text-input
+        #   variable: input_text
+      height: 90
+      id: '1000000001'
+      position:
+        x: 80
+        y: 282
+      positionAbsolute:
+        x: 80
+        y: 282
+      selected: false
+      sourcePosition: right
+      targetPosition: left
+      type: custom
+      width: 244
+
+    # --------------------------------------------------
+    # END NODE（終了ノード）
+    # --------------------------------------------------
+    - data:
+        desc: ''
+        outputs:
+        - value_selector:
+          - '1000000001'
+          - input_text
+          variable: output
+        selected: false
+        title: "終了"
+        type: end
+      height: 90
+      id: '1000000002'
+      position:
+        x: 380
+        y: 282
+      positionAbsolute:
+        x: 380
+        y: 282
+      selected: false
+      sourcePosition: right
+      targetPosition: left
+      type: custom
+      width: 244
+
+    viewport:
+      x: 0
+      y: 0
+      zoom: 1
+
+# ==================================================
+# ノードテンプレート（コピー用）
+# ==================================================
+
+# --------------------------------------------------
+# HTTP REQUEST NODE
+# --------------------------------------------------
+# - data:
+#     authorization:
+#       config: null
+#       type: no-auth
+#     body:
+#       data: ''
+#       type: none
+#     desc: 'APIからデータを取得'
+#     headers: ''
+#     method: get
+#     params: ''
+#     selected: false
+#     timeout:
+#       connect: 60
+#       read: 60
+#       write: 60
+#     title: "データ取得"
+#     type: http-request
+#     url: '{{#env.api_url#}}'
+#     variables: []
+#   height: 178
+#   id: '1000000003'
+#   position:
+#     x: 380
+#     y: 282
+#   positionAbsolute:
+#     x: 380
+#     y: 282
+#   selected: false
+#   sourcePosition: right
+#   targetPosition: left
+#   type: custom
+#   width: 244
+
+# --------------------------------------------------
+# LLM NODE
+# Qiita推奨: edition_type, structured_output_enabled 必須
+# --------------------------------------------------
+# - data:
+#     context:
+#       enabled: false
+#       variable_selector: []
+#     desc: 'LLMで処理'
+#     edition_type: basic                    # Qiita推奨: 必須
+#     model:
+#       completion_params:
+#         temperature: 0.3
+#       mode: chat
+#       name: claude-3-5-sonnet-20241022
+#       provider: anthropic
+#     prompt_template:
+#     - id: 'a1b2c3d4-e5f6-7890-abcd-ef1234567890'  # UUID形式推奨
+#       role: system
+#       text: |
+#         あなたは専門家です。
+#     - id: 'b2c3d4e5-f6a7-8901-bcde-f12345678901'
+#       role: user
+#       text: |
+#         以下を分析してください:
+#         {{#1000000003.body#}}
+#     selected: false
+#     structured_output_enabled: false       # Qiita推奨: 必須
+#     title: "分析"
+#     type: llm
+#     variables: []
+#     vision:
+#       enabled: false
+#   height: 98
+#   id: '1000000004'
+#   position:
+#     x: 680
+#     y: 282
+#   positionAbsolute:
+#     x: 680
+#     y: 282
+#   selected: false
+#   sourcePosition: right
+#   targetPosition: left
+#   type: custom
+#   width: 244
+
+# --------------------------------------------------
+# IF-ELSE NODE
+# sourceHandle: 'true' または 'false' を使用
+# --------------------------------------------------
+# - data:
+#     cases:
+#     - case_id: 'true'
+#       conditions:
+#       - comparison_operator: is-not-empty
+#         id: condition-001
+#         value: ''
+#         varType: string
+#         variable_selector:
+#         - '1000000003'
+#         - body
+#       id: case-true
+#       logical_operator: and
+#     desc: '条件分岐'
+#     selected: false
+#     title: "条件チェック"
+#     type: if-else
+#   height: 126
+#   id: '1000000005'
+#   position:
+#     x: 680
+#     y: 282
+#   positionAbsolute:
+#     x: 680
+#     y: 282
+#   selected: false
+#   sourcePosition: right
+#   targetPosition: left
+#   type: custom
+#   width: 244
+
+# ==================================================
+# 変数参照形式
+# ==================================================
+# ノード変数: {{#1000000001.variable_name#}}
+# 環境変数:   {{#env.api_url#}}
+#
+# 禁止形式:
+# - {{ node-id.variable }}
+# - {{ env.api_url }}

@@ -1,0 +1,324 @@
+# Dify DSL - 工事成績評定分析ワークフロー
+# 森組の工事成績評定通知書データを分析してレポート生成
+# Version: 0.5.0
+
+app:
+  description: "GAS Web App経由で工事成績評定データを取得し、LLMで分析してレポートを生成するワークフロー"
+  icon: "clipboard-document-check"
+  icon_background: "#10B981"
+  mode: workflow
+  name: "工事成績評定分析システム"
+
+kind: app
+version: 0.5.0
+
+workflow:
+  environment_variables:
+    - name: gas_webapp_url
+      value_type: secret
+      value: ""
+      description: "GAS Web AppのデプロイURL"
+
+  features:
+    file_upload:
+      enabled: false
+    retriever_resource:
+      enabled: false
+
+  graph:
+    # ========================================
+    # ノード定義
+    # ========================================
+    nodes:
+      # --------------------------------------------------
+      # Phase 0: 開始ノード
+      # --------------------------------------------------
+      - id: start-1
+        type: start
+        title: "開始"
+        position:
+          x: 0
+          y: 200
+        data:
+          outputs:
+            - variable_name: analysis_type
+              variable_type: string
+              description: "分析タイプ: summary（概要）, detail（詳細）, improvement（改善提案）"
+            - variable_name: focus_category
+              variable_type: string
+              description: "重点分析カテゴリ（任意）: 施工体制, 施工状況, 出来形品質, 工事特性, 創意工夫, 社会性等"
+        display: true
+
+      # --------------------------------------------------
+      # Phase 1: GAS API呼び出し（全データ取得）
+      # --------------------------------------------------
+      - id: http-gas-api
+        type: http-request
+        title: "工事評定データ取得"
+        position:
+          x: 250
+          y: 200
+        data:
+          method: GET
+          url: "{{ env.gas_webapp_url }}"
+          params:
+            - key: mode
+              value: "all"
+          headers: []
+          body:
+            type: none
+          timeout: 60
+          response_format: json
+        display: true
+
+      # --------------------------------------------------
+      # Phase 2: データ検証（Code）
+      # --------------------------------------------------
+      - id: code-validator
+        type: code
+        title: "データ検証"
+        position:
+          x: 500
+          y: 200
+        data:
+          language: python3
+          code: |
+            import json
+
+            def main(api_response: str) -> dict:
+                """APIレスポンスを検証し、分析可能か判定"""
+                try:
+                    data = json.loads(api_response) if isinstance(api_response, str) else api_response
+
+                    # 成功チェック
+                    if not data.get('success', False):
+                        return {
+                            'is_valid': False,
+                            'error': data.get('error', '不明なエラー'),
+                            'project_count': 0,
+                            'data_json': ''
+                        }
+
+                    # プロジェクト数チェック
+                    projects = data.get('data', {}).get('projects', [])
+                    if len(projects) == 0:
+                        return {
+                            'is_valid': False,
+                            'error': '工事データが見つかりません',
+                            'project_count': 0,
+                            'data_json': ''
+                        }
+
+                    return {
+                        'is_valid': True,
+                        'error': '',
+                        'project_count': len(projects),
+                        'data_json': json.dumps(data.get('data', {}), ensure_ascii=False)
+                    }
+
+                except Exception as e:
+                    return {
+                        'is_valid': False,
+                        'error': f'JSONパースエラー: {str(e)}',
+                        'project_count': 0,
+                        'data_json': ''
+                    }
+          input_variables:
+            - variable_name: api_response
+              variable_type: string
+          output_variables:
+            - variable_name: is_valid
+              variable_type: bool
+            - variable_name: error
+              variable_type: string
+            - variable_name: project_count
+              variable_type: number
+            - variable_name: data_json
+              variable_type: string
+        display: true
+
+      # --------------------------------------------------
+      # Phase 3: 条件分岐（データ有効性チェック）
+      # --------------------------------------------------
+      - id: ifelse-validation
+        type: if-else
+        title: "データ有効性チェック"
+        position:
+          x: 750
+          y: 200
+        data:
+          conditions:
+            - id: condition-valid
+              variable_selector: ["code-validator", "is_valid"]
+              comparison_operator: "equals"
+              value: "true"
+          logical_operator: "and"
+        display: true
+
+      # --------------------------------------------------
+      # Phase 4a: 工事評定分析（LLM）- 成功時
+      # --------------------------------------------------
+      - id: llm-analyzer
+        type: llm
+        title: "工事評定分析"
+        position:
+          x: 1000
+          y: 100
+        data:
+          model:
+            provider: anthropic
+            name: claude-3-5-sonnet-20241022
+            mode: chat
+          prompt_template:
+            - type: system
+              text: |
+                あなたは建設業の工事成績評定の専門家です。
+                工事成績評定通知書のデータを分析し、詳細なレポートを作成してください。
+
+                ## 評価項目の構成
+                - 1. 施工体制（施工体制一般、配置技術者）
+                - 2. 施工状況（施工管理、工程管理、安全対策、対外関係）
+                - 3. 出来形・品質・出来ばえ（出来形、品質、出来ばえ）
+                - 4. 工事特性（加点項目）
+                - 5. 創意工夫（加点項目）
+                - 6. 社会性等（加点項目）
+                - 7. 法令遵守等（減点項目）
+
+                ## 分析の観点
+                - 達成率が高い項目（強み）と低い項目（改善点）を特定
+                - 工事間での傾向の違いを分析
+                - 加点項目の獲得状況を評価
+                - 具体的な改善提案を提示
+
+                ## 出力形式
+                Markdown形式で、以下の構成でレポートを作成:
+                1. エグゼクティブサマリー
+                2. 全体評価
+                3. カテゴリ別分析
+                4. 強み・弱み分析
+                5. 改善提案
+                6. 次回工事への推奨事項
+            - type: user
+              text: |
+                以下の工事成績評定データを分析してください。
+
+                分析タイプ: {{ start-1.analysis_type }}
+                重点カテゴリ: {{ start-1.focus_category }}
+                工事件数: {{ code-validator.project_count }}件
+
+                データ:
+                {{ code-validator.data_json }}
+          temperature: 0.3
+          max_tokens: 4000
+        display: true
+
+      # --------------------------------------------------
+      # Phase 4b: エラーレポート（LLM）- 失敗時
+      # --------------------------------------------------
+      - id: llm-error
+        type: llm
+        title: "エラーレポート"
+        position:
+          x: 1000
+          y: 300
+        data:
+          model:
+            provider: anthropic
+            name: claude-3-5-sonnet-20241022
+            mode: chat
+          prompt_template:
+            - type: system
+              text: |
+                データ取得または検証に失敗しました。
+                エラーの原因と対処方法を説明するレポートを作成してください。
+            - type: user
+              text: |
+                以下のエラーが発生しました。原因と対処方法を説明してください。
+
+                エラー内容: {{ code-validator.error }}
+
+                ## 確認事項
+                1. GAS Web Appが正しくデプロイされているか
+                2. スプレッドシートへのアクセス権限があるか
+                3. データ形式が正しいか
+          temperature: 0.3
+          max_tokens: 1000
+        display: true
+
+      # --------------------------------------------------
+      # Phase 5: 結果統合
+      # --------------------------------------------------
+      - id: var-aggregator-result
+        type: variable-aggregator
+        title: "結果統合"
+        position:
+          x: 1250
+          y: 200
+        data:
+          variables:
+            - variable_selector: ["llm-analyzer", "text"]
+            - variable_selector: ["llm-error", "text"]
+          output_type: array
+        display: true
+
+      # --------------------------------------------------
+      # Phase 6: 終了ノード
+      # --------------------------------------------------
+      - id: end-1
+        type: end
+        title: "終了"
+        position:
+          x: 1500
+          y: 200
+        data:
+          outputs:
+            - variable_selector: ["var-aggregator-result", "output"]
+              name: analysis_report
+              description: "工事成績評定分析レポート"
+        display: true
+
+    # ========================================
+    # エッジ定義（ノード間接続）
+    # ========================================
+    edges:
+      # start → http-gas-api
+      - id: edge-start-http
+        source: start-1
+        target: http-gas-api
+
+      # http-gas-api → code-validator
+      - id: edge-http-validator
+        source: http-gas-api
+        target: code-validator
+
+      # code-validator → ifelse-validation
+      - id: edge-validator-ifelse
+        source: code-validator
+        target: ifelse-validation
+
+      # ifelse-validation (true) → llm-analyzer
+      - id: edge-ifelse-true
+        source: ifelse-validation
+        sourceHandle: "true"
+        target: llm-analyzer
+
+      # ifelse-validation (false) → llm-error
+      - id: edge-ifelse-false
+        source: ifelse-validation
+        sourceHandle: "false"
+        target: llm-error
+
+      # llm-analyzer → var-aggregator-result
+      - id: edge-analyzer-aggregator
+        source: llm-analyzer
+        target: var-aggregator-result
+
+      # llm-error → var-aggregator-result
+      - id: edge-error-aggregator
+        source: llm-error
+        target: var-aggregator-result
+
+      # var-aggregator-result → end
+      - id: edge-aggregator-end
+        source: var-aggregator-result
+        target: end-1

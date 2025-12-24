@@ -1,0 +1,302 @@
+# Dify DSL - スプレッドシート分析ワークフロー
+# 検証用サンプル: if-elseノードを使用した条件分岐
+# Version: 0.5.0
+
+app:
+  description: "GAS Web App経由でスプレッドシートデータを取得し、LLMで分析してレポートを生成するワークフロー"
+  icon: "chart-bar"
+  icon_background: "#4F46E5"
+  mode: workflow
+  name: "スプレッドシート分析レポート"
+
+kind: app
+version: 0.5.0
+
+workflow:
+  environment_variables:
+    - name: gas_webapp_url
+      value_type: secret
+      value: ""
+      description: "GAS Web AppのデプロイURL"
+
+  features:
+    file_upload:
+      enabled: false
+    retriever_resource:
+      enabled: false
+
+  graph:
+    # ========================================
+    # ノード定義
+    # ========================================
+    nodes:
+      # --------------------------------------------------
+      # Phase 0: 開始ノード
+      # --------------------------------------------------
+      - id: start-1
+        type: start
+        title: "開始"
+        position:
+          x: 0
+          y: 200
+        data:
+          outputs:
+            - variable_name: spreadsheet_id
+              variable_type: string
+              description: "分析対象のスプレッドシートID"
+            - variable_name: sheet_name
+              variable_type: string
+              description: "シート名"
+            - variable_name: analysis_type
+              variable_type: string
+              description: "分析タイプ（summary/detail/trend）"
+        display: true
+
+      # --------------------------------------------------
+      # Phase 1: GAS API呼び出し
+      # --------------------------------------------------
+      - id: http-gas-api
+        type: http-request
+        title: "GAS API呼び出し"
+        position:
+          x: 250
+          y: 200
+        data:
+          method: GET
+          url: "{{ env.gas_webapp_url }}"
+          params:
+            - key: spreadsheet_id
+              value: "{{ start-1.spreadsheet_id }}"
+            - key: sheet_name
+              value: "{{ start-1.sheet_name }}"
+          headers: []
+          body:
+            type: none
+          timeout: 30
+          response_format: json
+        display: true
+
+      # --------------------------------------------------
+      # Phase 2: データ分析（LLM）
+      # --------------------------------------------------
+      - id: llm-analyzer
+        type: llm
+        title: "データ分析"
+        position:
+          x: 500
+          y: 200
+        data:
+          model:
+            provider: anthropic
+            name: claude-3-5-sonnet-20241022
+            mode: chat
+          prompt_template:
+            - type: system
+              text: |
+                あなたはデータ分析の専門家です。
+                スプレッドシートから取得したJSONデータを分析し、構造化された結果を返してください。
+
+                ## 出力形式（JSON）
+                {
+                  "is_valid": true/false,
+                  "record_count": 数値,
+                  "summary": "データの概要（1-2文）",
+                  "key_findings": ["発見1", "発見2", "発見3"],
+                  "recommendations": ["推奨事項1", "推奨事項2"]
+                }
+
+                ## 分析ルール
+                - is_valid: データが分析可能な形式であればtrue、エラーや空データならfalse
+                - record_count: データの行数
+                - summary: データの全体像を簡潔に説明
+                - key_findings: 重要な発見（最大5つ）
+                - recommendations: 改善提案や次のアクション（最大3つ）
+            - type: user
+              text: |
+                以下のスプレッドシートデータを分析してください。
+
+                分析タイプ: {{ start-1.analysis_type }}
+
+                データ:
+                {{ http-gas-api.body }}
+          temperature: 0.3
+          max_tokens: 2000
+          response_format: json_schema
+        display: true
+
+      # --------------------------------------------------
+      # Phase 3: 品質チェック分岐（If-Else）
+      # --------------------------------------------------
+      - id: ifelse-quality
+        type: if-else
+        title: "品質チェック"
+        position:
+          x: 750
+          y: 200
+        data:
+          conditions:
+            - id: condition-valid
+              variable_selector: ["llm-analyzer", "text"]
+              comparison_operator: "contains"
+              value: '"is_valid": true'
+          logical_operator: "and"
+        display: true
+
+      # --------------------------------------------------
+      # Phase 4a: レポート生成（成功時）
+      # --------------------------------------------------
+      - id: llm-report
+        type: llm
+        title: "レポート生成"
+        position:
+          x: 1000
+          y: 100
+        data:
+          model:
+            provider: anthropic
+            name: claude-3-5-sonnet-20241022
+            mode: chat
+          prompt_template:
+            - type: system
+              text: |
+                あなたはビジネスレポートの専門家です。
+                分析結果を基に、見やすいMarkdown形式のレポートを作成してください。
+
+                ## レポート構成
+                1. エグゼクティブサマリー（3行以内）
+                2. データ概要
+                3. 主要な発見
+                4. 推奨アクション
+                5. 次のステップ
+
+                ## 注意事項
+                - 専門用語は避け、分かりやすい表現を使う
+                - 数値は具体的に記載
+                - 箇条書きを活用して読みやすく
+            - type: user
+              text: |
+                以下の分析結果を基にレポートを作成してください。
+
+                分析結果:
+                {{ llm-analyzer.text }}
+          temperature: 0.5
+          max_tokens: 3000
+        display: true
+
+      # --------------------------------------------------
+      # Phase 4b: エラーレポート（失敗時）
+      # --------------------------------------------------
+      - id: llm-error
+        type: llm
+        title: "エラーレポート"
+        position:
+          x: 1000
+          y: 300
+        data:
+          model:
+            provider: anthropic
+            name: claude-3-5-sonnet-20241022
+            mode: chat
+          prompt_template:
+            - type: system
+              text: |
+                データ分析に失敗しました。
+                エラーの原因と対処方法を説明するレポートを作成してください。
+
+                ## レポート構成
+                1. エラー概要
+                2. 考えられる原因
+                3. 対処方法
+                4. 再試行の手順
+            - type: user
+              text: |
+                以下の分析結果を確認し、エラーレポートを作成してください。
+
+                分析結果:
+                {{ llm-analyzer.text }}
+
+                入力パラメータ:
+                - スプレッドシートID: {{ start-1.spreadsheet_id }}
+                - シート名: {{ start-1.sheet_name }}
+                - 分析タイプ: {{ start-1.analysis_type }}
+          temperature: 0.3
+          max_tokens: 1000
+        display: true
+
+      # --------------------------------------------------
+      # Phase 5: 結果統合
+      # --------------------------------------------------
+      - id: var-aggregator-result
+        type: variable-aggregator
+        title: "結果統合"
+        position:
+          x: 1250
+          y: 200
+        data:
+          variables:
+            - variable_selector: ["llm-report", "text"]
+            - variable_selector: ["llm-error", "text"]
+          output_type: array
+        display: true
+
+      # --------------------------------------------------
+      # Phase 6: 終了ノード
+      # --------------------------------------------------
+      - id: end-1
+        type: end
+        title: "終了"
+        position:
+          x: 1500
+          y: 200
+        data:
+          outputs:
+            - variable_selector: ["var-aggregator-result", "output"]
+              name: report
+              description: "分析レポート（成功時）またはエラーレポート（失敗時）"
+        display: true
+
+    # ========================================
+    # エッジ定義（ノード間接続）
+    # ========================================
+    edges:
+      # start → http-gas-api
+      - id: edge-start-http
+        source: start-1
+        target: http-gas-api
+
+      # http-gas-api → llm-analyzer
+      - id: edge-http-llm
+        source: http-gas-api
+        target: llm-analyzer
+
+      # llm-analyzer → ifelse-quality
+      - id: edge-llm-ifelse
+        source: llm-analyzer
+        target: ifelse-quality
+
+      # ifelse-quality (true) → llm-report
+      - id: edge-ifelse-true
+        source: ifelse-quality
+        sourceHandle: "true"
+        target: llm-report
+
+      # ifelse-quality (false) → llm-error
+      - id: edge-ifelse-false
+        source: ifelse-quality
+        sourceHandle: "false"
+        target: llm-error
+
+      # llm-report → var-aggregator-result
+      - id: edge-report-aggregator
+        source: llm-report
+        target: var-aggregator-result
+
+      # llm-error → var-aggregator-result
+      - id: edge-error-aggregator
+        source: llm-error
+        target: var-aggregator-result
+
+      # var-aggregator-result → end
+      - id: edge-aggregator-end
+        source: var-aggregator-result
+        target: end-1

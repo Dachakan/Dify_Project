@@ -1,0 +1,34 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(where:*)",
+      "Bash(find:*)",
+      "Bash(powershell:*)",
+      "WebSearch",
+      "WebFetch(domain:docs.dify.ai)",
+      "WebFetch(domain:github.com)",
+      "Bash(dir \"C:\\Users\\naiec\\Documents\\claude-thinking-clone-main\\鹿児島県企業分析\" /s /b)",
+      "Bash(dir \"C:\\Users\\naiec\\Documents\\claude-thinking-clone-main\\鹿児島企業経営支援\")",
+      "Bash(dir:*)",
+      "WebFetch(domain:docs.google.com)",
+      "WebFetch(domain:script.google.com)",
+      "WebFetch(domain:script.googleusercontent.com)",
+      "WebFetch(domain:raw.githubusercontent.com)",
+      "Bash(curl:*)",
+      "WebFetch(domain:qiita.com)",
+      "Bash(ls:*)",
+      "Bash(wc:*)",
+      "Bash(python3:*)",
+      "Bash(python:*)",
+      "Bash(grep:*)",
+      "Bash(cat:*)",
+      "Bash(xargs:*)",
+      "WebFetch(domain:zenn.dev)",
+      "WebFetch(domain:medium.com)",
+      "Bash(git init:*)",
+      "Bash(git add:*)"
+    ],
+    "deny": [],
+    "ask": []
+  }
+}
