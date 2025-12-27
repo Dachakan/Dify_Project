@@ -63,9 +63,17 @@ def refresh_access_token() -> tuple[str, str]:
 
 def get_request_headers(access_token: str, csrf_token: str = ""):
     """APIリクエスト用ヘッダーを生成（CookieとCSRFトークンを含む）"""
+    # CSRFトークンはCookieとX-CSRF-Tokenヘッダーの両方で送信する必要がある
+    cookie_parts = [
+        f"__Host-access_token={access_token}",
+        f"__Host-refresh_token={DIFY_REFRESH_TOKEN}"
+    ]
+    if csrf_token:
+        cookie_parts.append(f"__Host-csrf_token={csrf_token}")
+
     headers = {
         "Content-Type": "application/json",
-        "Cookie": f"__Host-access_token={access_token}; __Host-refresh_token={DIFY_REFRESH_TOKEN}"
+        "Cookie": "; ".join(cookie_parts)
     }
     if csrf_token:
         headers["X-CSRF-Token"] = csrf_token
