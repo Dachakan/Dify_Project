@@ -1,24 +1,75 @@
-# Dify ワークフロー開発プロジェクト
+# Dify DSL Vibe Coding プロジェクト
 
 > **グローバルルール継承**: ~/.claude/CLAUDE.md を参照
 
 ## Context
-- 担当：AI自動化ワークフロー開発
-- 目的：Difyを使った業務自動化ワークフローの構築
+- 担当：Dify DSL自動生成（バイブコーディング）
+- 目的：自然言語からDify Cloudワークフローを自動生成
 - 言語：日本語
 - ワークフロー標準：Dify DSL (YAML v0.1.2)
 - 環境：Dify Cloud版
+
+---
 
 ## プロジェクト固有スキル
 
 | スキル | 用途 | 場所 |
 |--------|------|------|
-| **dify-dsl-generator** | Dify DSL YAML自動生成 | `.claude/skills/dify-dsl-generator/` |
-| **gas-webapp-generator** | GASウェブアプリ（JSON API）生成 | `.claude/skills/gas-webapp-generator/` |
+| **dify-dsl-generator** | Dify DSL YAML自動生成（520行） | `.claude/skills/dify-dsl-generator/` |
+| **gas-webapp-generator** | スプレッドシート連携用GAS生成 | `.claude/skills/gas-webapp-generator/` |
+| **refresh-dify-token** | Difyトークン更新 | `.claude/skills/refresh-dify-token/` |
 
-## 参照ファイル
-- **施工計画設計書**: plan.md（1,398行）
-- **元システム**: 施工計画爆速作成/ （work004）
+---
+
+## ディレクトリ構成
+
+```
+Dify_project/
+├── CLAUDE.md                    # 本ファイル
+├── .claude/
+│   └── skills/
+│       ├── dify-dsl-generator/  # DSL生成スキル（520行）
+│       ├── gas-webapp-generator/ # GAS生成スキル
+│       └── refresh-dify-token/  # トークン更新
+├── .github/
+│   └── workflows/
+│       └── export_dify_workflows.yml  # 週次自動バックアップ
+├── dsl/
+│   ├── templates/               # 47テンプレート（Awesome-Dify-Workflow）
+│   ├── exported/                # バックアップDSL（GitHub Actions生成）
+│   └── generated/               # 生成DSL出力先
+├── gas_templates/               # GASコード出力先
+└── scripts/
+    ├── export_dify_workflows.py # エクスポートスクリプト
+    └── README.md
+```
+
+---
+
+## DSL生成ワークフロー
+
+### Step 1: 要件定義
+ユーザーが自然言語で実現したいワークフローを記述。
+
+### Step 2: テンプレート選択
+47のテンプレートから類似ワークフローを選択：
+```
+dsl/templates/
+├── agent/                # エージェント系（16テンプレート）
+├── chatbot/              # チャットボット系（5テンプレート）
+├── chatflow/             # チャットフロー系（8テンプレート）
+├── completion/           # 補完系（6テンプレート）
+└── workflow/             # ワークフロー系（12テンプレート）
+```
+
+### Step 3: DSL生成
+`dify-dsl-generator`スキルを使用してYAML生成。
+
+### Step 4: 品質検証
+生成されたDSLを検証チェックリストで確認。
+
+### Step 5: Difyインポート
+DSLをDify Cloudにインポートして動作確認。
 
 ---
 
@@ -34,7 +85,7 @@
 ### テンプレート参照（必須）
 DSL生成時は以下を必ず参照:
 - `dsl/templates/_base_template.yml` - 基本構造
-- `dsl/construction_evaluation_analysis_workflow_v2.yml` - 動作確認済み実例
+- `dsl/templates/` - 47テンプレート集
 
 ### 必須フィールド
 
@@ -72,92 +123,54 @@ structured_output_enabled: false     # 必須（Qiita推奨）
 
 ---
 
-## ディレクトリ構成
+## 週次自動バックアップ
 
+GitHub Actionsで毎週日曜5:00（JST）にDify Cloudからワークフローを自動エクスポート。
+
+### 設定済みシークレット
+- `DIFY_CONSOLE_TOKEN` - Difyコンソールトークン
+- `DIFY_REFRESH_TOKEN` - リフレッシュトークン
+
+### エクスポート先
 ```
-Dify_project/
-├── CLAUDE.md                    # 本ファイル
-├── plan.md                      # 施工計画移行計画書（1,398行）
-├── .claude/
-│   ├── agents/
-│   │   └── dify-workflow-orchestrator.md
-│   └── skills/
-│       ├── dify-dsl-generator/  # DSL生成スキル
-│       └── gas-webapp-generator/ # GAS生成スキル
-├── dsl/
-│   ├── templates/               # テンプレート（参照用）
-│   │   └── _base_template.yml
-│   ├── generated/               # 生成DSL格納
-│   ├── archive/                 # 旧バージョン退避
-│   └── construction_evaluation_analysis_workflow_v2.yml  # 動作確認済み
-├── gas_templates/               # GASテンプレート格納
-├── code_nodes/                  # Code Executionノード用Python
-│   ├── placeholder_detector.py
-│   ├── fact_checker.py
-│   └── chart_generator.py
-├── prompts/                     # LLMプロンプト
-│   ├── design_doc_analyzer.md
-│   ├── quality_formatter.md
-│   └── document_integrator.md
-├── knowledge_base/              # Knowledge Base用データ
-│   ├── 品質管理基準/
-│   ├── 施工ノウハウ/
-│   └── 法規制/
-└── tests/                       # テストケース
+dsl/exported/
+└── {ワークフロー名}_{app_id}.yml
 ```
 
 ---
 
-## Knowledge Base構成（3つ）
-1. 品質管理基準DB (dataset_id: TBD)
-2. 施工ノウハウDB (dataset_id: TBD)
-3. 法規制DB (dataset_id: TBD)
+## バイブコーディングのベストプラクティス
+
+### 1. 具体的な要件を伝える
+```
+NG: 「チャットボットを作って」
+OK: 「PDFをアップロードし、内容に基づいて質問回答するRAGチャットボットを作成。
+     Knowledge Retrievalで検索し、GPT-4oで回答生成。」
+```
+
+### 2. ノードタイプを明示
+使用したいノードタイプを明記（11種類）：
+- Start, End, LLM, HTTP Request, Code
+- If-Else, Iteration, Knowledge Retrieval
+- Tools, Template Transform, Variable Assignment
+
+### 3. 入出力変数を定義
+ワークフローの入力パラメータと出力変数を事前に定義。
+
+### 4. テンプレートを参照指示
+類似テンプレートがあれば明示的に参照を指示。
 
 ---
 
-## ワークフロー概要
+## クイックスタート
 
-### 処理フェーズ（11段階）
-| Phase | 処理内容 |
-|-------|----------|
-| 0 | 初期化、ディレクトリ生成 |
-| 1 | 設計図書分析 → JSON構造化 |
-| 2 | 品質基準抽出 → Markdown表 |
-| 3 | 施工方法・安全計画調査（Felo検索） |
-| 4 | 品質検証（JSON構造、プレースホルダー、数値整合性） |
-| 5-6 | 図表生成・検証 |
-| 7-8 | Markdown統合・ユーザー確認 |
-| 9-11 | Gammaプレゼン生成 |
+```bash
+# DSL生成スキルを呼び出し
+@dify-dsl-generator
 
-### スキル対応（10個）
-| # | Claude Codeスキル | Dify実装 |
-|---|------------------|----------|
-| 1 | design-doc-analyzer | LLM Node + JSON Mode |
-| 2 | quality-criteria-extractor | Knowledge Retrieval + LLM |
-| 3 | construction-method-researcher | Knowledge Retrieval + HTTP |
-| 4 | placeholder-detector | Code Execution (Python) |
-| 5 | fact-checker | Code Execution (Python) |
-| 6 | chart-generator | Code Execution (matplotlib/Mermaid) |
-| 7 | emergency-contact-researcher | HTTP Request x 4 |
-| 8 | local-info-researcher | HTTP Request x 3 |
-| 9 | regulation-checker | Knowledge Retrieval |
-| 10 | stakeholder-mapper | LLM + HTTP |
+# GAS生成スキルを呼び出し
+@gas-webapp-generator
 
----
-
-## 品質保証
-
-### 3層検証
-1. **JSON構造検証**: スキーマ準拠チェック
-2. **プレースホルダー検出**: 禁止パターン（XXX等）0件
-3. **数値整合性**: 金額・工期の計算チェック
-
----
-
-## 次のステップ
-
-1. Dify Cloudにログイン
-2. Knowledge Base作成（3つ）
-3. dataset_idを取得してワークフローに設定
-4. DSLファイルをDifyにインポート
-5. テスト実行
+# トークン更新スキルを呼び出し
+@refresh-dify-token
+```

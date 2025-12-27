@@ -30,9 +30,28 @@
       "Bash(git commit:*)",
       "Bash(git branch:*)",
       "Bash(git remote add:*)",
-      "Bash(git push:*)"
+      "Bash(git push:*)",
+      "mcp__plugin_claude-mem_mem-search__search",
+      "mcp__plugin_claude-mem_mem-search__get_observation",
+      "mcp__tavily-mcp__tavily-search",
+      "mcp__tavily-mcp__tavily-extract",
+      "Bash(git checkout:*)",
+      "Bash(git ls-tree:*)",
+      "Bash(git pull:*)",
+      "Bash(git fetch:*)"
     ],
     "deny": [],
     "ask": []
-  }
+  },
+  "enableAllProjectMcpServers": true,
+  "enabledMcpjsonServers": [
+    "serena",
+    "chrome-devtools",
+    "mcp-scholarly",
+    "felo-search",
+    "gamma-mcp",
+    "context7",
+    "mlit-dpf-mcp",
+    "tavily-mcp"
+  ]
 }
