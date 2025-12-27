@@ -34,12 +34,12 @@ SCRIPT_DIR = Path(__file__).parent
 OUTPUT_DIR = SCRIPT_DIR.parent / "dsl" / "exported"
 
 
-def refresh_access_token() -> str:
+def refresh_access_token() -> tuple[str, str]:
     """
-    リフレッシュトークンから新しいaccess_tokenを取得
+    リフレッシュトークンから新しいaccess_tokenとcsrf_tokenを取得
 
     Returns:
-        access_token: APIリクエストに使用するトークン
+        tuple[str, str]: (access_token, csrf_token)
     """
     url = f"{DIFY_BASE_URL}/console/api/refresh-token"
 
@@ -51,23 +51,28 @@ def refresh_access_token() -> str:
     response = requests.post(url, headers=headers)
     response.raise_for_status()
 
-    # レスポンスのSet-Cookieからaccess_tokenを取得
+    # レスポンスのSet-Cookieからトークンを取得
     access_token = response.cookies.get("__Host-access_token", "")
+    csrf_token = response.cookies.get("__Host-csrf_token", "")
+
     if not access_token:
         raise ValueError("access_tokenが取得できませんでした")
 
-    return access_token
+    return access_token, csrf_token
 
 
-def get_request_headers(access_token: str):
-    """APIリクエスト用ヘッダーを生成（Cookieを含む）"""
-    return {
+def get_request_headers(access_token: str, csrf_token: str = ""):
+    """APIリクエスト用ヘッダーを生成（CookieとCSRFトークンを含む）"""
+    headers = {
         "Content-Type": "application/json",
         "Cookie": f"__Host-access_token={access_token}; __Host-refresh_token={DIFY_REFRESH_TOKEN}"
     }
+    if csrf_token:
+        headers["X-CSRF-Token"] = csrf_token
+    return headers
 
 
-def get_apps(access_token: str):
+def get_apps(access_token: str, csrf_token: str = ""):
     """全アプリケーション一覧を取得"""
     url = f"{DIFY_BASE_URL}/console/api/apps"
     params = {"page": 1, "limit": 100}
@@ -76,7 +81,7 @@ def get_apps(access_token: str):
     while True:
         response = requests.get(
             url,
-            headers=get_request_headers(access_token),
+            headers=get_request_headers(access_token, csrf_token),
             params=params
         )
         response.raise_for_status()
@@ -93,14 +98,14 @@ def get_apps(access_token: str):
     return all_apps
 
 
-def export_app_dsl(app_id, app_name, access_token: str):
+def export_app_dsl(app_id, app_name, access_token: str, csrf_token: str = ""):
     """アプリケーションのDSLをエクスポート"""
     include_param = "true" if INCLUDE_SECRET else "false"
     url = f"{DIFY_BASE_URL}/console/api/apps/{app_id}/export?include_secret={include_param}"
 
     response = requests.get(
         url,
-        headers=get_request_headers(access_token)
+        headers=get_request_headers(access_token, csrf_token)
     )
     response.raise_for_status()
 
@@ -168,15 +173,15 @@ def main():
     print("-" * 50)
 
     try:
-        # リフレッシュトークンからアクセストークンを取得
+        # リフレッシュトークンからアクセストークンとCSRFトークンを取得
         print("アクセストークンを取得中...")
-        access_token = refresh_access_token()
-        print("トークン取得成功")
+        access_token, csrf_token = refresh_access_token()
+        print(f"トークン取得成功 (CSRF: {'あり' if csrf_token else 'なし'})")
         print("-" * 50)
 
         # アプリ一覧を取得
         print("アプリケーション一覧を取得中...")
-        apps = get_apps(access_token)
+        apps = get_apps(access_token, csrf_token)
         print(f"取得したアプリ数: {len(apps)}")
 
         if not apps:
@@ -197,7 +202,7 @@ def main():
 
             print(f"  Exporting: {app_name}...")
             try:
-                dsl_content = export_app_dsl(app_id, app_name, access_token)
+                dsl_content = export_app_dsl(app_id, app_name, access_token, csrf_token)
                 filepath = save_dsl(app_name, dsl_content, app_id)
                 apps_info.append({
                     "id": app_id,
