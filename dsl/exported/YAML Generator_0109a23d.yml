@@ -1,0 +1,57 @@
+data: "app:\n  description: Generates Nano Banana Pro compatible YAML prompt for manga page generation.\n  icon: \uD83E\uDD16\
+  \n  icon_background: '#FEF3C7'\n  mode: workflow\n  name: YAML Generator\n  use_icon_as_answer_icon: false\ndependencies:\n\
+  - current_identifier: null\n  type: marketplace\n  value:\n    marketplace_plugin_unique_identifier: langgenius/openai:0.2.8@aae2be0913b8c6f0b80cff58e08d7a8b4c214569b41778413fcaea204561ff16\n\
+  \    version: null\nkind: app\nversion: 0.5.0\nworkflow:\n  conversation_variables: []\n  environment_variables: []\n  features:\n\
+  \    file_upload:\n      allowed_file_extensions:\n      - .JPG\n      - .JPEG\n      - .PNG\n      - .GIF\n      - .WEBP\n\
+  \      - .SVG\n      allowed_file_types:\n      - image\n      allowed_file_upload_methods:\n      - local_file\n      -\
+  \ remote_url\n      enabled: false\n      fileUploadConfig:\n        audio_file_size_limit: 50\n        batch_count_limit:\
+  \ 5\n        file_size_limit: 15\n        image_file_batch_limit: 10\n        image_file_size_limit: 10\n        single_chunk_attachment_limit:\
+  \ 10\n        video_file_size_limit: 100\n        workflow_file_upload_limit: 10\n      image:\n        enabled: false\n\
+  \        number_limits: 3\n        transfer_methods:\n        - local_file\n        - remote_url\n      number_limits: 3\n\
+  \    opening_statement: ''\n    retriever_resource:\n      enabled: true\n    sensitive_word_avoidance:\n      enabled:\
+  \ false\n    speech_to_text:\n      enabled: false\n    suggested_questions: []\n    suggested_questions_after_answer:\n\
+  \      enabled: false\n    text_to_speech:\n      enabled: false\n      language: ''\n      voice: ''\n  graph:\n    edges:\n\
+  \    - data:\n        isInIteration: false\n        sourceType: start\n        targetType: llm\n      id: 1735300300001-source-1735300300002-target\n\
+  \      source: '1735300300001'\n      sourceHandle: source\n      target: '1735300300002'\n      targetHandle: target\n\
+  \      type: custom\n      zIndex: 0\n    - data:\n        isInIteration: false\n        sourceType: llm\n        targetType:\
+  \ end\n      id: 1735300300002-source-1735300300003-target\n      source: '1735300300002'\n      sourceHandle: source\n\
+  \      target: '1735300300003'\n      targetHandle: target\n      type: custom\n      zIndex: 0\n    nodes:\n    - data:\n\
+  \        desc: ''\n        selected: false\n        title: Start\n        type: start\n        variables:\n        - label:\
+  \ Panel Design\n          max_length: 5000\n          options: []\n          required: true\n          type: paragraph\n\
+  \          variable: panel_design\n        - default: 1\n          label: Page Number\n          options: []\n         \
+  \ required: true\n          type: number\n          variable: page_number\n      height: 135\n      id: '1735300300001'\n\
+  \      position:\n        x: 80\n        y: 282\n      positionAbsolute:\n        x: 80\n        y: 282\n      selected:\
+  \ false\n      sourcePosition: right\n      targetPosition: left\n      type: custom\n      width: 242\n    - data:\n  \
+  \      context:\n          enabled: false\n          variable_selector: []\n        desc: ''\n        model:\n         \
+  \ completion_params:\n            temperature: 0.5\n          mode: chat\n          name: gpt-4o\n          provider: langgenius/openai/openai\n\
+  \        prompt_template:\n        - id: d1b2c3d4-yg01-0001-0001-000000000001\n          role: system\n          text: \"\
+  You are a prompt engineer for AI manga image generation.\\n\\n## Character\\\n            \\ Visual Reference (for prompts)\\\
+  n- takeru: 4-head-tall SD chibi male,\\\n            \\ 22yo, black spiky short hair, large determined eyes, band-aid on\
+  \ right\\\n            \\ cheek, blue hard hat, gray work uniform, white towel on shoulder\\n-\\\n            \\ kazusan:\
+  \ 4-head-tall SD chibi female, 32yo, black short hair, gentle\\\n            \\ droopy eyes, small mole on left cheek, white\
+  \ hard hat, navy work uniform,\\\n            \\ fluorescent yellow safety vest\\n- ryusan: 4-head-tall SD chibi male,\\\
+  \n            \\ 55yo, bald with gray stubble, rugged weathered face, scar on jaw, yellow\\\n            \\ hard hat, dark\
+  \ gray work uniform\\n- shochou: 4-head-tall SD chibi male,\\\n            \\ 50yo, gray hair parted 7:3, silver-rimmed\
+  \ glasses, stocky build, white\\\n            \\ hard hat, navy suit or work uniform, orange safety vest\\n\\n## Style\\\
+  \n            \\ for all prompts\\n- 4-head-tall SD (chibi) proportions\\n- Hard-boiled\\\n            \\ gekiga aesthetic\
+  \ applied to SD style\\n- Bold ink-brush line art\\n- High-contrast\\\n            \\ cell shading\\n- Japanese construction\
+  \ site setting\\n\\n## Output Format\\\n            \\ (YAML)\\npage_info:\\n  page_number: [number]\\n  file_name: \\\"\
+  page_[number].yaml\\\"\\\n            \\n\\nstyle:\\n  art_style: \\\"4-head-tall SD chibi, hard-boiled gekiga aesthetic\\\
+  \"\\\n            \\n  line_art: \\\"bold ink-brush strokes\\\"\\n  shading: \\\"high-contrast cell\\\n            \\ shading\\\
+  \"\\n  aspect_ratio: \\\"4:3 landscape\\\"\\n  resolution: \\\"2048x1536\\\"\\\n            \\n\\npanels:\\n  - panel_id:\
+  \ 1\\n    prompt: |\\n      [Detailed English prompt\\\n            \\ for this panel]\\n    negative_prompt: \\\"realistic\
+  \ proportions, western\\\n            \\ comic style, blurry, low quality\\\"\\n    dialogue:\\n      - speaker:\\\n   \
+  \         \\ \\\"[character]\\\"\\n        text: \\\"[Japanese dialogue]\\\"\\n        bubble_style:\\\n            \\ \\\
+  \"speech\\\"\\n\\nnatural_language_prompt: |\\n  [Complete natural language\\\n            \\ description for the entire\
+  \ page in English]\\n\\nOutput valid YAML format.\\n\"\n        - id: d1b2c3d4-yg01-0001-0001-000000000002\n          role:\
+  \ user\n          text: 'Page Number: {{#1735300300001.page_number#}}\n\n\n            Panel Design:\n\n            {{#1735300300001.panel_design#}}\n\
+  \n\n            Generate complete YAML prompt for Nano Banana Pro.\n\n            Output valid YAML format only, no markdown\
+  \ code blocks.\n\n            '\n        selected: true\n        title: 'LLM: YAML Generator'\n        type: llm\n     \
+  \   variables: []\n        vision:\n          enabled: false\n      height: 88\n      id: '1735300300002'\n      position:\n\
+  \        x: 384\n        y: 282\n      positionAbsolute:\n        x: 384\n        y: 282\n      selected: true\n      sourcePosition:\
+  \ right\n      targetPosition: left\n      type: custom\n      width: 242\n    - data:\n        desc: ''\n        outputs:\n\
+  \        - value_selector:\n          - '1735300300002'\n          - text\n          variable: yaml_prompt\n        selected:\
+  \ false\n        title: End\n        type: end\n      height: 88\n      id: '1735300300003'\n      position:\n        x:\
+  \ 688\n        y: 282\n      positionAbsolute:\n        x: 688\n        y: 282\n      sourcePosition: right\n      targetPosition:\
+  \ left\n      type: custom\n      width: 242\n    viewport:\n      x: 250\n      y: 72\n      zoom: 1\n  rag_pipeline_variables:\
+  \ []\n"

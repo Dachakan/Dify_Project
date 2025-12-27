@@ -1,0 +1,64 @@
+data: "app:\n  description: GAS Web App経由で工事成績評定データを取得し、LLMで分析してレポートを生成するワークフロー\n  icon: \uD83E\uDD16\n  icon_background:\
+  \ '#10B981'\n  mode: workflow\n  name: 工事成績評定分析システム\n  use_icon_as_answer_icon: false\ndependencies: []\nkind: app\nversion:\
+  \ 0.5.0\nworkflow:\n  conversation_variables: []\n  environment_variables:\n  - description: GAS Web AppのデプロイURL\n    id:\
+  \ 1314137d-60db-4952-80a0-2fa9cd4c3c68\n    name: gas_webapp_url\n    selector:\n    - env\n    - gas_webapp_url\n    value:\
+  \ ''\n    value_type: secret\n  features:\n    file_upload:\n      enabled: false\n    retriever_resource:\n      enabled:\
+  \ false\n    sensitive_word_avoidance:\n      enabled: false\n    text_to_speech:\n      enabled: false\n      language:\
+  \ ''\n      voice: ''\n  graph:\n    edges:\n    - id: edge-start-http\n      source: start-1\n      target: http-gas-api\n\
+  \    - id: edge-http-validator\n      source: http-gas-api\n      target: code-validator\n    - id: edge-validator-ifelse\n\
+  \      source: code-validator\n      target: ifelse-validation\n    - id: edge-ifelse-true\n      source: ifelse-validation\n\
+  \      sourceHandle: 'true'\n      target: llm-analyzer\n    - id: edge-ifelse-false\n      source: ifelse-validation\n\
+  \      sourceHandle: 'false'\n      target: llm-error\n    - id: edge-analyzer-aggregator\n      source: llm-analyzer\n\
+  \      target: var-aggregator-result\n    - id: edge-error-aggregator\n      source: llm-error\n      target: var-aggregator-result\n\
+  \    - id: edge-aggregator-end\n      source: var-aggregator-result\n      target: end-1\n    nodes:\n    - data:\n    \
+  \    outputs:\n        - description: '分析タイプ: summary（概要）, detail（詳細）, improvement（改善提案）'\n          variable_name: analysis_type\n\
+  \          variable_type: string\n        - description: '重点分析カテゴリ（任意）: 施工体制, 施工状況, 出来形品質, 工事特性, 創意工夫, 社会性等'\n         \
+  \ variable_name: focus_category\n          variable_type: string\n      display: true\n      id: start-1\n      position:\n\
+  \        x: 0\n        y: 200\n      title: 開始\n      type: start\n    - data:\n        body:\n          type: none\n  \
+  \      headers: []\n        method: GET\n        params:\n        - key: mode\n          value: all\n        response_format:\
+  \ json\n        timeout: 60\n        url: '{{ env.gas_webapp_url }}'\n      display: true\n      id: http-gas-api\n    \
+  \  position:\n        x: 250\n        y: 200\n      title: 工事評定データ取得\n      type: http-request\n    - data:\n        code:\
+  \ \"import json\\n\\ndef main(api_response: str) -> dict:\\n    \\\"\\\"\\\"APIレスポンスを検証し、分析可能か判定\\\"\\\n          \\\"\\\
+  \"\\n    try:\\n        data = json.loads(api_response) if isinstance(api_response,\\\n          \\ str) else api_response\\\
+  n\\n        # 成功チェック\\n        if not data.get('success',\\\n          \\ False):\\n            return {\\n            \
+  \    'is_valid': False,\\n  \\\n          \\              'error': data.get('error', '不明なエラー'),\\n                'project_count':\\\
+  \n          \\ 0,\\n                'data_json': ''\\n            }\\n\\n        # プロジェクト数チェック\\n\\\n          \\      \
+  \  projects = data.get('data', {}).get('projects', [])\\n        if\\\n          \\ len(projects) == 0:\\n            return\
+  \ {\\n                'is_valid':\\\n          \\ False,\\n                'error': '工事データが見つかりません',\\n                'project_count':\\\
+  \n          \\ 0,\\n                'data_json': ''\\n            }\\n\\n        return {\\n\\\n          \\           \
+  \ 'is_valid': True,\\n            'error': '',\\n            'project_count':\\\n          \\ len(projects),\\n        \
+  \    'data_json': json.dumps(data.get('data', {}),\\\n          \\ ensure_ascii=False)\\n        }\\n\\n    except Exception\
+  \ as e:\\n       \\\n          \\ return {\\n            'is_valid': False,\\n            'error': f'JSONパースエラー:\\\n   \
+  \       \\ {str(e)}',\\n            'project_count': 0,\\n            'data_json':\\\n          \\ ''\\n        }\\n\"\n\
+  \        input_variables:\n        - variable_name: api_response\n          variable_type: string\n        language: python3\n\
+  \        output_variables:\n        - variable_name: is_valid\n          variable_type: bool\n        - variable_name: error\n\
+  \          variable_type: string\n        - variable_name: project_count\n          variable_type: number\n        - variable_name:\
+  \ data_json\n          variable_type: string\n      display: true\n      id: code-validator\n      position:\n        x:\
+  \ 500\n        y: 200\n      title: データ検証\n      type: code\n    - data:\n        conditions:\n        - comparison_operator:\
+  \ equals\n          id: condition-valid\n          value: 'true'\n          variable_selector:\n          - code-validator\n\
+  \          - is_valid\n        logical_operator: and\n      display: true\n      id: ifelse-validation\n      position:\n\
+  \        x: 750\n        y: 200\n      title: データ有効性チェック\n      type: if-else\n    - data:\n        max_tokens: 4000\n \
+  \       model:\n          mode: chat\n          name: claude-3-5-sonnet-20241022\n          provider: anthropic\n      \
+  \  prompt_template:\n        - text: 'あなたは建設業の工事成績評定の専門家です。\n\n            工事成績評定通知書のデータを分析し、詳細なレポートを作成してください。\n\n\n   \
+  \         ## 評価項目の構成\n\n            - 1. 施工体制（施工体制一般、配置技術者）\n\n            - 2. 施工状況（施工管理、工程管理、安全対策、対外関係）\n\n          \
+  \  - 3. 出来形・品質・出来ばえ（出来形、品質、出来ばえ）\n\n            - 4. 工事特性（加点項目）\n\n            - 5. 創意工夫（加点項目）\n\n            - 6. 社会性等（加点項目）\n\
+  \n            - 7. 法令遵守等（減点項目）\n\n\n            ## 分析の観点\n\n            - 達成率が高い項目（強み）と低い項目（改善点）を特定\n\n            - 工事間での傾向の違いを分析\n\
+  \n            - 加点項目の獲得状況を評価\n\n            - 具体的な改善提案を提示\n\n\n            ## 出力形式\n\n            Markdown形式で、以下の構成でレポートを作成:\n\
+  \n            1. エグゼクティブサマリー\n\n            2. 全体評価\n\n            3. カテゴリ別分析\n\n            4. 強み・弱み分析\n\n            5.\
+  \ 改善提案\n\n            6. 次回工事への推奨事項\n\n            '\n          type: system\n        - text: '以下の工事成績評定データを分析してください。\n\n\
+  \n            分析タイプ: {{ start-1.analysis_type }}\n\n            重点カテゴリ: {{ start-1.focus_category }}\n\n            工事件数:\
+  \ {{ code-validator.project_count }}件\n\n\n            データ:\n\n            {{ code-validator.data_json }}\n\n          \
+  \  '\n          type: user\n        temperature: 0.3\n      display: true\n      id: llm-analyzer\n      position:\n   \
+  \     x: 1000\n        y: 100\n      title: 工事評定分析\n      type: llm\n    - data:\n        max_tokens: 1000\n        model:\n\
+  \          mode: chat\n          name: claude-3-5-sonnet-20241022\n          provider: anthropic\n        prompt_template:\n\
+  \        - text: 'データ取得または検証に失敗しました。\n\n            エラーの原因と対処方法を説明するレポートを作成してください。\n\n            '\n          type: system\n\
+  \        - text: '以下のエラーが発生しました。原因と対処方法を説明してください。\n\n\n            エラー内容: {{ code-validator.error }}\n\n\n            ##\
+  \ 確認事項\n\n            1. GAS Web Appが正しくデプロイされているか\n\n            2. スプレッドシートへのアクセス権限があるか\n\n            3. データ形式が正しいか\n\
+  \n            '\n          type: user\n        temperature: 0.3\n      display: true\n      id: llm-error\n      position:\n\
+  \        x: 1000\n        y: 300\n      title: エラーレポート\n      type: llm\n    - data:\n        output_type: array\n     \
+  \   variables:\n        - variable_selector:\n          - llm-analyzer\n          - text\n        - variable_selector:\n\
+  \          - llm-error\n          - text\n      display: true\n      id: var-aggregator-result\n      position:\n      \
+  \  x: 1250\n        y: 200\n      title: 結果統合\n      type: variable-aggregator\n    - data:\n        outputs:\n        -\
+  \ description: 工事成績評定分析レポート\n          name: analysis_report\n          variable_selector:\n          - var-aggregator-result\n\
+  \          - output\n      display: true\n      id: end-1\n      position:\n        x: 1500\n        y: 200\n      title:\
+  \ 終了\n      type: end\n  rag_pipeline_variables: []\n"

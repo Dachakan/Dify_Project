@@ -1,0 +1,26 @@
+data: "app:\n  description: ''\n  icon: \uD83E\uDD16\n  icon_background: '#FFEAD5'\n  mode: advanced-chat\n  name: Manga Chat\
+  \ Assistant\n  use_icon_as_answer_icon: false\ndependencies:\n- current_identifier: null\n  type: marketplace\n  value:\n\
+  \    marketplace_plugin_unique_identifier: langgenius/anthropic:0.2.4@b92b6019133c6b156dfcd61bd4253bbbed07f5f58440296c1c46f10f3bbbfc3e\n\
+  \    version: null\nkind: app\nversion: 0.5.0\nworkflow:\n  conversation_variables: []\n  environment_variables: []\n  features:\n\
+  \    file_upload:\n      allowed_file_extensions:\n      - .JPG\n      - .JPEG\n      - .PNG\n      - .GIF\n      - .WEBP\n\
+  \      - .SVG\n      allowed_file_types:\n      - image\n      allowed_file_upload_methods:\n      - local_file\n      -\
+  \ remote_url\n      enabled: false\n      fileUploadConfig:\n        audio_file_size_limit: 50\n        batch_count_limit:\
+  \ 5\n        file_size_limit: 15\n        image_file_batch_limit: 10\n        image_file_size_limit: 10\n        single_chunk_attachment_limit:\
+  \ 10\n        video_file_size_limit: 100\n        workflow_file_upload_limit: 10\n      image:\n        enabled: false\n\
+  \        number_limits: 3\n        transfer_methods:\n        - local_file\n        - remote_url\n      number_limits: 3\n\
+  \    opening_statement: ''\n    retriever_resource:\n      enabled: true\n    sensitive_word_avoidance:\n      enabled:\
+  \ false\n    speech_to_text:\n      enabled: false\n    suggested_questions: []\n    suggested_questions_after_answer:\n\
+  \      enabled: false\n    text_to_speech:\n      enabled: false\n      language: ''\n      voice: ''\n  graph:\n    edges:\
+  \ []\n    nodes:\n    - data:\n        selected: false\n        title: ユーザー入力\n        type: start\n        variables: []\n\
+  \      height: 72\n      id: '1766621670291'\n      position:\n        x: 80\n        y: 282\n      positionAbsolute:\n\
+  \        x: 80\n        y: 282\n      sourcePosition: right\n      targetPosition: left\n      type: custom\n      width:\
+  \ 242\n    - data:\n        classes:\n        - id: '1'\n          name: ''\n        - id: '2'\n          name: ''\n   \
+  \     instructions: ''\n        model:\n          completion_params:\n            temperature: 0.7\n          mode: chat\n\
+  \          name: claude-3-5-sonnet-20241022\n          provider: langgenius/anthropic/anthropic\n        query_variable_selector:\
+  \ []\n        selected: true\n        title: 質問分類器\n        type: question-classifier\n        vision:\n          enabled:\
+  \ false\n      height: 137\n      id: '1766637145951'\n      position:\n        x: 380\n        y: 282\n      positionAbsolute:\n\
+  \        x: 380\n        y: 282\n      sourcePosition: right\n      targetPosition: left\n      type: custom\n      width:\
+  \ 242\n    - data:\n        answer: '{{#llm.text#}}'\n        selected: false\n        title: 回答\n        type: answer\n\
+  \        variables: []\n      height: 101\n      id: answer\n      position:\n        x: 680\n        y: 282\n      positionAbsolute:\n\
+  \        x: 680\n        y: 282\n      sourcePosition: right\n      targetPosition: left\n      type: custom\n      width:\
+  \ 242\n    viewport:\n      x: 0\n      y: 0\n      zoom: 1\n  rag_pipeline_variables: []\n"

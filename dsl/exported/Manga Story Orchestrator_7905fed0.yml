@@ -1,0 +1,93 @@
+data: "app:\n  description: Main orchestrator that generates complete manga storyboard and YAML\n    prompts from a theme\
+  \ using sub-workflows.\n  icon: \uD83E\uDD16\n  icon_background: '#FEE2E2'\n  mode: workflow\n  name: Manga Story Orchestrator\n\
+  \  use_icon_as_answer_icon: false\ndependencies: []\nkind: app\nversion: 0.5.0\nworkflow:\n  conversation_variables: []\n\
+  \  environment_variables: []\n  features:\n    file_upload:\n      image:\n        enabled: false\n        number_limits:\
+  \ 3\n        transfer_methods:\n        - local_file\n        - remote_url\n    opening_statement: ''\n    retriever_resource:\n\
+  \      enabled: true\n    sensitive_word_avoidance:\n      enabled: false\n    speech_to_text:\n      enabled: false\n \
+  \   suggested_questions: []\n    suggested_questions_after_answer:\n      enabled: false\n    text_to_speech:\n      enabled:\
+  \ false\n      language: ''\n      voice: ''\n  graph:\n    edges:\n    - data:\n        isInIteration: false\n        sourceType:\
+  \ start\n        targetType: tool\n      id: 1735400000001-source-1735400000002-target\n      source: '1735400000001'\n\
+  \      sourceHandle: source\n      target: '1735400000002'\n      targetHandle: target\n      type: custom\n      zIndex:\
+  \ 0\n    - data:\n        isInIteration: false\n        sourceType: tool\n        targetType: tool\n      id: 1735400000002-source-1735400000003-target\n\
+  \      source: '1735400000002'\n      sourceHandle: source\n      target: '1735400000003'\n      targetHandle: target\n\
+  \      type: custom\n      zIndex: 0\n    - data:\n        isInIteration: false\n        sourceType: tool\n        targetType:\
+  \ code\n      id: 1735400000003-source-1735400000004-target\n      source: '1735400000003'\n      sourceHandle: source\n\
+  \      target: '1735400000004'\n      targetHandle: target\n      type: custom\n      zIndex: 0\n    - data:\n        isInIteration:\
+  \ false\n        sourceType: code\n        targetType: iteration\n      id: 1735400000004-source-1735400000005-target\n\
+  \      source: '1735400000004'\n      sourceHandle: source\n      target: '1735400000005'\n      targetHandle: target\n\
+  \      type: custom\n      zIndex: 0\n    - data:\n        isInIteration: true\n        iteration_id: '1735400000005'\n\
+  \        sourceType: iteration-start\n        targetType: tool\n      id: 1735400000005start0-source-1735400000006-target\n\
+  \      source: 1735400000005start0\n      sourceHandle: source\n      target: '1735400000006'\n      targetHandle: target\n\
+  \      type: custom\n      zIndex: 0\n    - data:\n        isInIteration: true\n        iteration_id: '1735400000005'\n\
+  \        sourceType: tool\n        targetType: tool\n      id: 1735400000006-source-1735400000007-target\n      source:\
+  \ '1735400000006'\n      sourceHandle: source\n      target: '1735400000007'\n      targetHandle: target\n      type: custom\n\
+  \      zIndex: 0\n    - data:\n        isInIteration: false\n        sourceType: iteration\n        targetType: template-transform\n\
+  \      id: 1735400000005-source-1735400000008-target\n      source: '1735400000005'\n      sourceHandle: source\n      target:\
+  \ '1735400000008'\n      targetHandle: target\n      type: custom\n      zIndex: 0\n    - data:\n        isInIteration:\
+  \ false\n        sourceType: template-transform\n        targetType: end\n      id: 1735400000008-source-1735400000009-target\n\
+  \      source: '1735400000008'\n      sourceHandle: source\n      target: '1735400000009'\n      targetHandle: target\n\
+  \      type: custom\n      zIndex: 0\n    nodes:\n    - data:\n        desc: ''\n        selected: false\n        title:\
+  \ Start\n        type: start\n        variables:\n        - label: Theme\n          max_length: 500\n          options:\
+  \ []\n          required: true\n          type: paragraph\n          variable: theme\n        - default: takeru, kazusan\n\
+  \          label: Characters\n          max_length: 200\n          options: []\n          required: true\n          type:\
+  \ text-input\n          variable: characters\n        - default: 4\n          label: Page Count\n          options: []\n\
+  \          required: true\n          type: number\n          variable: page_count\n      height: 150\n      id: '1735400000001'\n\
+  \      position:\n        x: 80\n        y: 282\n      positionAbsolute:\n        x: 80\n        y: 282\n      selected:\
+  \ false\n      sourcePosition: right\n      targetPosition: left\n      type: custom\n      width: 244\n    - data:\n  \
+  \      desc: Generate educational structure\n        provider_id: instructional-designer\n        provider_name: Instructional\
+  \ Designer\n        provider_type: workflow\n        selected: false\n        title: Instructional Designer\n        tool_name:\
+  \ instructional_designer\n        tool_parameters:\n          page_count:\n            type: number\n            value:\
+  \ '{{#1735400000001.page_count#}}'\n          target_audience:\n            type: string\n            value: construction\
+  \ new employees\n          theme:\n            type: string\n            value: '{{#1735400000001.theme#}}'\n        type:\
+  \ tool\n      height: 90\n      id: '1735400000002'\n      position:\n        x: 384\n        y: 282\n      positionAbsolute:\n\
+  \        x: 384\n        y: 282\n      selected: false\n      sourcePosition: right\n      targetPosition: left\n      type:\
+  \ custom\n      width: 244\n    - data:\n        desc: Generate storyboard for all pages\n        provider_id: storyboard-designer\n\
+  \        provider_name: Storyboard Designer\n        provider_type: workflow\n        selected: false\n        title: Storyboard\
+  \ Designer\n        tool_name: storyboard_designer\n        tool_parameters:\n          characters:\n            type: string\n\
+  \            value: '{{#1735400000001.characters#}}'\n          educational_design:\n            type: string\n        \
+  \    value: '{{#1735400000002.text#}}'\n          page_count:\n            type: number\n            value: '{{#1735400000001.page_count#}}'\n\
+  \          theme:\n            type: string\n            value: '{{#1735400000001.theme#}}'\n        type: tool\n      height:\
+  \ 90\n      id: '1735400000003'\n      position:\n        x: 688\n        y: 282\n      positionAbsolute:\n        x: 688\n\
+  \        y: 282\n      selected: false\n      sourcePosition: right\n      targetPosition: left\n      type: custom\n  \
+  \    width: 244\n    - data:\n        code: \"import json\\n\\ndef main(storyboard_json: str) -> dict:\\n    try:\\n\\\n\
+  \          \\        data = json.loads(storyboard_json)\\n        pages = data.get(\\\"\\\n          pages\\\", [])\\n \
+  \       # Convert each page to JSON string for iteration\\n\\\n          \\        page_strings = [json.dumps(page, ensure_ascii=False)\
+  \ for page in\\\n          \\ pages]\\n        return {\\\"pages\\\": page_strings, \\\"page_count\\\": len(page_strings)}\\\
+  n\\\n          \\    except:\\n        return {\\\"pages\\\": [], \\\"page_count\\\": 0}\\n\"\n        code_language: python3\n\
+  \        desc: Parse storyboard JSON and extract pages for iteration\n        outputs:\n          page_count:\n        \
+  \    children: null\n            type: number\n          pages:\n            children: null\n            type: array[string]\n\
+  \        selected: false\n        title: Parse Storyboard\n        type: code\n        variables:\n        - value_selector:\n\
+  \          - '1735400000003'\n          - text\n          variable: storyboard_json\n      height: 102\n      id: '1735400000004'\n\
+  \      position:\n        x: 992\n        y: 282\n      positionAbsolute:\n        x: 992\n        y: 282\n      selected:\
+  \ false\n      sourcePosition: right\n      targetPosition: left\n      type: custom\n      width: 244\n    - data:\n  \
+  \      desc: Process each page\n        iterator_selector:\n        - '1735400000004'\n        - pages\n        output_selector:\n\
+  \        - '1735400000007'\n        - text\n        output_type: array[string]\n        selected: false\n        start_node_id:\
+  \ 1735400000005start0\n        title: Page Iterator\n        type: iteration\n      height: 250\n      id: '1735400000005'\n\
+  \      position:\n        x: 1296\n        y: 200\n      positionAbsolute:\n        x: 1296\n        y: 200\n      selected:\
+  \ false\n      sourcePosition: right\n      targetPosition: left\n      type: custom\n      width: 500\n    - data:\n  \
+  \      desc: Design panels for single page\n        parentId: '1735400000005'\n        provider_id: panel-designer\n   \
+  \     provider_name: Panel Designer\n        provider_type: workflow\n        selected: false\n        title: Panel Designer\n\
+  \        tool_name: panel_designer\n        tool_parameters:\n          character_definitions:\n            type: string\n\
+  \            value: ''\n          page_data:\n            type: string\n            value: '{{#item#}}'\n        type: tool\n\
+  \      height: 90\n      id: '1735400000006'\n      position:\n        x: 1350\n        y: 260\n      positionAbsolute:\n\
+  \        x: 1350\n        y: 260\n      selected: false\n      sourcePosition: right\n      targetPosition: left\n     \
+  \ type: custom\n      width: 200\n    - data:\n        desc: Generate YAML prompt for page\n        parentId: '1735400000005'\n\
+  \        provider_id: yaml-generator\n        provider_name: YAML Generator\n        provider_type: workflow\n        selected:\
+  \ false\n        title: YAML Generator\n        tool_name: yaml_generator\n        tool_parameters:\n          page_number:\n\
+  \            type: number\n            value: '{{#item.page_number#}}'\n          panel_design:\n            type: string\n\
+  \            value: '{{#1735400000006.text#}}'\n        type: tool\n      height: 90\n      id: '1735400000007'\n      position:\n\
+  \        x: 1580\n        y: 260\n      positionAbsolute:\n        x: 1580\n        y: 260\n      selected: false\n    \
+  \  sourcePosition: right\n      targetPosition: left\n      type: custom\n      width: 200\n    - data:\n        desc: Combine\
+  \ all page YAMLs\n        selected: false\n        template: '# Manga YAML Prompts\n\n          {% for yaml in yaml_outputs\
+  \ %}\n\n          ---\n\n          {{ yaml }}\n\n          {% endfor %}\n\n          '\n        title: Combine YAMLs\n \
+  \       type: template-transform\n        variables:\n        - value_selector:\n          - '1735400000005'\n         \
+  \ - output\n          variable: yaml_outputs\n      height: 90\n      id: '1735400000008'\n      position:\n        x: 1856\n\
+  \        y: 282\n      positionAbsolute:\n        x: 1856\n        y: 282\n      selected: false\n      sourcePosition:\
+  \ right\n      targetPosition: left\n      type: custom\n      width: 244\n    - data:\n        desc: ''\n        outputs:\n\
+  \        - value_selector:\n          - '1735400000008'\n          - output\n          variable: yaml_prompts\n        -\
+  \ value_selector:\n          - '1735400000003'\n          - text\n          variable: storyboard\n        - value_selector:\n\
+  \          - '1735400000002'\n          - text\n          variable: educational_design\n        selected: false\n      \
+  \  title: End\n        type: end\n      height: 90\n      id: '1735400000009'\n      position:\n        x: 2160\n      \
+  \  y: 282\n      positionAbsolute:\n        x: 2160\n        y: 282\n      sourcePosition: right\n      targetPosition:\
+  \ left\n      type: custom\n      width: 244\n    viewport:\n      x: 0\n      y: 0\n      zoom: 0.7\n  rag_pipeline_variables:\
+  \ []\n"

@@ -1,0 +1,60 @@
+{
+  "exported_at": "2025-12-27T20:06:41.496880",
+  "total_apps": 9,
+  "apps": [
+    {
+      "id": "f78e1125-b1c9-4555-9739-cbbae450beb7",
+      "name": "Manga Chat Assistant",
+      "mode": "advanced-chat",
+      "filename": "Manga Chat Assistant_f78e1125.yml"
+    },
+    {
+      "id": "c0313a71-d8f5-4ec6-8c45-6067690139e4",
+      "name": "manga_orchestrator",
+      "mode": "workflow",
+      "filename": "manga_orchestrator_c0313a71.yml"
+    },
+    {
+      "id": "7905fed0-89c8-4815-9dfc-29a3ae5649f7",
+      "name": "Manga Story Orchestrator",
+      "mode": "workflow",
+      "filename": "Manga Story Orchestrator_7905fed0.yml"
+    },
+    {
+      "id": "0109a23d-7399-44a0-952d-c9f2b0b86c47",
+      "name": "YAML Generator",
+      "mode": "workflow",
+      "filename": "YAML Generator_0109a23d.yml"
+    },
+    {
+      "id": "7d712e91-159a-4390-9d2d-8aa3d39330d9",
+      "name": "Storyboard Designer",
+      "mode": "workflow",
+      "filename": "Storyboard Designer_7d712e91.yml"
+    },
+    {
+      "id": "de2d0c9c-f232-4e90-a028-856ec580a8aa",
+      "name": "Panel Designer",
+      "mode": "workflow",
+      "filename": "Panel Designer_de2d0c9c.yml"
+    },
+    {
+      "id": "e9498f03-bb08-48a4-870a-34838bd9d0a9",
+      "name": "Instructional Designer",
+      "mode": "workflow",
+      "filename": "Instructional Designer_e9498f03.yml"
+    },
+    {
+      "id": "d774f675-564b-4407-b9a8-b0e2bceb8e01",
+      "name": "工事成績評定分析システム",
+      "mode": "workflow",
+      "filename": "工事成績評定分析システム_d774f675.yml"
+    },
+    {
+      "id": "e9a98dbf-d965-4920-b508-0b9e36432d36",
+      "name": "工事成績評定分析システム",
+      "mode": "workflow",
+      "filename": "工事成績評定分析システム_e9a98dbf.yml"
+    }
+  ]
+}

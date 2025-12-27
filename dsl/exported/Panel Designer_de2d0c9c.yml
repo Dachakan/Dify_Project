@@ -1,0 +1,54 @@
+data: "app:\n  description: Designs detailed panel composition for a single manga page.\n  icon: \uD83E\uDD16\n  icon_background:\
+  \ '#D1FAE5'\n  mode: workflow\n  name: Panel Designer\n  use_icon_as_answer_icon: false\ndependencies:\n- current_identifier:\
+  \ null\n  type: marketplace\n  value:\n    marketplace_plugin_unique_identifier: langgenius/openai:0.2.8@aae2be0913b8c6f0b80cff58e08d7a8b4c214569b41778413fcaea204561ff16\n\
+  \    version: null\nkind: app\nversion: 0.5.0\nworkflow:\n  conversation_variables: []\n  environment_variables: []\n  features:\n\
+  \    file_upload:\n      allowed_file_extensions:\n      - .JPG\n      - .JPEG\n      - .PNG\n      - .GIF\n      - .WEBP\n\
+  \      - .SVG\n      allowed_file_types:\n      - image\n      allowed_file_upload_methods:\n      - local_file\n      -\
+  \ remote_url\n      enabled: false\n      fileUploadConfig:\n        audio_file_size_limit: 50\n        batch_count_limit:\
+  \ 5\n        file_size_limit: 15\n        image_file_batch_limit: 10\n        image_file_size_limit: 10\n        single_chunk_attachment_limit:\
+  \ 10\n        video_file_size_limit: 100\n        workflow_file_upload_limit: 10\n      image:\n        enabled: false\n\
+  \        number_limits: 3\n        transfer_methods:\n        - local_file\n        - remote_url\n      number_limits: 3\n\
+  \    opening_statement: ''\n    retriever_resource:\n      enabled: true\n    sensitive_word_avoidance:\n      enabled:\
+  \ false\n    speech_to_text:\n      enabled: false\n    suggested_questions: []\n    suggested_questions_after_answer:\n\
+  \      enabled: false\n    text_to_speech:\n      enabled: false\n      language: ''\n      voice: ''\n  graph:\n    edges:\n\
+  \    - data:\n        isInIteration: false\n        sourceType: start\n        targetType: llm\n      id: 1735300200001-source-1735300200002-target\n\
+  \      source: '1735300200001'\n      sourceHandle: source\n      target: '1735300200002'\n      targetHandle: target\n\
+  \      type: custom\n      zIndex: 0\n    - data:\n        isInIteration: false\n        sourceType: llm\n        targetType:\
+  \ end\n      id: 1735300200002-source-1735300200003-target\n      source: '1735300200002'\n      sourceHandle: source\n\
+  \      target: '1735300200003'\n      targetHandle: target\n      type: custom\n      zIndex: 0\n    nodes:\n    - data:\n\
+  \        desc: ''\n        selected: false\n        title: Start\n        type: start\n        variables:\n        - label:\
+  \ Page Data\n          max_length: 5000\n          options: []\n          required: true\n          type: paragraph\n  \
+  \        variable: page_data\n        - default: ''\n          label: Character Definitions\n          max_length: 2000\n\
+  \          options: []\n          required: false\n          type: paragraph\n          variable: character_definitions\n\
+  \      height: 134\n      id: '1735300200001'\n      position:\n        x: 80\n        y: 282\n      positionAbsolute:\n\
+  \        x: 80\n        y: 282\n      selected: false\n      sourcePosition: right\n      targetPosition: left\n      type:\
+  \ custom\n      width: 242\n    - data:\n        context:\n          enabled: false\n          variable_selector: []\n \
+  \       desc: ''\n        model:\n          completion_params:\n            temperature: 0.7\n          mode: chat\n   \
+  \       name: gpt-4o\n          provider: langgenius/openai/openai\n        prompt_template:\n        - id: c1b2c3d4-pd01-0001-0001-000000000001\n\
+  \          role: system\n          text: \"You are a manga panel composition expert.\\n\\n## Character Visual\\\n      \
+  \      \\ Reference\\n- takeru: 22yo male, black spiky hair, large eyes, band-aid\\\n            \\ on cheek, blue helmet,\
+  \ gray work clothes\\n- kazusan: 32yo female, black\\\n            \\ short hair, gentle droopy eyes, mole on left cheek,\
+  \ white helmet, navy\\\n            \\ work clothes, yellow safety vest\\n- ryusan: 55yo male, bald with gray\\\n      \
+  \      \\ stubble, rugged face, scar on jaw, yellow helmet, dark gray work clothes\\n\\\n            - shochou: 50yo male,\
+  \ gray hair 7:3 part, silver glasses, stocky, white\\\n            \\ helmet, navy suit, orange safety vest\\n\\n## Style\\\
+  n- 4-head-tall SD\\\n            \\ (chibi) style\\n- Hard-boiled gekiga aesthetic\\n- Bold ink-brush line\\\n         \
+  \   \\ art\\n- High-contrast cell shading\\n\\n## Output Format (JSON)\\n{\\n  \\\"\\\n            page_number\\\": 1,\\\
+  n  \\\"panels\\\": [\\n    {\\n      \\\"id\\\": 1,\\n      \\\"\\\n            position\\\": \\\"top_left\\\",\\n     \
+  \ \\\"size\\\": \\\"medium\\\",\\n      \\\"visual_description\\\"\\\n            : \\\"detailed scene description\\\",\\\
+  n      \\\"camera\\\": {\\\"angle\\\": \\\"eye_level\\\"\\\n            , \\\"shot_type\\\": \\\"medium_shot\\\"},\\n  \
+  \    \\\"characters_in_panel\\\": [\\n\\\n            \\        {\\\"name\\\": \\\"takeru\\\", \\\"position\\\": \\\"center\\\
+  \", \\\"pose\\\": \\\"\\\n            standing\\\", \\\"expression\\\": \\\"worried\\\"}\\n      ],\\n      \\\"bubbles\\\
+  \"\\\n            : [\\n        {\\\"text\\\": \\\"Japanese dialogue\\\", \\\"speaker\\\": \\\"takeru\\\"\\\n          \
+  \  , \\\"style\\\": \\\"speech\\\"}\\n      ]\\n    }\\n  ]\\n}\\n\"\n        - id: c1b2c3d4-pd01-0001-0001-000000000002\n\
+  \          role: user\n          text: 'Page Data:\n\n            {{#1735300200001.page_data#}}\n\n\n            Character\
+  \ Definitions:\n\n            {{#1735300200001.character_definitions#}}\n\n\n            Design detailed panel composition\
+  \ for this page.\n\n            Output ONLY valid JSON, no markdown code blocks.\n\n            '\n        selected: false\n\
+  \        title: 'LLM: Panel Designer'\n        type: llm\n        variables: []\n        vision:\n          enabled: false\n\
+  \      height: 87\n      id: '1735300200002'\n      position:\n        x: 384\n        y: 282\n      positionAbsolute:\n\
+  \        x: 384\n        y: 282\n      selected: true\n      sourcePosition: right\n      targetPosition: left\n      type:\
+  \ custom\n      width: 242\n    - data:\n        desc: ''\n        outputs:\n        - value_selector:\n          - '1735300200002'\n\
+  \          - text\n          variable: panel_design\n        selected: false\n        title: End\n        type: end\n  \
+  \    height: 88\n      id: '1735300200003'\n      position:\n        x: 688\n        y: 282\n      positionAbsolute:\n \
+  \       x: 688\n        y: 282\n      sourcePosition: right\n      targetPosition: left\n      type: custom\n      width:\
+  \ 242\n    viewport:\n      x: -99.01978343746862\n      y: 52.1454600358511\n      zoom: 0.8705505632961241\n  rag_pipeline_variables:\
+  \ []\n"
