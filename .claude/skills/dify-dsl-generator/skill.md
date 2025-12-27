@@ -26,11 +26,11 @@ Difyワークフロー用のDSL（YAML形式）を自動生成するスキル。
 | `{{#1000000001.variable#}}` | `{{ node-id.variable }}` |
 | `{{#env.api_url#}}` | `{{ env.api_url }}` |
 
-### 4. 生成前の必須参照
-DSL生成前に以下を必ず確認:
-- `dsl/templates/_base_template_enhanced.yml` - 全11ノードタイプのテンプレート
-- `dsl/templates/TEMPLATE_REFERENCE_MAP.md` - 用途別43テンプレートカタログ
-- `dsl/construction_evaluation_analysis_workflow_v2.yml` - 動作確認済み実例
+### 4. 生成前の必須参照（優先順位順）
+DSL生成前に以下を優先順位順で確認:
+1. `dsl/exported/` - 自分の動作確認済みワークフロー（最優先）
+2. `dsl/templates/_base_template_enhanced.yml` - 全11ノードタイプのテンプレート
+3. `dsl/templates/TEMPLATE_REFERENCE_MAP.md` - 用途別43テンプレートカタログ
 
 ---
 
@@ -481,11 +481,21 @@ Dify_project/dsl/generated/{workflow_name}.yml
 
 ---
 
+## コンテキスト拡充の考え方
+
+GitHub Actionsで週次エクスポートされるDSLは「動作確認済み」の実例。
+これを最優先で参照することで、「それっぽい推測」ではなく
+「実際に動いたパターン」に基づいたDSL生成が可能。
+
+参照: https://qiita.com/yuto-ida-stb/items/a06cab875174b0295cec
+
+---
+
 ## 関連ファイル
 
-- `dsl/templates/_base_template.yml` - 基本テンプレート
-- `dsl/construction_evaluation_analysis_workflow_v2.yml` - 動作確認済み実例
-- `.claude/agents/dify-workflow-orchestrator.md` - オーケストレーター
+- `dsl/exported/` - 動作確認済みワークフロー（最優先参照）
+- `dsl/templates/_base_template_enhanced.yml` - 全ノードタイプテンプレート
+- `dsl/templates/TEMPLATE_REFERENCE_MAP.md` - 用途別テンプレートカタログ
 
 ---
 

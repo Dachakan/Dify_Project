@@ -82,10 +82,11 @@ DSLをDify Cloudにインポートして動作確認。
 |------|------|
 | `version: 0.1.2` | `version: 0.5.0`（Dify Cloud非互換） |
 
-### テンプレート参照（必須）
-DSL生成時は以下を必ず参照:
-- `dsl/templates/_base_template.yml` - 基本構造
-- `dsl/templates/` - 47テンプレート集
+### DSL参照優先順位（必須）
+DSL生成時は以下の順で参照:
+1. `dsl/exported/` - 自分の動作確認済みワークフロー（最優先）
+2. `dsl/templates/_base_template_enhanced.yml` - 全11ノードタイプのテンプレート
+3. `dsl/templates/` - 47テンプレート集
 
 ### 必須フィールド
 
@@ -123,9 +124,29 @@ structured_output_enabled: false     # 必須（Qiita推奨）
 
 ---
 
-## 週次自動バックアップ
+## GitHub Actions: コンテキスト拡充 + バックアップ
 
 GitHub Actionsで毎週日曜5:00（JST）にDify Cloudからワークフローを自動エクスポート。
+
+### 目的（2つ）
+
+| 目的 | 説明 |
+|------|------|
+| **コンテキスト拡充** | エクスポートDSLをClaude Codeの学習材料として蓄積 |
+| **バージョン管理** | GUI変更をGitで追跡し、復元可能に |
+
+### なぜコンテキスト拡充が重要か
+
+```
+エクスポートDSL = 「動作確認済み」の実例
+     ↓
+Claude Codeが「それっぽい推測」ではなく
+「実際に動いたパターン」に基づいてDSL生成
+     ↓
+一発成功率の向上
+```
+
+参考: https://qiita.com/yuto-ida-stb/items/a06cab875174b0295cec
 
 ### 設定済みシークレット
 - `DIFY_CONSOLE_TOKEN` - Difyコンソールトークン
