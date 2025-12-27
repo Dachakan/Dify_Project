@@ -163,6 +163,8 @@ def main():
     print(f"Dify Base URL: {DIFY_BASE_URL}")
     print(f"Include Secrets: {INCLUDE_SECRET}")
     print(f"Output Directory: {OUTPUT_DIR}")
+    print(f"Token Length: {len(DIFY_REFRESH_TOKEN)}")
+    print(f"Token Preview: {DIFY_REFRESH_TOKEN[:10]}...{DIFY_REFRESH_TOKEN[-10:]}")
     print("-" * 50)
 
     try:
