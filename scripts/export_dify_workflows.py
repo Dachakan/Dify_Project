@@ -26,19 +26,12 @@ import yaml
 
 # 設定
 DIFY_BASE_URL = os.environ.get("DIFY_BASE_URL", "https://cloud.dify.ai")
-DIFY_REFRESH_TOKEN = os.environ.get("DIFY_REFRESH_TOKEN", "")
+DIFY_REFRESH_TOKEN = os.environ.get("DIFY_REFRESH_TOKEN", "").strip()
 INCLUDE_SECRET = os.environ.get("INCLUDE_SECRET", "false").lower() == "true"
 
 # 出力先ディレクトリ
 SCRIPT_DIR = Path(__file__).parent
 OUTPUT_DIR = SCRIPT_DIR.parent / "dsl" / "exported"
-
-
-def get_cookies():
-    """APIリクエスト用クッキーを生成"""
-    return {
-        "__Host-refresh_token": DIFY_REFRESH_TOKEN,
-    }
 
 
 def refresh_access_token() -> str:
@@ -50,7 +43,12 @@ def refresh_access_token() -> str:
     """
     url = f"{DIFY_BASE_URL}/console/api/refresh-token"
 
-    response = requests.post(url, cookies=get_cookies())
+    # Cookieをヘッダーとして直接送信（curlと同じ動作）
+    headers = {
+        "Cookie": f"__Host-refresh_token={DIFY_REFRESH_TOKEN}"
+    }
+
+    response = requests.post(url, headers=headers)
     response.raise_for_status()
 
     # レスポンスのSet-Cookieからaccess_tokenを取得
@@ -61,18 +59,11 @@ def refresh_access_token() -> str:
     return access_token
 
 
-def get_headers(access_token: str):
-    """APIリクエスト用ヘッダーを生成"""
+def get_request_headers(access_token: str):
+    """APIリクエスト用ヘッダーを生成（Cookieを含む）"""
     return {
         "Content-Type": "application/json",
-    }
-
-
-def get_request_cookies(access_token: str):
-    """APIリクエスト用クッキーを生成"""
-    return {
-        "__Host-access_token": access_token,
-        "__Host-refresh_token": DIFY_REFRESH_TOKEN,
+        "Cookie": f"__Host-access_token={access_token}; __Host-refresh_token={DIFY_REFRESH_TOKEN}"
     }
 
 
@@ -85,8 +76,7 @@ def get_apps(access_token: str):
     while True:
         response = requests.get(
             url,
-            headers=get_headers(access_token),
-            cookies=get_request_cookies(access_token),
+            headers=get_request_headers(access_token),
             params=params
         )
         response.raise_for_status()
@@ -110,8 +100,7 @@ def export_app_dsl(app_id, app_name, access_token: str):
 
     response = requests.get(
         url,
-        headers=get_headers(access_token),
-        cookies=get_request_cookies(access_token)
+        headers=get_request_headers(access_token)
     )
     response.raise_for_status()
 
