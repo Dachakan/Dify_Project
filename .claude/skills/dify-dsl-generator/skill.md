@@ -30,7 +30,7 @@ Difyワークフロー用のDSL（YAML形式）を自動生成するスキル。
 DSL生成前に以下を優先順位順で確認:
 1. `dsl/exported/` - 自分の動作確認済みワークフロー（最優先）
 2. `dsl/templates/_base_template_enhanced.yml` - 全11ノードタイプのテンプレート
-3. `dsl/templates/TEMPLATE_REFERENCE_MAP.md` - 用途別43テンプレートカタログ
+3. `dsl/templates/TEMPLATE_REFERENCE_MAP.md` - 用途別38テンプレートカタログ
 
 ---
 
@@ -519,7 +519,7 @@ DSL生成時、実装したい機能に応じて以下のテンプレートを�
 
 ### テンプレート一覧
 
-詳細は `dsl/templates/README.md` を参照。
+詳細は `dsl/templates/TEMPLATE_REFERENCE_MAP.md` を参照。
 
 | カテゴリ | ファイル数 | 学習ポイント |
 |----------|------------|--------------|

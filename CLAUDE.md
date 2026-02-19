@@ -3,8 +3,10 @@
 > **グローバルルール継承**: ~/.claude/CLAUDE.md を参照
 
 ## Context
-- 担当：Dify DSL自動生成（バイブコーディング）
-- 目的：自然言語からDify Cloudワークフローを自動生成
+- クライアント：(株)森組（土木工事業）
+- 担当：工事予算管理システム x Dify Cloud連携
+- 目的：自然言語からDify Cloudワークフローを自動生成 + GAS Web App連携
+- 実装済み：GAS 7ファイル（予実管理/月次集計/API/本社台帳）、PoC手順書
 - 言語：日本語
 - ワークフロー標準：Dify DSL (YAML v0.1.2)
 - 環境：Dify Cloud版
@@ -36,7 +38,7 @@ Dify_project/
 │   └── workflows/
 │       └── export_dify_workflows.yml  # 週次自動バックアップ
 ├── dsl/
-│   ├── templates/               # 42テンプレート（重複解消済み）
+│   ├── templates/               # 38テンプレート（重複解消済み）
 │   ├── exported/                # バックアップDSL（GitHub Actions生成）
 │   └── generated/
 │       ├── data_analysis_chatbot.yml
@@ -60,7 +62,7 @@ Dify_project/
 ユーザーが自然言語で実現したいワークフローを記述。
 
 ### Step 2: テンプレート選択
-47のテンプレートから類似ワークフローを選択：
+38のテンプレートから類似ワークフローを選択：
 ```
 dsl/templates/
 ├── agent/                # エージェント系（16テンプレート）
@@ -94,7 +96,7 @@ DSLをDify Cloudにインポートして動作確認。
 DSL生成時は以下の順で参照:
 1. `dsl/exported/` - 自分の動作確認済みワークフロー（最優先）
 2. `dsl/templates/_base_template_enhanced.yml` - 全11ノードタイプのテンプレート
-3. `dsl/templates/` - 47テンプレート集
+3. `dsl/templates/` - 38テンプレート集
 
 ### 必須フィールド
 

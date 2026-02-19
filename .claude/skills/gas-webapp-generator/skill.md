@@ -1,5 +1,40 @@
 # GAS WebApp Generator
 
+## 絶対ルール（厳守）
+
+以下のルールは例外なく遵守すること。
+
+### 1. レスポンス形式
+| 使用 | 禁止 |
+|------|------|
+| `{ success: true, count, data }` | `{ result: [...] }`（統一形式外） |
+| `{ success: false, error }` | `throw error`（キャッチされないエラー） |
+
+### 2. エラーハンドリング
+| OK | NG |
+|----|-----|
+| `try { ... } catch (error) { ... }` | エラーハンドリングなし |
+| catch内でJSON返却 | catchなしで`throw`のみ |
+
+### 3. MIME Type
+| OK | NG |
+|----|-----|
+| `ContentService.MimeType.JSON` | `setMimeType('application/json')` |
+| `.setMimeType(ContentService.MimeType.JSON)` | 文字列直接指定 |
+
+### 4. 関数シグネチャ
+| OK | NG |
+|----|-----|
+| `doGet(e)` | `doGet()`（パラメータなし） |
+| `doPost(e)` | `doPost()`（パラメータなし） |
+
+### 5. シート名の変数化
+| OK | NG |
+|----|-----|
+| `const SHEET_NAME = '売上'; sheet.getSheetByName(SHEET_NAME)` | `sheet.getSheetByName('売上')`（ハードコード） |
+
+---
+
 ## 概要
 Google Apps Script（GAS）でスプレッドシートデータをJSON APIとして公開するウェブアプリコードを自動生成するスキル。
 
@@ -175,9 +210,19 @@ function doGet(e) {
 
 ### 集計機能付き版
 ```javascript
+// 設定値（必要に応じて変更）
+const SHEET_NAME = '売上';
+const AMOUNT_COLUMN = '売上金額';
+const CATEGORY_COLUMN = 'カテゴリ';
+
 function doGet(e) {
   try {
-    const sheet = SpreadsheetApp.getActiveSpreadsheet().getSheetByName('売上');
+    const sheet = SpreadsheetApp.getActiveSpreadsheet().getSheetByName(SHEET_NAME);
+
+    if (!sheet) {
+      throw new Error(`シート "${SHEET_NAME}" が見つかりません`);
+    }
+
     const data = sheet.getDataRange().getValues();
     const headers = data[0];
 
@@ -192,21 +237,21 @@ function doGet(e) {
     // 集計処理
     const summary = {
       total_count: rows.length,
-      total_sales: rows.reduce((sum, r) => sum + (Number(r['売上金額']) || 0), 0),
+      total_sales: rows.reduce((sum, r) => sum + (Number(r[AMOUNT_COLUMN]) || 0), 0),
       average_sales: 0,
       by_category: {}
     };
 
-    summary.average_sales = summary.total_sales / summary.total_count;
+    summary.average_sales = summary.total_count > 0 ? summary.total_sales / summary.total_count : 0;
 
     // カテゴリ別集計
     rows.forEach(row => {
-      const cat = row['カテゴリ'] || '未分類';
+      const cat = row[CATEGORY_COLUMN] || '未分類';
       if (!summary.by_category[cat]) {
         summary.by_category[cat] = { count: 0, total: 0 };
       }
       summary.by_category[cat].count++;
-      summary.by_category[cat].total += Number(row['売上金額']) || 0;
+      summary.by_category[cat].total += Number(row[AMOUNT_COLUMN]) || 0;
     });
 
     return ContentService
@@ -235,10 +280,48 @@ function doGet(e) {
 3. **レスポンス形式**: `{ success, count/error, data }` の統一形式
 4. **CORS対応**: ContentService.MimeType.JSON を使用
 5. **コメント**: デプロイ手順を必ず記載
+6. **シート名**: 定数として先頭で定義（ハードコード禁止）
+7. **パラメータチェック**: `e.parameter` 使用前に存在確認
+
+---
+
+## 生成チェックリスト
+
+GASコード生成後、以下を全て確認すること:
+
+- [ ] `doGet(e)` または `doPost(e)` でパラメータを受け取っている
+- [ ] try-catchで全体をエラーハンドリングしている
+- [ ] `ContentService.MimeType.JSON` を使用している
+- [ ] レスポンスが `{ success, count/error, data }` 形式になっている
+- [ ] 冒頭にデプロイ手順コメントが記載されている
+- [ ] シート名が定数として変数化されている（ハードコード禁止）
+- [ ] 日本語エラーメッセージが含まれている
+- [ ] `e.parameter` 使用前に存在チェックを行っている
+
+---
+
+## 禁止事項
+
+| 項目 | 禁止パターン | 正解パターン |
+|------|-------------|--------------|
+| シート名 | `getSheetByName('売上')` 直接記述 | `const SHEET_NAME = '売上'` で変数化 |
+| エラー処理 | `throw new Error()` のみ（catchなし） | try-catch + JSON返却 |
+| パラメータ | `e.parameter.key` 直接使用 | 存在チェック後に使用 |
+| コメント | デプロイ手順なし | 必ずデプロイ手順を記載 |
+| MIME Type | 文字列 `'application/json'` | `ContentService.MimeType.JSON` |
+| 関数定義 | `doGet()` パラメータなし | `doGet(e)` パラメータあり |
+| レスポンス | `{ result: [...] }` 独自形式 | `{ success, count, data }` 統一形式 |
+
+---
 
 ## 出力先
 ```
-Dify_project/gas_templates/{api_name}.js
+Dify_project/gas_templates/{category}/{api_name}.js
+
+カテゴリ例:
+- budget_management/ -- 工事予算管理システム
+- manga/ -- マンガ関連
+- misc/ -- その他
 ```
 
 ## Difyとの連携
