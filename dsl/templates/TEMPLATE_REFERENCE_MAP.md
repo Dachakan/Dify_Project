@@ -1,5 +1,5 @@
 # Dify DSL Template Reference Map
-# 用途別テンプレートカタログ（43テンプレート）
+# 用途別テンプレートカタログ（38テンプレート）
 
 ## カテゴリ別テンプレート一覧
 
@@ -54,29 +54,24 @@
 | URL_CrossPlatform_Copywriting.yml | http-request, llm | URL→コンテンツ |
 | viral_title_generator.yml | llm | バイラルタイトル生成 |
 
-### 6. Visual/Design（ビジュアル・デザイン）- 4件
+### 6. Visual/Design（ビジュアル・デザイン）- 2件
 | Template | Node Types | Learning Points |
 |----------|------------|-----------------|
 | FlatStyleIllustration.yml | llm | フラットイラスト生成 |
 | SVGLogoDesign.yml | llm | SVGロゴ生成 |
-| Flat Style Illustration Generation.yml | llm | フラットイラスト（別版） |
-| SVG Logo Design .yml | llm | SVGロゴ（別版） |
 
-### 7. Search/Web（検索・Web）- 4件
+### 7. Search/Web（検索・Web）- 3件
 | Template | Node Types | Learning Points |
 |----------|------------|-----------------|
 | search_master.yml | tool, llm | 検索統合 |
 | WebContentSearch_Summarization.yml | http-request, llm | Web検索・要約 |
 | ResearchAgentProcessFlow.yml | tool, llm | リサーチエージェント |
-| Web Content Search and Summarization Workflow.yml | http-request, llm | Web検索・要約（別版） |
 
-### 8. Base/Reference（基本・参照）- 4件
+### 8. Base/Reference（基本・参照）- 2件
 | Template | Node Types | Learning Points |
 |----------|------------|-----------------|
 | _base_template.yml | start, end | 基本構造、必須フィールド |
 | _base_template_enhanced.yml | 全11種 | 全ノードテンプレート |
-| Knowledge Retreival + Chatbot .yml | knowledge-retrieval | KB検索（重複） |
-| Question Classifier + Knowledge + Chatbot .yml | question-classifier | 分類（重複） |
 
 ---
 

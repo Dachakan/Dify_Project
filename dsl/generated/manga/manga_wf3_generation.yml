@@ -1,0 +1,568 @@
+app:
+  description: "WF3: Page Generation - 各ページYAML生成"
+  icon: "🎨"
+  icon_background: '#D1FAE5'
+  mode: workflow
+  name: "Manga WF3 - Page Generation"
+  use_icon_as_answer_icon: false
+kind: app
+version: 0.1.2
+
+workflow:
+  conversation_variables: []
+  environment_variables: []
+  features:
+    file_upload:
+      image:
+        enabled: false
+        number_limits: 3
+        transfer_methods:
+        - local_file
+        - remote_url
+    opening_statement: ''
+    retriever_resource:
+      enabled: false
+    sensitive_word_avoidance:
+      enabled: false
+    speech_to_text:
+      enabled: false
+    suggested_questions: []
+    suggested_questions_after_answer:
+      enabled: false
+    text_to_speech:
+      enabled: false
+      language: ''
+      voice: ''
+
+  graph:
+    edges:
+    - data:
+        isInIteration: false
+        isInLoop: false
+        sourceType: start
+        targetType: code
+      id: edge-start-to-binding
+      source: '1000000001'
+      sourceHandle: source
+      target: '1000000002'
+      targetHandle: target
+      type: custom
+      zIndex: 0
+    - data:
+        isInIteration: false
+        isInLoop: false
+        sourceType: code
+        targetType: iteration
+      id: edge-binding-to-iter
+      source: '1000000002'
+      sourceHandle: source
+      target: '1000000003'
+      targetHandle: target
+      type: custom
+      zIndex: 0
+    - data:
+        isInIteration: true
+        isInLoop: false
+        iteration_id: '1000000003'
+        sourceType: iteration-start
+        targetType: code
+      id: edge-iterstart-to-layout
+      source: '1000000003start'
+      sourceHandle: source
+      target: '1000000004'
+      targetHandle: target
+      type: custom
+      zIndex: 1002
+    - data:
+        isInIteration: true
+        isInLoop: false
+        iteration_id: '1000000003'
+        sourceType: code
+        targetType: llm
+      id: edge-layout-to-yaml
+      source: '1000000004'
+      sourceHandle: source
+      target: '1000000005'
+      targetHandle: target
+      type: custom
+      zIndex: 1002
+    - data:
+        isInIteration: false
+        isInLoop: false
+        sourceType: iteration
+        targetType: template-transform
+      id: edge-iter-to-template
+      source: '1000000003'
+      sourceHandle: source
+      target: '1000000006'
+      targetHandle: target
+      type: custom
+      zIndex: 0
+    - data:
+        isInIteration: false
+        isInLoop: false
+        sourceType: template-transform
+        targetType: end
+      id: edge-template-to-end
+      source: '1000000006'
+      sourceHandle: source
+      target: '1000000007'
+      targetHandle: target
+      type: custom
+      zIndex: 0
+
+    nodes:
+    - data:
+        desc: 'WF2からの入力を受け取る'
+        selected: false
+        title: Start
+        type: start
+        variables:
+        - label: pages_array
+          max_length: 20000
+          options: []
+          required: true
+          type: paragraph
+          variable: pages_array
+        - default: true
+          label: use_takeru
+          options: []
+          required: false
+          type: select
+          variable: use_takeru
+        - default: true
+          label: use_kazu
+          options: []
+          required: false
+          type: select
+          variable: use_kazu
+        - default: false
+          label: use_ryu
+          options: []
+          required: false
+          type: select
+          variable: use_ryu
+        - default: false
+          label: use_director
+          options: []
+          required: false
+          type: select
+          variable: use_director
+      height: 220
+      id: '1000000001'
+      position:
+        x: 80
+        y: 200
+      positionAbsolute:
+        x: 80
+        y: 200
+      selected: false
+      sourcePosition: right
+      targetPosition: left
+      type: custom
+      width: 244
+
+    - data:
+        code: |
+          import json
+
+          CHARACTER_IMAGES = {
+              "takeru": "https://drive.google.com/uc?export=view&id=1PBP3aeoc_zYEIP93AnbMyLZ84iGuxc3T",
+              "kazusan": "https://drive.google.com/uc?export=view&id=1aBahLtJpy0DnoKJ6f0ObQnTDMM5y-L4y",
+              "ryusan": "https://drive.google.com/uc?export=view&id=1umU2L6J0wJdoVd2fHmjMUP4cMJP4HgGV",
+              "shochou": "https://drive.google.com/uc?export=view&id=1VdRytA2MTc5WiYyvPOiJ9iGFnwxQARXu"
+          }
+
+          def main(pages_array_str: str, use_takeru: str, use_kazu: str, use_ryu: str, use_director: str) -> dict:
+              """
+              キャラクター画像URLをバインディングする。
+              pages_arrayはJSON配列として渡される。
+              """
+              try:
+                  # pages_arrayを解析
+                  pages = json.loads(pages_array_str) if isinstance(pages_array_str, str) else pages_array_str
+
+                  # 使用するキャラクターのマップを構築
+                  active_chars = {}
+                  if use_takeru == "true" or use_takeru == True:
+                      active_chars["takeru"] = CHARACTER_IMAGES["takeru"]
+                  if use_kazu == "true" or use_kazu == True:
+                      active_chars["kazusan"] = CHARACTER_IMAGES["kazusan"]
+                  if use_ryu == "true" or use_ryu == True:
+                      active_chars["ryusan"] = CHARACTER_IMAGES["ryusan"]
+                  if use_director == "true" or use_director == True:
+                      active_chars["shochou"] = CHARACTER_IMAGES["shochou"]
+
+                  return {
+                      "pages": pages,
+                      "character_image_map": active_chars,
+                      "page_count": len(pages)
+                  }
+              except (json.JSONDecodeError, TypeError) as e:
+                  return {
+                      "pages": [],
+                      "character_image_map": CHARACTER_IMAGES,
+                      "page_count": 0,
+                      "error": str(e)
+                  }
+        code_language: python3
+        outputs:
+          pages:
+            children: null
+            type: array[string]
+          character_image_map:
+            children: null
+            type: object
+          page_count:
+            children: null
+            type: number
+        selected: false
+        title: 'CODE: Character Binding'
+        type: code
+        variables:
+        - value_selector:
+          - '1000000001'
+          - pages_array
+          value_type: string
+          variable: pages_array_str
+        - value_selector:
+          - '1000000001'
+          - use_takeru
+          value_type: string
+          variable: use_takeru
+        - value_selector:
+          - '1000000001'
+          - use_kazu
+          value_type: string
+          variable: use_kazu
+        - value_selector:
+          - '1000000001'
+          - use_ryu
+          value_type: string
+          variable: use_ryu
+        - value_selector:
+          - '1000000001'
+          - use_director
+          value_type: string
+          variable: use_director
+      height: 54
+      id: '1000000002'
+      position:
+        x: 380
+        y: 200
+      positionAbsolute:
+        x: 380
+        y: 200
+      selected: false
+      sourcePosition: right
+      targetPosition: left
+      type: custom
+      width: 244
+
+    - data:
+        error_handle_mode: terminated
+        flatten_output: true
+        is_parallel: false
+        iterator_input_type: array[string]
+        iterator_selector:
+        - '1000000002'
+        - pages
+        output_selector:
+        - '1000000005'
+        - text
+        output_type: array[string]
+        parallel_nums: 10
+        selected: false
+        start_node_id: '1000000003start'
+        title: 'ITERATION: Page Generator'
+        type: iteration
+        width: 600
+      height: 180
+      id: '1000000003'
+      position:
+        x: 380
+        y: 350
+      positionAbsolute:
+        x: 380
+        y: 350
+      selected: false
+      sourcePosition: right
+      targetPosition: left
+      type: custom
+      width: 600
+      zIndex: 1
+
+    - data:
+        desc: ''
+        isInIteration: true
+        selected: false
+        title: ''
+        type: iteration-start
+      draggable: false
+      height: 48
+      id: '1000000003start'
+      parentId: '1000000003'
+      position:
+        x: 24
+        y: 90
+      positionAbsolute:
+        x: 404
+        y: 440
+      selectable: false
+      sourcePosition: right
+      targetPosition: left
+      type: custom-iteration-start
+      width: 44
+      zIndex: 1002
+
+    - data:
+        code: |
+          import json
+
+          def main(page_data_str: str, char_map: dict) -> dict:
+              """
+              ページデータをパースし、YAML生成用に整形する。
+              """
+              try:
+                  page = json.loads(page_data_str) if isinstance(page_data_str, str) else page_data_str
+
+                  # パネル情報を整形
+                  panels_info = []
+                  for panel in page.get("panels", []):
+                      panel_info = {
+                          "number": panel.get("panel_number", 1),
+                          "layout": panel.get("layout", "standard"),
+                          "description": panel.get("description", ""),
+                          "characters": []
+                      }
+
+                      # キャラクター情報を追加
+                      for char_name in panel.get("characters", []):
+                          if char_name in char_map:
+                              panel_info["characters"].append({
+                                  "name": char_name,
+                                  "image_url": char_map[char_name]
+                              })
+
+                      panels_info.append(panel_info)
+
+                  return {
+                      "page_number": page.get("page_number", 1),
+                      "arc_phase": page.get("arc_phase", ""),
+                      "emphasis_point": page.get("emphasis_point", ""),
+                      "key_scene": page.get("key_scene", ""),
+                      "dialogue": page.get("dialogue", []),
+                      "panels": panels_info,
+                      "character_map": char_map
+                  }
+              except (json.JSONDecodeError, TypeError) as e:
+                  return {
+                      "page_number": 0,
+                      "error": str(e)
+                  }
+        code_language: python3
+        isInIteration: true
+        isInLoop: false
+        iteration_id: '1000000003'
+        outputs:
+          page_number:
+            children: null
+            type: number
+          arc_phase:
+            children: null
+            type: string
+          emphasis_point:
+            children: null
+            type: string
+          key_scene:
+            children: null
+            type: string
+          dialogue:
+            children: null
+            type: array[object]
+          panels:
+            children: null
+            type: array[object]
+          character_map:
+            children: null
+            type: object
+        selected: false
+        title: 'CODE: Layout Convert'
+        type: code
+        variables:
+        - value_selector:
+          - '1000000003'
+          - item
+          value_type: string
+          variable: page_data_str
+        - value_selector:
+          - '1000000002'
+          - character_image_map
+          value_type: object
+          variable: char_map
+      height: 54
+      id: '1000000004'
+      parentId: '1000000003'
+      position:
+        x: 128
+        y: 90
+      positionAbsolute:
+        x: 508
+        y: 440
+      selected: false
+      sourcePosition: right
+      targetPosition: left
+      type: custom
+      width: 200
+      zIndex: 1002
+
+    - data:
+        context:
+          enabled: false
+          variable_selector: []
+        desc: 'ページYAML生成'
+        edition_type: basic
+        isInIteration: true
+        isInLoop: false
+        iteration_id: '1000000003'
+        model:
+          completion_params:
+            temperature: 0.5
+          mode: chat
+          name: gpt-4o
+          provider: langgenius/openai/openai
+        prompt_template:
+        - id: sys-yaml
+          role: system
+          text: |
+            あなたはNano Banana Pro互換のYAMLプロンプトジェネレーターです。
+
+            以下の形式でYAMLを生成してください：
+            ```yaml
+            page: [ページ番号]
+            layout: [レイアウトタイプ]
+            emphasis: [emphasis_point]
+            scene:
+              background: [背景の説明]
+              lighting: [照明の説明]
+            panels:
+              - panel: 1
+                description: [パネル説明]
+                characters:
+                  - name: [キャラクター名]
+                    image_url: [画像URL]
+                    pose: [ポーズ]
+                    expression: [表情]
+                dialogue:
+                  - character: [キャラクター名]
+                    text: "[台詞]"
+            ```
+
+            注意事項：
+            - YAMLのみを出力し、コードブロック記号は使用しない
+            - 日本語で出力
+            - image_urlは必ず提供されたURLを使用
+        - id: user-yaml
+          role: user
+          text: |
+            ページ番号: {{#1000000004.page_number#}}
+            フェーズ: {{#1000000004.arc_phase#}}
+            強調ポイント: {{#1000000004.emphasis_point#}}
+            キーシーン: {{#1000000004.key_scene#}}
+
+            台詞:
+            {{#1000000004.dialogue#}}
+
+            パネル情報:
+            {{#1000000004.panels#}}
+
+            キャラクター画像マップ:
+            {{#1000000004.character_map#}}
+
+            上記の情報をもとにYAMLを生成してください。
+        selected: false
+        structured_output_enabled: false
+        title: 'LLM: Generate YAML'
+        type: llm
+        variables: []
+        vision:
+          enabled: false
+      height: 98
+      id: '1000000005'
+      parentId: '1000000003'
+      position:
+        x: 388
+        y: 67
+      positionAbsolute:
+        x: 768
+        y: 417
+      selected: false
+      sourcePosition: right
+      targetPosition: left
+      type: custom
+      width: 180
+      zIndex: 1002
+
+    - data:
+        selected: false
+        template: |
+          {% for yaml in arg1 %}
+          {{ yaml }}
+          ---
+          {% endfor %}
+        title: 'TEMPLATE: Combine Pages'
+        type: template-transform
+        variables:
+        - value_selector:
+          - '1000000003'
+          - output
+          value_type: array[string]
+          variable: arg1
+      height: 54
+      id: '1000000006'
+      position:
+        x: 1040
+        y: 350
+      positionAbsolute:
+        x: 1040
+        y: 350
+      selected: false
+      sourcePosition: right
+      targetPosition: left
+      type: custom
+      width: 244
+
+    - data:
+        desc: ''
+        outputs:
+        - value_selector:
+          - '1000000006'
+          - output
+          variable: yaml_content
+        - value_selector:
+          - '1000000002'
+          - page_count
+          variable: page_count
+        selected: false
+        title: End
+        type: end
+      height: 118
+      id: '1000000007'
+      position:
+        x: 1340
+        y: 350
+      positionAbsolute:
+        x: 1340
+        y: 350
+      selected: false
+      sourcePosition: right
+      targetPosition: left
+      type: custom
+      width: 244
+
+    viewport:
+      x: 0
+      y: 0
+      zoom: 1
+
+  rag_pipeline_variables: []

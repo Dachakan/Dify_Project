@@ -1,0 +1,87 @@
+type,id,name,parent_id,available_elements,active
+category,C01,直接工事費,,,TRUE
+category,C02,共通仮設費,,,TRUE
+category,C03,現場管理費,,,TRUE
+work_type,W01,土工事,C01,,TRUE
+work_type,W02,コンクリート工事,C01,,TRUE
+work_type,W03,仮設工事,C01,,TRUE
+work_type,W04,護岸・海岸工事,C01,,TRUE
+work_type,W05,砂防・治山工事,C01,,TRUE
+work_type,W06,舗装工事,C01,,TRUE
+work_type,W07,法面工事,C01,,TRUE
+work_type,W08,林道・農林道工事,C01,,TRUE
+work_type,W09,基礎工事,C01,,TRUE
+work_type,W10,撤去工事,C01,,TRUE
+work_type,W11,排水工事,C01,,TRUE
+work_type,W99,その他直接工事,C01,,TRUE
+koushus,K0101,掘削工,W01,"E11 E12 E13 E14 E15",TRUE
+koushus,K0102,盛土工,W01,"E11 E12 E13 E14 E15",TRUE
+koushus,K0103,除石工,W01,"E12 E13 E14",TRUE
+koushus,K0104,浚渫工,W01,"E12 E13 E14",TRUE
+koushus,K0105,場内運搬工,W01,"E12 E13 E14",TRUE
+koushus,K0201,コンクリート工,W02,"E11 E12 E13 E14 E15",TRUE
+koushus,K0202,型枠工,W02,"E11 E14 E15",TRUE
+koushus,K0203,鉄筋工,W02,"E11 E14 E15",TRUE
+koushus,K0204,均しコンクリート工,W02,"E11 E14 E15",TRUE
+koushus,K0205,基礎割栗石工,W02,"E11 E12 E14",TRUE
+koushus,K0301,足場工,W03,"E11 E12 E14",TRUE
+koushus,K0302,仮囲工,W03,"E11 E14",TRUE
+koushus,K0303,工事用道路工,W03,"E11 E12 E14",TRUE
+koushus,K0401,護岸工,W04,"E11 E12 E14",TRUE
+koushus,K0402,消波根固工,W04,"E11 E14",TRUE
+koushus,K0403,根固工,W04,"E11 E14",TRUE
+koushus,K0501,砂防ダム工（堰堤工）,W05,"E11 E12 E14",TRUE
+koushus,K0502,流路工,W05,"E11 E12 E14",TRUE
+koushus,K0503,床止工,W05,"E11 E12 E14",TRUE
+koushus,K0504,山腹工,W05,"E11 E14 E15",TRUE
+koushus,K0505,落石防止工,W05,"E11 E14",TRUE
+koushus,K0601,アスファルト舗装工,W06,"E11 E12 E14",TRUE
+koushus,K0602,路盤工,W06,"E11 E12 E14",TRUE
+koushus,K0701,法面保護工,W07,"E11 E12 E14 E15",TRUE
+koushus,K0702,法面整形工,W07,"E12 E13 E14",TRUE
+koushus,K0801,路体工,W08,"E11 E12 E14",TRUE
+koushus,K0802,路面工,W08,"E11 E12 E14",TRUE
+koushus,K0803,排水路工（林道）,W08,"E11 E14",TRUE
+koushus,K0901,地盤改良工,W09,"E11 E12 E14",TRUE
+koushus,K0902,杭工,W09,"E11 E12 E14",TRUE
+koushus,K1001,構造物撤去工,W10,"E12 E13 E14",TRUE
+koushus,K1002,舗装撤去工,W10,"E12 E14",TRUE
+koushus,K1101,管渠工（排水工）,W11,"E11 E12 E14",TRUE
+koushus,K1102,側溝工,W11,"E11 E14",TRUE
+koushus,K9901,測量丁張工,W99,"E14 E15",TRUE
+expense_element,E11,材料費,C01,,TRUE
+expense_element,E12,機械経費,C01,,TRUE
+expense_element,E13,機械経費（損料）,C01,,TRUE
+expense_element,E14,外注費,C01,,TRUE
+expense_element,E15,労務費,C01,,TRUE
+expense_item,F31,運搬費,C02,,TRUE
+expense_item,F32,調査・準備費,C02,,TRUE
+expense_item,F33,仮設建物費,C02,,TRUE
+expense_item,F34,公害防止対策費,C02,,TRUE
+expense_item,F35,安全対策費,C02,,TRUE
+expense_item,F36,水道光熱費,C02,,TRUE
+expense_item,F37,産業廃棄物処理費,C02,,TRUE
+expense_item,F38,役務費,C02,,TRUE
+expense_item,F39,営繕費,C02,,TRUE
+expense_item,F51,労務管理費,C03,,TRUE
+expense_item,F52,法定福利費,C03,,TRUE
+expense_item,F53,租税公課,C03,,TRUE
+expense_item,F54,地代家賃,C03,,TRUE
+expense_item,F55,保険料,C03,,TRUE
+expense_item,F56,従業員給料手当,C03,,TRUE
+expense_item,F57,従業員賞与,C03,,TRUE
+expense_item,F58,従業員退職金,C03,,TRUE
+expense_item,F59,福利厚生費,C03,,TRUE
+expense_item,F60,事務用品費,C03,,TRUE
+expense_item,F61,旅費・交通費・通信費,C03,,TRUE
+expense_item,F62,補償費,C03,,TRUE
+expense_item,F63,設計費,C03,,TRUE
+expense_item,F64,交際費,C03,,TRUE
+expense_item,F65,保証料,C03,,TRUE
+expense_item,F66,会議費・諸会費,C03,,TRUE
+expense_item,F67,雑費,C03,,TRUE
+vendor,V001,川越建設(株),,subcontractor,TRUE
+vendor,V002,南九州生コン(株),,supplier,TRUE
+vendor,V003,(株)鹿児島重機リース,,rental,TRUE
+vendor,V004,丸栄産業(株),,supplier,TRUE
+vendor,V005,(有)海潟建材,,supplier,TRUE

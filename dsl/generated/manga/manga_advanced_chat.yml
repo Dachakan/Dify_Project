@@ -1,0 +1,3669 @@
+app:
+  description: "Advanced-chat mode: WF1-WF4 integration with user confirmation gates"
+  icon: "manga"
+  icon_background: '#E4FBCC'
+  mode: advanced-chat
+  name: "Manga Complete Pipeline - Chat"
+  use_icon_as_answer_icon: false
+dependencies:
+- current_identifier: null
+  type: marketplace
+  value:
+    marketplace_plugin_unique_identifier: langgenius/openai:0.2.8@aae2be0913b8c6f0b80cff58e08d7a8b4c214569b41778413fcaea204561ff16
+    version: null
+kind: app
+version: 0.1.2
+
+workflow:
+  conversation_variables:
+  - name: current_phase
+    value_type: string
+    description: "Current workflow phase"
+    value: "init"
+  - name: design_json
+    value_type: string
+    description: "WF1 output: Learning design JSON"
+    value: ""
+  - name: story_json
+    value_type: string
+    description: "WF2 output: Story details JSON"
+    value: ""
+  - name: pages_array
+    value_type: string
+    description: "WF2 output: Pages array for iteration"
+    value: ""
+  - name: yaml_content
+    value_type: string
+    description: "WF3 output: Generated YAML"
+    value: ""
+  - name: theme
+    value_type: string
+    description: "User input: Theme"
+    value: ""
+  - name: characters
+    value_type: string
+    description: "User input: Characters"
+    value: ""
+  - name: total_pages
+    value_type: number
+    description: "Total page count"
+    value: 4
+  - name: reference_image_id
+    value_type: string
+    description: "Style anchor image file ID for consistency"
+    value: ""
+
+  environment_variables:
+  - name: GOOGLE_AI_API_KEY
+    value_type: secret
+    value: ''
+    description: 'Google AI Studio APIキー (gemini-2.0-flash-exp用)'
+  - name: GAS_GEMINI_PROXY_URL
+    value_type: string
+    value: ''
+    description: '[TODO] Dify UIの環境変数設定で実際のGAS URLを入力してください'
+  features:
+    file_upload:
+      allowed_file_extensions:
+      - .JPG
+      - .JPEG
+      - .PNG
+      - .GIF
+      - .WEBP
+      - .SVG
+      allowed_file_types:
+      - image
+      allowed_file_upload_methods:
+      - local_file
+      - remote_url
+      enabled: false
+      fileUploadConfig:
+        audio_file_size_limit: 50
+        batch_count_limit: 5
+        file_size_limit: 15
+        image_file_batch_limit: 10
+        image_file_size_limit: 10
+        single_chunk_attachment_limit: 10
+        video_file_size_limit: 100
+        workflow_file_upload_limit: 10
+      image:
+        enabled: false
+        number_limits: 3
+        transfer_methods:
+        - local_file
+        - remote_url
+      number_limits: 3
+    opening_statement: |
+      マンガ生成パイプラインへようこそ。
+
+      テーマと登場人物を含めてマンガの内容を入力してください。
+      例: 「足場の安全点検について、タケルとカズさんで4ページのマンガを作成して」
+    retriever_resource:
+      enabled: true
+    sensitive_word_avoidance:
+      enabled: false
+    speech_to_text:
+      enabled: false
+    suggested_questions:
+    - "足場の安全点検について、タケルとカズさんで4ページのマンガを作成して"
+    - "KY活動の重要性を新人向けに説明するマンガを作成して"
+    - "熱中症対策について、建設現場での予防方法を学ぶマンガを作成して"
+    suggested_questions_after_answer:
+      enabled: true
+    text_to_speech:
+      enabled: false
+      language: ''
+      voice: ''
+
+  graph:
+    edges:
+    # Start -> If-Else: Action Router
+    - data:
+        isInIteration: false
+        isInLoop: false
+        sourceType: start
+        targetType: if-else
+      id: edge-start-ifelse
+      source: '1000000001'
+      sourceHandle: source
+      target: '1000000099'
+      targetHandle: target
+      type: custom
+      zIndex: 0
+
+    # Phase Router -> CODE: Parse Initial Input (case: init)
+    - data:
+        isInIteration: false
+        isInLoop: false
+        sourceType: if-else
+        targetType: code
+      id: edge-phase-init
+      source: '1000000099'
+      sourceHandle: 'case-init'
+      target: '1000000003'
+      targetHandle: target
+      type: custom
+      zIndex: 0
+
+    # Phase Router -> LLM: Story Details (case: design_done)
+    - data:
+        isInIteration: false
+        isInLoop: false
+        sourceType: if-else
+        targetType: llm
+      id: edge-phase-design
+      source: '1000000099'
+      sourceHandle: 'case-design_done'
+      target: '1000000008'
+      targetHandle: target
+      type: custom
+      zIndex: 0
+
+    # Phase Router -> CODE: Generate YAML (case: story_done)
+    - data:
+        isInIteration: false
+        isInLoop: false
+        sourceType: if-else
+        targetType: code
+      id: edge-phase-story
+      source: '1000000099'
+      sourceHandle: 'case-story_done'
+      target: '1000000011'
+      targetHandle: target
+      type: custom
+      zIndex: 0
+
+    # Phase Router -> CODE: Quality Check (case: yaml_done)
+    - data:
+        isInIteration: false
+        isInLoop: false
+        sourceType: if-else
+        targetType: code
+      id: edge-phase-yaml
+      source: '1000000099'
+      sourceHandle: 'case-yaml_done'
+      target: '1000000013'
+      targetHandle: target
+      type: custom
+      zIndex: 0
+
+    # Phase Router -> CODE: Parse Pages for Image (case: quality_done)
+    - data:
+        isInIteration: false
+        isInLoop: false
+        sourceType: if-else
+        targetType: code
+      id: edge-phase-quality
+      source: '1000000099'
+      sourceHandle: 'case-quality_done'
+      target: '1000000020'
+      targetHandle: target
+      type: custom
+      zIndex: 0
+
+    # Phase Router -> Answer: Help (default/false)
+    - data:
+        isInIteration: false
+        isInLoop: false
+        sourceType: if-else
+        targetType: answer
+      id: edge-phase-default
+      source: '1000000099'
+      sourceHandle: 'false'
+      target: '1000000017'
+      targetHandle: target
+      type: custom
+      zIndex: 0
+
+    # Parse Input -> Knowledge Retrieval
+    - data:
+        isInIteration: false
+        isInLoop: false
+        sourceType: code
+        targetType: knowledge-retrieval
+      id: edge-parse-rag
+      source: '1000000003'
+      sourceHandle: source
+      target: '1000000004'
+      targetHandle: target
+      type: custom
+      zIndex: 0
+
+    # Knowledge Retrieval -> LLM: Learning Design
+    - data:
+        isInIteration: false
+        isInLoop: false
+        sourceType: knowledge-retrieval
+        targetType: llm
+      id: edge-rag-design
+      source: '1000000004'
+      sourceHandle: source
+      target: '1000000005'
+      targetHandle: target
+      type: custom
+      zIndex: 0
+
+    # LLM: Learning Design -> CODE: Format Design
+    - data:
+        sourceType: llm
+        targetType: code
+        isInIteration: false
+        isInLoop: false
+      id: edge-design-format
+      source: '1000000005'
+      sourceHandle: source
+      target: '1000000018'
+      targetHandle: target
+      type: custom
+      zIndex: 0
+
+    # CODE: Format Design -> Assigner: Save Design
+    - data:
+        sourceType: code
+        targetType: assigner
+        isInIteration: false
+        isInLoop: false
+      id: edge-format-save
+      source: '1000000018'
+      sourceHandle: source
+      target: '1000000006'
+      targetHandle: target
+      type: custom
+      zIndex: 0
+
+    # Assigner: Save Design -> Answer: Show Design
+    - data:
+        sourceType: assigner
+        targetType: answer
+        isInIteration: false
+        isInLoop: false
+      id: edge-save-showdesign
+      source: '1000000006'
+      sourceHandle: source
+      target: '1000000007'
+      targetHandle: target
+      type: custom
+      zIndex: 0
+
+    # LLM: Story Details -> CODE: Format Story
+    - data:
+        sourceType: llm
+        targetType: code
+        isInIteration: false
+        isInLoop: false
+      id: edge-story-format
+      source: '1000000008'
+      sourceHandle: source
+      target: '1000000019'
+      targetHandle: target
+      type: custom
+      zIndex: 0
+
+    # CODE: Format Story -> Assigner: Save Story
+    - data:
+        sourceType: code
+        targetType: assigner
+        isInIteration: false
+        isInLoop: false
+      id: edge-format-story-save
+      source: '1000000019'
+      sourceHandle: source
+      target: '1000000009'
+      targetHandle: target
+      type: custom
+      zIndex: 0
+
+    # Assigner: Save Story -> Answer: Show Story
+    - data:
+        sourceType: assigner
+        targetType: answer
+        isInIteration: false
+        isInLoop: false
+      id: edge-save-showstory
+      source: '1000000009'
+      sourceHandle: source
+      target: '1000000010'
+      targetHandle: target
+      type: custom
+      zIndex: 0
+
+    # CODE: Generate YAML -> ASSIGNER: Save YAML
+    - data:
+        sourceType: code
+        targetType: assigner
+        isInIteration: false
+        isInLoop: false
+      id: edge-yaml-save
+      source: '1000000011'
+      sourceHandle: source
+      target: '1000000016'
+      targetHandle: target
+      type: custom
+      zIndex: 0
+
+    # ASSIGNER: Save YAML -> Answer: Show YAML
+    - data:
+        sourceType: assigner
+        targetType: answer
+        isInIteration: false
+        isInLoop: false
+      id: edge-save-show
+      source: '1000000016'
+      sourceHandle: source
+      target: '1000000012'
+      targetHandle: target
+      type: custom
+      zIndex: 0
+
+    # [FIX v2] CODE: Quality Check -> IF-ELSE: Need Enhancement
+    - data:
+        isInIteration: false
+        isInLoop: false
+        sourceType: code
+        targetType: if-else
+      id: edge-check-ifelse
+      source: '1000000013'
+      sourceHandle: source
+      target: '1000000030'
+      targetHandle: target
+      type: custom
+      zIndex: 0
+
+    # [FIX v2] IF-ELSE: Need Enhancement (false) -> LLM: Consistency
+    - data:
+        isInIteration: false
+        isInLoop: false
+        sourceType: if-else
+        targetType: llm
+      id: edge-ifelse-consistency
+      source: '1000000030'
+      sourceHandle: 'false'
+      target: '1000000014'
+      targetHandle: target
+      type: custom
+      zIndex: 0
+
+    # [FIX v2] IF-ELSE: Need Enhancement (true) -> LLM: Auto Enhance
+    - data:
+        isInIteration: false
+        isInLoop: false
+        sourceType: if-else
+        targetType: llm
+      id: edge-ifelse-enhance
+      source: '1000000030'
+      sourceHandle: 'true'
+      target: '1000000031'
+      targetHandle: target
+      type: custom
+      zIndex: 0
+
+    # [FIX v2] LLM: Auto Enhance -> CODE: Merge Enhanced
+    - data:
+        isInIteration: false
+        isInLoop: false
+        sourceType: llm
+        targetType: code
+      id: edge-enhance-merge
+      source: '1000000031'
+      sourceHandle: source
+      target: '1000000032'
+      targetHandle: target
+      type: custom
+      zIndex: 0
+
+    # [FIX v2] CODE: Merge Enhanced -> ASSIGNER: Update Enhanced
+    - data:
+        isInIteration: false
+        isInLoop: false
+        sourceType: code
+        targetType: assigner
+      id: edge-merge-assigner
+      source: '1000000032'
+      sourceHandle: source
+      target: '1000000033'
+      targetHandle: target
+      type: custom
+      zIndex: 0
+
+    # [FIX v2] ASSIGNER: Update Enhanced -> LLM: Consistency
+    - data:
+        isInIteration: false
+        isInLoop: false
+        sourceType: assigner
+        targetType: llm
+      id: edge-assigner-consistency
+      source: '1000000033'
+      sourceHandle: source
+      target: '1000000014'
+      targetHandle: target
+      type: custom
+      zIndex: 0
+
+    # LLM: Consistency -> Assigner: Set Quality Done
+    - data:
+        isInIteration: false
+        isInLoop: false
+        sourceType: llm
+        targetType: assigner
+      id: edge-consistency-assigner
+      source: '1000000014'
+      sourceHandle: source
+      target: '1000000034'
+      targetHandle: target
+      type: custom
+      zIndex: 0
+
+    # Assigner: Set Quality Done -> Answer: Show Report
+    - data:
+        isInIteration: false
+        isInLoop: false
+        sourceType: assigner
+        targetType: answer
+      id: edge-assigner-report
+      source: '1000000034'
+      sourceHandle: source
+      target: '1000000015'
+      targetHandle: target
+      type: custom
+      zIndex: 0
+
+    # Iteration internal edges: start -> build prompt
+    - data:
+        isInIteration: true
+        isInLoop: false
+        iteration_id: '1000000021'
+        sourceType: iteration-start
+        targetType: code
+      id: edge-iter-start-build
+      source: '1000000021start'
+      sourceHandle: source
+      target: '1000000022'
+      targetHandle: target
+      type: custom
+      zIndex: 1002
+
+    # Iteration internal edges: build prompt -> http gemini
+    - data:
+        isInIteration: true
+        isInLoop: false
+        iteration_id: '1000000021'
+        sourceType: code
+        targetType: http-request
+      id: edge-iter-build-http
+      source: '1000000022'
+      sourceHandle: source
+      target: '1000000023'
+      targetHandle: target
+      type: custom
+      zIndex: 1002
+
+    # Iteration internal edges: http gemini -> extract image
+    - data:
+        isInIteration: true
+        isInLoop: false
+        iteration_id: '1000000021'
+        sourceType: http-request
+        targetType: code
+      id: edge-iter-http-extract
+      source: '1000000023'
+      sourceHandle: source
+      target: '1000000024'
+      targetHandle: target
+      type: custom
+      zIndex: 1002
+
+    # Iteration internal edges: parse GAS response -> build result
+    # Note: 1000000029 (GAS Upload) は削除済み、GAS プロキシが直接 Drive 保存
+    - data:
+        isInIteration: true
+        isInLoop: false
+        iteration_id: '1000000021'
+        sourceType: code
+        targetType: code
+      id: edge-iter-parse-result
+      source: '1000000024'
+      sourceHandle: source
+      target: '1000000025'
+      targetHandle: target
+      type: custom
+      zIndex: 1002
+
+    # CODE: Parse Pages -> CODE: Generate Session ID
+    - data:
+        sourceType: code
+        targetType: code
+        isInIteration: false
+        isInLoop: false
+      id: edge-parse-sessionid
+      source: '1000000020'
+      sourceHandle: source
+      target: '1000000028'
+      targetHandle: target
+      type: custom
+      zIndex: 0
+
+    # CODE: Generate Session ID -> CODE: Build Style Anchor Prompt
+    - data:
+        sourceType: code
+        targetType: code
+        isInIteration: false
+        isInLoop: false
+      id: edge-sessionid-styleanchor
+      source: '1000000028'
+      sourceHandle: source
+      target: '1000000035'
+      targetHandle: target
+      type: custom
+      zIndex: 0
+
+    # CODE: Build Style Anchor Prompt -> HTTP: Generate Style Anchor
+    - data:
+        sourceType: code
+        targetType: http-request
+        isInIteration: false
+        isInLoop: false
+      id: edge-styleanchor-http
+      source: '1000000035'
+      sourceHandle: source
+      target: '1000000036'
+      targetHandle: target
+      type: custom
+      zIndex: 0
+
+    # HTTP: Generate Style Anchor -> CODE: Extract FileId
+    - data:
+        sourceType: http-request
+        targetType: code
+        isInIteration: false
+        isInLoop: false
+      id: edge-styleanchor-extract
+      source: '1000000036'
+      sourceHandle: source
+      target: '1000000037'
+      targetHandle: target
+      type: custom
+      zIndex: 0
+
+    # CODE: Extract FileId -> ASSIGNER: Save to conversation
+    - data:
+        sourceType: code
+        targetType: assigner
+        isInIteration: false
+        isInLoop: false
+      id: edge-extract-assigner
+      source: '1000000037'
+      sourceHandle: source
+      target: '1000000038'
+      targetHandle: target
+      type: custom
+      zIndex: 0
+
+    # ASSIGNER: Save to conversation -> Iteration: Image Generation
+    - data:
+        sourceType: assigner
+        targetType: iteration
+        isInIteration: false
+        isInLoop: false
+      id: edge-assigner-iteration
+      source: '1000000038'
+      sourceHandle: source
+      target: '1000000021'
+      targetHandle: target
+      type: custom
+      zIndex: 0
+
+    # Iteration -> Template Transform: Collect Results
+    - data:
+        sourceType: iteration
+        targetType: template-transform
+        isInIteration: false
+        isInLoop: false
+      id: edge-iteration-template
+      source: '1000000021'
+      sourceHandle: source
+      target: '1000000026'
+      targetHandle: target
+      type: custom
+      zIndex: 0
+
+    # Template Transform -> Answer: Image Complete
+    - data:
+        sourceType: template-transform
+        targetType: answer
+        isInIteration: false
+        isInLoop: false
+      id: edge-template-answer
+      source: '1000000026'
+      sourceHandle: source
+      target: '1000000027'
+      targetHandle: target
+      type: custom
+      zIndex: 0
+
+    nodes:
+    # [1] START NODE
+    - data:
+        desc: 'User input receiver - current_phaseで自動分岐'
+        selected: false
+        title: Start
+        type: start
+        variables: []
+      height: 90
+      id: '1000000001'
+      position:
+        x: 80
+        y: 350
+      positionAbsolute:
+        x: 80
+        y: 350
+      selected: false
+      sourcePosition: right
+      targetPosition: left
+      type: custom
+      width: 242
+
+    # [99] IF-ELSE: Phase Router (current_phaseで分岐)
+    - data:
+        cases:
+        - case_id: 'case-init'
+          conditions:
+          - comparison_operator: is
+            id: 'cond-init'
+            value: 'init'
+            variable_selector:
+            - conversation
+            - current_phase
+          logical_operator: and
+        - case_id: 'case-design_done'
+          conditions:
+          - comparison_operator: is
+            id: 'cond-design'
+            value: 'design_done'
+            variable_selector:
+            - conversation
+            - current_phase
+          logical_operator: and
+        - case_id: 'case-story_done'
+          conditions:
+          - comparison_operator: is
+            id: 'cond-story'
+            value: 'story_done'
+            variable_selector:
+            - conversation
+            - current_phase
+          logical_operator: and
+        - case_id: 'case-yaml_done'
+          conditions:
+          - comparison_operator: is
+            id: 'cond-yaml'
+            value: 'yaml_done'
+            variable_selector:
+            - conversation
+            - current_phase
+          logical_operator: and
+        - case_id: 'case-quality_done'
+          conditions:
+          - comparison_operator: is
+            id: 'cond-quality'
+            value: 'quality_done'
+            variable_selector:
+            - conversation
+            - current_phase
+          logical_operator: and
+        desc: 'current_phase会話変数でフェーズ分岐。LLM判定を使わない確実な状態マシン'
+        selected: false
+        title: 'Phase Router'
+        type: if-else
+      height: 250
+      id: '1000000099'
+      position:
+        x: 220
+        y: 350
+      positionAbsolute:
+        x: 220
+        y: 350
+      selected: false
+      sourcePosition: right
+      targetPosition: left
+      type: custom
+      width: 242
+
+    # [3] CODE: Parse Initial Input
+    - data:
+        code: |
+          import json
+          import re
+
+          # Protected compound words (domain-specific terms)
+          COMPOUND_WORDS = [
+              "石工事", "足場", "熱中症", "KY活動", "安全点検",
+              "施工計画", "品質管理", "安全管理", "建設現場",
+              "コンクリート", "鉄筋", "型枠", "クレーン"
+          ]
+
+          def extract_search_keywords(user_input: str) -> str:
+              """
+              [FIX v2] Extract search keywords from user input for RAG optimization.
+              - Preserves compound words by extracting them first (no placeholder)
+              - Uses extended Unicode regex for complete CJK coverage
+              - Prioritizes domain-specific compound words at the beginning
+              """
+              text = user_input
+              preserved_keywords = []
+
+              # Step 1: Extract compound words first (preserve them in list)
+              for word in COMPOUND_WORDS:
+                  if word in text:
+                      preserved_keywords.append(word)
+
+              # Step 2: Patterns to remove (non-search intent)
+              remove_patterns = [
+                  r'\d+\s*[ページペ]',
+                  r'マンガ|漫画|まんが',
+                  r'作りたい|作成して|作って',
+                  r'を伝える|で伝える',
+                  r'について学ぶ|を学ぶ',
+                  r'ポイント',
+                  r'気を?付け',
+              ]
+
+              for pattern in remove_patterns:
+                  text = re.sub(pattern, '', text)
+
+              # Step 3: Extended Unicode regex for keyword extraction
+              keywords = re.findall(r'[\u4E00-\u9FFF\u3040-\u309F\u30A0-\u30FFa-zA-Z0-9]+', text)
+
+              # Step 4: Filter stopwords
+              stopwords = {"の", "は", "が", "を", "に", "で", "と", "も", "や", "て", "した", "する"}
+              keywords = [k for k in keywords if k not in stopwords and len(k) >= 1]
+
+              # Step 5: Prioritize preserved compound words at the beginning
+              final_keywords = []
+              for word in preserved_keywords:
+                  if word not in final_keywords:
+                      final_keywords.append(word)
+
+              for k in keywords:
+                  is_substring = any(k in cw and k != cw for cw in preserved_keywords)
+                  if k not in final_keywords and not is_substring:
+                      final_keywords.append(k)
+
+              return ' '.join(final_keywords[:8])
+
+          def main(user_input: str, current_phase: str, design_json: str) -> dict:
+              """
+              Parse user input to extract theme, characters, pages.
+              Also detects modification requests and generates optimized search_query for RAG.
+              """
+              # Initialize default values
+              is_modification = False
+              modification_instruction = ""
+              existing_design = ""
+
+              # Safely handle design_json
+              design_json_str = ""
+              if design_json is not None and design_json != "":
+                  design_json_str = str(design_json)
+
+                  # Check for modification patterns only if design exists
+                  modification_patterns = [
+                      r'変更して|変更|修正して|修正',
+                      r'変えて|にして|にしてほしい',
+                      r'対象.*を.*に|対象者.*を.*に',
+                      r'難易度.*を.*に|ページ数.*を.*に',
+                      r'今の.*で|設計.*そのまま|テーマ.*変えずに',
+                      r'増やして|減らして|上げて|下げて',
+                      r'詳しく|簡潔に|もっと',
+                  ]
+
+                  for pattern in modification_patterns:
+                      if re.search(pattern, user_input):
+                          is_modification = True
+                          modification_instruction = user_input
+                          existing_design = design_json_str
+                          break
+
+              # Initialize with defaults or preserve from existing design in modification mode
+              theme = user_input
+              characters = ""  # Empty default, will be set by extraction or existing design
+              total_pages = 4
+
+              # In modification mode, preserve existing design values
+              if is_modification and design_json_str:
+                  try:
+                      existing = json.loads(design_json_str)
+                      # Preserve theme from existing design
+                      theme = existing.get("story_overview", {}).get("theme", user_input)
+                      # Preserve characters from existing design
+                      existing_chars = existing.get("characters", [])
+                      if existing_chars:
+                          characters = ", ".join([c.get("id", "") for c in existing_chars if c.get("id")])
+                      # Preserve total_pages from existing design
+                      total_pages = existing.get("story_overview", {}).get("total_pages", 4)
+                  except (json.JSONDecodeError, TypeError, AttributeError):
+                      pass  # Fall back to defaults if parsing fails
+
+              # Extract optimized search query for RAG
+              search_query = extract_search_keywords(user_input)
+
+              # Extract page count if specified
+              page_match = re.search(r'(\d+)\s*[ページペ]', user_input)
+              if page_match:
+                  total_pages = int(page_match.group(1))
+
+              # Extract characters if mentioned (supports both katakana and kanji)
+              char_patterns = [
+                  (r'タケル|たける', 'takeru'),
+                  (r'カズ(?:さん)?|かず(?:さん)?', 'kazusan'),
+                  (r'リュウ(?:さん)?|りゅう(?:さん)?|竜(?:さん)?', 'ryusan'),
+                  (r'所長|しょちょう', 'shochou')
+              ]
+              found_chars = []
+              for pattern, char_id in char_patterns:
+                  if re.search(pattern, user_input):
+                      found_chars.append(char_id)
+
+              # Only override characters if explicitly mentioned in input
+              if found_chars:
+                  characters = ", ".join(found_chars)
+              elif not characters:
+                  # No characters found and no existing design: use default
+                  characters = "takeru, kazusan"
+
+              return {
+                  "theme": theme,
+                  "search_query": search_query,
+                  "characters": characters,
+                  "total_pages": total_pages,
+                  "learning_goal": theme + "について学ぶ",
+                  "setting_location": "建設現場",
+                  "setting_time": "日中",
+                  "art_style": "modern realistic",
+                  "difficulty": "beginner",
+                  "is_modification": "true" if is_modification else "false",
+                  "modification_instruction": modification_instruction,
+                  "existing_design": existing_design
+              }
+        code_language: python3
+        outputs:
+          theme:
+            children: null
+            type: string
+          search_query:
+            children: null
+            type: string
+          characters:
+            children: null
+            type: string
+          total_pages:
+            children: null
+            type: number
+          learning_goal:
+            children: null
+            type: string
+          setting_location:
+            children: null
+            type: string
+          setting_time:
+            children: null
+            type: string
+          art_style:
+            children: null
+            type: string
+          difficulty:
+            children: null
+            type: string
+          is_modification:
+            children: null
+            type: string
+          modification_instruction:
+            children: null
+            type: string
+          existing_design:
+            children: null
+            type: string
+        selected: false
+        title: 'CODE: Parse Input'
+        type: code
+        variables:
+        - value_selector:
+          - '1000000001'
+          - sys.query
+          value_type: string
+          variable: user_input
+        - value_selector:
+          - conversation
+          - current_phase
+          value_type: string
+          variable: current_phase
+        - value_selector:
+          - conversation
+          - design_json
+          value_type: string
+          variable: design_json
+      height: 80
+      id: '1000000003'
+      position:
+        x: 680
+        y: 150
+      positionAbsolute:
+        x: 680
+        y: 150
+      selected: false
+      sourcePosition: right
+      targetPosition: left
+      type: custom
+      width: 242
+
+    # [4] KNOWLEDGE RETRIEVAL (RAG Optimized)
+    # [FIX v2] keyword_weight 0.3->0.5, vector_weight 0.7->0.5, top_k 6->8, threshold 0.4->0.35
+    - data:
+        dataset_ids:
+        - KhqY3/pLuw/5nCFaUyaWHQLsDo0HI3WqaDHLOvaKW397RixQ8W78g/YdA3GtgS8K
+        multiple_retrieval_config:
+          reranking_enable: true
+          reranking_mode: weighted_score
+          score_threshold: 0.35
+          top_k: 8
+          weights:
+            keyword_setting:
+              keyword_weight: 0.5
+            vector_setting:
+              embedding_model_name: text-embedding-3-large
+              embedding_provider_name: langgenius/openai/openai
+              vector_weight: 0.5
+            weight_type: customized
+        query_variable_selector:
+        - '1000000003'
+        - search_query
+        retrieval_mode: multiple
+        selected: false
+        title: Knowledge Retrieval
+        type: knowledge-retrieval
+      height: 80
+      id: '1000000004'
+      position:
+        x: 960
+        y: 150
+      positionAbsolute:
+        x: 960
+        y: 150
+      selected: false
+      sourcePosition: right
+      targetPosition: left
+      type: custom
+      width: 242
+
+    # [5] LLM: Learning Design
+    - data:
+        context:
+          enabled: true
+          variable_selector:
+          - '1000000004'
+          - result
+        desc: 'Generate learning design JSON'
+        edition_type: basic
+        memory:
+          role_prefix:
+            assistant: ''
+            user: ''
+          window:
+            enabled: false
+            size: 50
+        model:
+          completion_params:
+            frequency_penalty: 0
+            max_tokens: 2048
+            presence_penalty: 0
+            temperature: 0.7
+            top_p: 1
+          mode: chat
+          name: gpt-4o
+          provider: langgenius/openai/openai
+        prompt_template:
+        - role: system
+          text: |
+            あなたは建設業界向け教育マンガの教育設計エキスパートです。
+
+            日本の物語構造（起承転結）に従って教育構造を設計してください：
+            - 起（導入）: 状況設定
+            - 承（展開）: 学習内容の展開
+            - 転（転換）: 課題または重要な気づき
+            - 結（結末）: 解決と学び
+
+            出力は必ず以下のJSON形式で出力してください：
+            {
+              "story_overview": {
+                "title": "マンガのタイトル",
+                "theme": "テーマ",
+                "learning_goal": "学習目標",
+                "target_audience": "対象者",
+                "total_pages": 4,
+                "story_arc": {
+                  "ki": "起の説明",
+                  "sho": "承の説明",
+                  "ten": "転の説明",
+                  "ketsu": "結の説明"
+                }
+              },
+              "learning_objectives": ["目標1", "目標2", "目標3"],
+              "educational_points": [
+                {"point_number": 1, "content": "内容", "category": "ki"}
+              ],
+              "pages": [
+                {
+                  "page_number": 1,
+                  "arc_phase": "ki",
+                  "learning_focus": "このページの学習焦点",
+                  "key_message": "キーメッセージ"
+                }
+              ]
+            }
+        - role: user
+          text: |
+            {% if 1000000003.is_modification == "true" %}
+            【設計修正モード】
+
+            既存の設計:
+            {{#1000000003.existing_design#}}
+
+            修正指示:
+            {{#1000000003.modification_instruction#}}
+
+            上記の修正指示に基づいて、既存設計を部分更新してください。
+            - 変更が必要な部分のみ修正してください
+            - その他のフィールドは既存設計の値を維持してください
+            - JSON形式で完全な設計JSONを出力してください
+            - マークダウンのコードブロックは使用しないでください
+
+            {% else %}
+            【新規設計モード】
+
+            テーマ: {{#1000000003.theme#}}
+            学習目標: {{#1000000003.learning_goal#}}
+            ページ数: {{#1000000003.total_pages#}}
+            登場人物: {{#1000000003.characters#}}
+            場所設定: {{#1000000003.setting_location#}}
+            時間設定: {{#1000000003.setting_time#}}
+            アートスタイル: {{#1000000003.art_style#}}
+            難易度: {{#1000000003.difficulty#}}
+
+            参考知識:
+            {{#context#}}
+
+            上記の情報をもとに、教育マンガの設計JSONを生成してください。
+            出力はJSONのみで、マークダウンのコードブロックは使用しないでください。
+            {% endif %}
+        selected: false
+        structured_output_enabled: false
+        title: 'LLM: Learning Design'
+        type: llm
+        variables: []
+        vision:
+          enabled: false
+      height: 98
+      id: '1000000005'
+      position:
+        x: 1240
+        y: 150
+      positionAbsolute:
+        x: 1240
+        y: 150
+      selected: false
+      sourcePosition: right
+      targetPosition: left
+      type: custom
+      width: 242
+
+    # [6] ASSIGNER: Save Design
+    - data:
+        desc: ''
+        items:
+        - input_type: variable
+          operation: over-write
+          value:
+          - '1000000005'
+          - text
+          variable_selector:
+          - conversation
+          - design_json
+          write_mode: over-write
+        - input_type: constant
+          operation: over-write
+          value: design_done
+          variable_selector:
+          - conversation
+          - current_phase
+          write_mode: over-write
+        - input_type: variable
+          operation: over-write
+          value:
+          - '1000000003'
+          - theme
+          variable_selector:
+          - conversation
+          - theme
+          write_mode: over-write
+        - input_type: variable
+          operation: over-write
+          value:
+          - '1000000003'
+          - characters
+          variable_selector:
+          - conversation
+          - characters
+          write_mode: over-write
+        - input_type: variable
+          operation: over-write
+          value:
+          - '1000000003'
+          - total_pages
+          variable_selector:
+          - conversation
+          - total_pages
+          write_mode: over-write
+        selected: false
+        title: 'ASSIGNER: Save Design'
+        type: assigner
+        version: '2'
+      height: 54
+      id: '1000000006'
+      position:
+        x: 1800
+        y: 150
+      positionAbsolute:
+        x: 1800
+        y: 150
+      selected: false
+      sourcePosition: right
+      targetPosition: left
+      type: custom
+      width: 242
+
+    # [7] ANSWER: Show Design
+    - data:
+        answer: |
+          ## 教育設計が完成しました
+
+          {{#1000000018.formatted_output#}}
+
+          ---
+
+          <details>
+          <summary>詳細JSON（クリックで展開）</summary>
+
+          ```json
+          {{#1000000018.raw_json#}}
+          ```
+          </details>
+
+          ---
+
+          設計内容を確認してください。
+          - OKなら「承認」または「次へ」と入力してください
+          - 修正が必要な場合は、修正内容を入力してください
+        desc: ''
+        selected: false
+        title: 'Answer: Design'
+        type: answer
+        variables:
+        - value_selector:
+          - '1000000018'
+          - formatted_output
+          variable: design_output
+      height: 116
+      id: '1000000007'
+      position:
+        x: 2080
+        y: 150
+      positionAbsolute:
+        x: 2080
+        y: 150
+      selected: false
+      sourcePosition: right
+      targetPosition: left
+      type: custom
+      width: 242
+
+    # [8] LLM: Story Details
+    - data:
+        context:
+          enabled: false
+          variable_selector: []
+        desc: 'Generate story details from design JSON'
+        edition_type: basic
+        memory:
+          role_prefix:
+            assistant: ''
+            user: ''
+          window:
+            enabled: false
+            size: 50
+        model:
+          completion_params:
+            frequency_penalty: 0
+            max_tokens: 4096
+            presence_penalty: 0
+            temperature: 0.7
+            top_p: 1
+          mode: chat
+          name: gpt-4o
+          provider: langgenius/openai/openai
+        prompt_template:
+        - role: system
+          text: |
+            あなたは建設業界向け教育マンガのストーリー詳細化エキスパートです。
+
+            ## 5コマレイアウト仕様
+
+            各ページは5コマで構成します。1コマが横長になり、その位置はemphasis_pointで決定します。
+
+            ### emphasis_point と横長コマ位置
+            - opening: 上段横長（パネル1が横長）- 読者を引き込む導入シーン向け
+            - turning: 中段横長（パネル3が横長）- 核心・気づき・重要概念の強調向け
+            - conclusion: 下段横長（パネル5が横長）- 余韻・解決・まとめ向け
+
+            ### 5コマの基本配置（conclusionの場合）
+            - パネル1: top_right, large - 状況設定
+            - パネル2: top_left, medium - 問題提起
+            - パネル3: middle_right, medium - 指導・説明
+            - パネル4: middle_left, large - 実践・挑戦
+            - パネル5: bottom_center, wide（横長）- 解決・学び
+
+            ## emphasis_point 決定基準（優先順位順）
+
+            1. 感情の頂点（最優先）
+               - 「ハッと気づく」瞬間 → turning
+               - 危険からの解放 → conclusion
+               - 驚きの発見 → opening または turning
+
+            2. 学習の核心
+               - 重要概念の提示 → turning
+               - 正しい手順のデモ → turning
+               - 間違いと正解の対比 → turning
+
+            3. 視覚的インパクト
+               - 広い現場の全景 → opening
+               - クローズアップ詳細 → turning
+               - 完成した成果物 → conclusion
+
+            4. 物語構造（最も低い優先度）
+               - 導入 → opening
+               - 発展 → turning または conclusion
+               - 転換 → turning
+               - 解決 → conclusion
+
+            ## 汎用ルール
+            - 最初のページ: 原則 opening
+            - 最後のページ: 原則 conclusion
+            - turning は全体の1/3以下
+            - 同じemphasis_pointは連続2ページまで
+
+            ## 出力JSON形式
+            {
+              "pages": [
+                {
+                  "page_number": 1,
+                  "arc_phase": "ki",
+                  "emphasis_point": "opening",
+                  "emphasis_reason": "読者を現場に引き込む導入シーンのため",
+                  "learning_focus": "学習焦点",
+                  "key_message": "キーメッセージ",
+                  "key_scene": "シーンの詳細説明",
+                  "dialogue": [
+                    {"character": "takeru", "text": "台詞1", "panel": 1},
+                    {"character": "kazusan", "text": "台詞2", "panel": 2}
+                  ],
+                  "panels": [
+                    {
+                      "panel_number": 1,
+                      "position": "top_center",
+                      "size": "wide",
+                      "section_mapping": "ki",
+                      "description": "パネルの説明",
+                      "camera": {
+                        "angle": "low_angle",
+                        "shot_type": "wide_shot",
+                        "focus": "現場全景"
+                      },
+                      "characters": ["takeru", "kazusan"]
+                    },
+                    {
+                      "panel_number": 2,
+                      "position": "middle_left",
+                      "size": "medium",
+                      "section_mapping": "ki",
+                      "description": "パネルの説明",
+                      "camera": {
+                        "angle": "eye_level",
+                        "shot_type": "medium_shot",
+                        "focus": "キャラクター"
+                      },
+                      "characters": ["takeru"]
+                    }
+                  ]
+                }
+              ]
+            }
+
+            重要: 各ページに必ず5つのパネルを含めてください。
+        - role: user
+          text: |
+            テーマ: {{#conversation.theme#}}
+            登場人物: {{#conversation.characters#}}
+            ページ数: {{#conversation.total_pages#}}
+
+            設計JSON:
+            {{#conversation.design_json#}}
+
+            上記の設計に基づいて、各ページのストーリー詳細JSONを生成してください。
+            各ページは5コマで構成し、emphasis_pointはストーリー内容を分析して動的に決定してください。
+            出力はJSONのみで、マークダウンのコードブロックは使用しないでください。
+        selected: false
+        structured_output_enabled: false
+        title: 'LLM: Story Details'
+        type: llm
+        variables: []
+        vision:
+          enabled: false
+      height: 98
+      id: '1000000008'
+      position:
+        x: 680
+        y: 350
+      positionAbsolute:
+        x: 680
+        y: 350
+      selected: false
+      sourcePosition: right
+      targetPosition: left
+      type: custom
+      width: 242
+
+    # [9] ASSIGNER: Save Story
+    - data:
+        desc: ''
+        items:
+        - input_type: variable
+          operation: over-write
+          value:
+          - '1000000008'
+          - text
+          variable_selector:
+          - conversation
+          - story_json
+          write_mode: over-write
+        - input_type: variable
+          operation: over-write
+          value:
+          - '1000000008'
+          - text
+          variable_selector:
+          - conversation
+          - pages_array
+          write_mode: over-write
+        - input_type: constant
+          operation: over-write
+          value: story_done
+          variable_selector:
+          - conversation
+          - current_phase
+          write_mode: over-write
+        selected: false
+        title: 'ASSIGNER: Save Story'
+        type: assigner
+        version: '2'
+      height: 54
+      id: '1000000009'
+      position:
+        x: 1240
+        y: 350
+      positionAbsolute:
+        x: 1240
+        y: 350
+      selected: false
+      sourcePosition: right
+      targetPosition: left
+      type: custom
+      width: 242
+
+    # [10] ANSWER: Show Story
+    - data:
+        answer: |
+          ## ストーリー詳細が完成しました
+
+          {{#1000000019.formatted_output#}}
+
+          ---
+
+          <details>
+          <summary>詳細JSON（クリックで展開）</summary>
+
+          ```json
+          {{#1000000019.raw_json#}}
+          ```
+          </details>
+
+          ---
+
+          ストーリー詳細を確認してください。
+          - OKなら「生成開始」と入力してYAML生成を開始してください
+          - 修正が必要な場合は、修正内容を入力してください
+        desc: ''
+        selected: false
+        title: 'Answer: Story'
+        type: answer
+        variables:
+        - value_selector:
+          - '1000000019'
+          - formatted_output
+          variable: story_output
+      height: 116
+      id: '1000000010'
+      position:
+        x: 1520
+        y: 350
+      positionAbsolute:
+        x: 1520
+        y: 350
+      selected: false
+      sourcePosition: right
+      targetPosition: left
+      type: custom
+      width: 242
+
+    # [11] CODE: Generate YAML
+    - data:
+        code: |
+          import json
+          import re
+
+          def extract_json(text: str) -> str:
+              """Extract JSON from markdown code block or raw text."""
+              match = re.search(r'```json\s*([\s\S]*?)\s*```', text)
+              if match:
+                  return match.group(1).strip()
+              match = re.search(r'```\s*([\s\S]*?)\s*```', text)
+              if match:
+                  return match.group(1).strip()
+              match = re.search(r'\{[\s\S]*\}', text)
+              if match:
+                  return match.group(0)
+              return text
+
+          # 5コマレイアウト定義（emphasis_point別）
+          PANEL_LAYOUT_5 = {
+              "opening": [
+                  {"id": 1, "position": "top_center", "size": "wide", "width_ratio": 0.95, "height_ratio": 0.28},
+                  {"id": 2, "position": "middle_left", "size": "medium", "width_ratio": 0.48, "height_ratio": 0.30},
+                  {"id": 3, "position": "middle_right", "size": "medium", "width_ratio": 0.48, "height_ratio": 0.30},
+                  {"id": 4, "position": "bottom_right", "size": "large", "width_ratio": 0.55, "height_ratio": 0.32},
+                  {"id": 5, "position": "bottom_left", "size": "medium", "width_ratio": 0.42, "height_ratio": 0.28}
+              ],
+              "turning": [
+                  {"id": 1, "position": "top_right", "size": "medium", "width_ratio": 0.48, "height_ratio": 0.28},
+                  {"id": 2, "position": "top_left", "size": "medium", "width_ratio": 0.48, "height_ratio": 0.28},
+                  {"id": 3, "position": "middle_center", "size": "wide", "width_ratio": 0.95, "height_ratio": 0.32},
+                  {"id": 4, "position": "bottom_right", "size": "medium", "width_ratio": 0.48, "height_ratio": 0.30},
+                  {"id": 5, "position": "bottom_left", "size": "medium", "width_ratio": 0.48, "height_ratio": 0.30}
+              ],
+              "conclusion": [
+                  {"id": 1, "position": "top_right", "size": "large", "width_ratio": 0.55, "height_ratio": 0.32},
+                  {"id": 2, "position": "top_left", "size": "medium", "width_ratio": 0.42, "height_ratio": 0.28},
+                  {"id": 3, "position": "middle_right", "size": "medium", "width_ratio": 0.50, "height_ratio": 0.30},
+                  {"id": 4, "position": "middle_left", "size": "large", "width_ratio": 0.48, "height_ratio": 0.38},
+                  {"id": 5, "position": "bottom_center", "size": "wide", "width_ratio": 0.95, "height_ratio": 0.28}
+              ]
+          }
+
+          CHARACTER_IMAGES = {
+              "takeru": "https://drive.google.com/uc?export=view&id=1PBP3aeoc_zYEIP93AnbMyLZ84iGuxc3T",
+              "kazusan": "https://drive.google.com/uc?export=view&id=1aBahLtJpy0DnoKJ6f0ObQnTDMM5y-L4y",
+              "ryusan": "https://drive.google.com/uc?export=view&id=1umU2L6J0wJdoVd2fHmjMUP4cMJP4HgGV",
+              "shochou": "https://drive.google.com/uc?export=view&id=1VdRytA2MTc5WiYyvPOiJ9iGFnwxQARXu"
+          }
+
+          def main(story_json: str, characters: str) -> dict:
+              """
+              Generate YAML from story JSON with 5-panel layout specifications.
+              """
+              try:
+                  json_str = extract_json(story_json)
+                  data = json.loads(json_str)
+                  pages = data.get("pages", [])
+
+                  # Build active character map
+                  active_chars = {}
+                  for char_id in ["takeru", "kazusan", "ryusan", "shochou"]:
+                      if char_id in characters.lower():
+                          active_chars[char_id] = CHARACTER_IMAGES[char_id]
+
+                  if not active_chars:
+                      active_chars = {"takeru": CHARACTER_IMAGES["takeru"], "kazusan": CHARACTER_IMAGES["kazusan"]}
+
+                  yaml_parts = []
+                  for page in pages:
+                      page_num = page.get("page_number", 1)
+                      arc_phase = page.get("arc_phase", "sho")
+                      emphasis = page.get("emphasis_point", "conclusion")
+                      emphasis_reason = page.get("emphasis_reason", "")
+                      key_scene = page.get("key_scene", "")
+                      story_panels = page.get("panels", [])
+
+                      # Select layout based on emphasis_point
+                      layout_def = PANEL_LAYOUT_5.get(emphasis, PANEL_LAYOUT_5["conclusion"])
+
+                      yaml_content = f"""page: {page_num}
+          layout_type: 5_panel
+          arc_phase: {arc_phase}
+          emphasis_point: {emphasis}
+          emphasis_reason: {emphasis_reason}
+          panel_count: 5
+          scene:
+            background: 建設現場
+            lighting: 日光
+            key_scene: {key_scene}
+          panels:"""
+
+                      # Generate 5 panels with layout info
+                      for i, layout_panel in enumerate(layout_def):
+                          panel_id = layout_panel["id"]
+                          # Get story panel data if available
+                          story_panel = story_panels[i] if i < len(story_panels) else {}
+                          desc = story_panel.get("description", key_scene)
+                          camera = story_panel.get("camera", {})
+                          panel_chars = story_panel.get("characters", list(active_chars.keys())[:2])
+
+                          yaml_content += f"""
+            - panel: {panel_id}
+              position: {layout_panel["position"]}
+              size: {layout_panel["size"]}
+              width_ratio: {layout_panel["width_ratio"]}
+              height_ratio: {layout_panel["height_ratio"]}
+              description: {desc}
+              camera:
+                angle: {camera.get("angle", "eye_level")}
+                shot_type: {camera.get("shot_type", "medium_shot")}
+                focus: {camera.get("focus", "キャラクター")}
+              characters:"""
+
+                          for char_name in panel_chars:
+                              if char_name in active_chars:
+                                  yaml_content += f"""
+                - name: {char_name}
+                  image_url: {active_chars[char_name]}
+                  pose: standing
+                  expression: neutral"""
+
+                      yaml_content += """
+          dialogue:"""
+                      for dialogue in page.get("dialogue", []):
+                          char = dialogue.get("character", "takeru")
+                          text = dialogue.get("text", "")
+                          panel = dialogue.get("panel", 1)
+                          yaml_content += f"""
+            - character: {char}
+              panel: {panel}
+              text: "{text}" """
+
+                      yaml_parts.append(yaml_content)
+
+                  full_yaml = "\n---\n".join(yaml_parts)
+
+                  return {
+                      "yaml_content": full_yaml,
+                      "page_count": len(pages),
+                      "status": "success"
+                  }
+              except Exception as e:
+                  return {
+                      "yaml_content": f"Error: {str(e)}",
+                      "page_count": 0,
+                      "status": "error"
+                  }
+        code_language: python3
+        outputs:
+          yaml_content:
+            children: null
+            type: string
+          page_count:
+            children: null
+            type: number
+          status:
+            children: null
+            type: string
+        selected: false
+        title: 'CODE: Generate YAML'
+        type: code
+        variables:
+        - value_selector:
+          - conversation
+          - story_json
+          value_type: string
+          variable: story_json
+        - value_selector:
+          - conversation
+          - characters
+          value_type: string
+          variable: characters
+      height: 80
+      id: '1000000011'
+      position:
+        x: 680
+        y: 550
+      positionAbsolute:
+        x: 680
+        y: 550
+      selected: false
+      sourcePosition: right
+      targetPosition: left
+      type: custom
+      width: 242
+
+    # [11.5] ASSIGNER: Save YAML
+    - data:
+        desc: ''
+        items:
+        - input_type: variable
+          operation: over-write
+          value:
+          - '1000000011'
+          - yaml_content
+          variable_selector:
+          - conversation
+          - yaml_content
+          write_mode: over-write
+        - input_type: constant
+          operation: over-write
+          value: yaml_done
+          variable_selector:
+          - conversation
+          - current_phase
+          write_mode: over-write
+        selected: false
+        title: 'ASSIGNER: Save YAML'
+        type: assigner
+        version: '2'
+      height: 54
+      id: '1000000016'
+      position:
+        x: 960
+        y: 550
+      positionAbsolute:
+        x: 960
+        y: 550
+      selected: false
+      sourcePosition: right
+      targetPosition: left
+      type: custom
+      width: 242
+
+    # [12] ANSWER: Show YAML
+    - data:
+        answer: |
+          ## YAML生成が完了しました
+
+          ```yaml
+          {{#1000000011.yaml_content#}}
+          ```
+
+          ---
+
+          生成されたYAMLを確認してください。
+          - 品質チェックを実行するには「品質チェック」と入力してください
+          - 最初からやり直す場合は、新しいテーマを入力してください
+        desc: ''
+        selected: false
+        title: 'Answer: YAML'
+        type: answer
+        variables:
+        - value_selector:
+          - '1000000011'
+          - yaml_content
+          variable: yaml_output
+      height: 116
+      id: '1000000012'
+      position:
+        x: 1240
+        y: 550
+      positionAbsolute:
+        x: 1240
+        y: 550
+      selected: false
+      sourcePosition: right
+      targetPosition: left
+      type: custom
+      width: 242
+
+    # [13] CODE: Quality Check Enhanced
+    # [FIX v2] Added character/background detail scoring and auto-enhancement detection
+    - data:
+        code: |
+          import json
+          import re
+          from typing import List, Tuple
+
+          def count_descriptive_words(text: str) -> int:
+              """Count Japanese adjectives and descriptive words"""
+              adj_patterns = [
+                  r'[いきしちにひみりえけせてねへめれ]い',
+                  r'な\b',
+                  r'的な?',
+                  r'らしい',
+              ]
+              count = 0
+              for pattern in adj_patterns:
+                  count += len(re.findall(pattern, text))
+              return count
+
+          def evaluate_character_detail(design_json_str: str) -> Tuple[int, List[str]]:
+              """Evaluate character detail level (0-30 points)"""
+              score = 0
+              missing = []
+              try:
+                  design = json.loads(design_json_str) if design_json_str else {}
+              except json.JSONDecodeError:
+                  return 0, ["JSON parse error"]
+
+              characters = design.get("characters", [])
+              if not characters:
+                  return 15, []  # No characters defined, give default score
+
+              per_char_score = 30 // max(len(characters), 1)
+              for char in characters:
+                  char_id = char.get("id", "unknown")
+                  appearance = char.get("appearance", "")
+                  personality = char.get("personality", "")
+                  role = char.get("role", "")
+
+                  char_score = 0
+                  if len(appearance) >= 10:
+                      char_score += per_char_score // 3
+                  elif appearance:
+                      char_score += per_char_score // 6
+                  else:
+                      missing.append(f"{char_id}: appearance missing")
+
+                  if len(personality) >= 10:
+                      char_score += per_char_score // 3
+                  elif personality:
+                      char_score += per_char_score // 6
+                  else:
+                      missing.append(f"{char_id}: personality missing")
+
+                  if role:
+                      char_score += per_char_score // 3
+                  else:
+                      missing.append(f"{char_id}: role missing")
+
+                  score += char_score
+
+              return min(score, 30), missing
+
+          def evaluate_background_detail(yaml_content: str, design_json_str: str) -> Tuple[int, List[str]]:
+              """Evaluate background detail level (0-30 points)"""
+              score = 0
+              missing = []
+              content = yaml_content + design_json_str
+
+              location_keywords = ["現場", "工事", "事務所", "足場", "屋外", "屋内", "倉庫", "道路"]
+              time_keywords = ["朝", "昼", "夕", "夜", "午前", "午後", "早朝", "日中"]
+              weather_keywords = ["晴", "曇", "雨", "雪", "暑", "寒", "風"]
+
+              if any(kw in content for kw in location_keywords):
+                  score += 10
+              else:
+                  missing.append("Location detail missing")
+
+              if any(kw in content for kw in time_keywords):
+                  score += 10
+              else:
+                  missing.append("Time setting missing")
+
+              if any(kw in content for kw in weather_keywords):
+                  score += 10
+              else:
+                  missing.append("Environment description missing")
+
+              return score, missing
+
+          def main(yaml_content: str, design_json: str, story_json: str) -> dict:
+              """
+              [FIX v2] Enhanced quality check with character/background scoring
+              """
+              all_issues = []
+
+              # 1. Structure check (40 points)
+              structure_score = 40
+              pages = yaml_content.split("---")
+              page_count = len([p for p in pages if p.strip()])
+
+              if page_count == 0:
+                  all_issues.append("No pages found")
+                  structure_score -= 20
+
+              required_fields = ["page:", "layout:", "scene:", "panels:"]
+              for field in required_fields:
+                  if field not in yaml_content:
+                      all_issues.append(f"Missing: {field}")
+                      structure_score -= 5
+
+              url_pattern = r"image_url:\s*https?://"
+              if not re.search(url_pattern, yaml_content):
+                  all_issues.append("No character image URLs")
+                  structure_score -= 10
+
+              structure_score = max(0, structure_score)
+
+              # 2. Character detail (30 points)
+              char_score, char_missing = evaluate_character_detail(design_json)
+              all_issues.extend(char_missing)
+
+              # 3. Background detail (30 points)
+              bg_score, bg_missing = evaluate_background_detail(yaml_content, design_json)
+              all_issues.extend(bg_missing)
+
+              # Total score
+              total_score = structure_score + char_score + bg_score
+
+              # Enhancement detection
+              needs_enhancement = total_score < 70 or char_score < 15 or bg_score < 15
+              enhancement_targets = []
+              if char_score < 15:
+                  enhancement_targets.append("character")
+              if bg_score < 15:
+                  enhancement_targets.append("background")
+
+              return {
+                  "total_score": total_score,
+                  "structure_score": structure_score,
+                  "character_score": char_score,
+                  "background_score": bg_score,
+                  "page_count": page_count,
+                  "issues": all_issues,
+                  "needs_enhancement": "true" if needs_enhancement else "false",
+                  "enhancement_targets": json.dumps(enhancement_targets, ensure_ascii=False),
+                  "report": json.dumps({
+                      "total_score": total_score,
+                      "breakdown": {"structure": structure_score, "character": char_score, "background": bg_score},
+                      "issues": all_issues,
+                      "needs_enhancement": needs_enhancement
+                  }, ensure_ascii=False, indent=2)
+              }
+        code_language: python3
+        outputs:
+          total_score:
+            children: null
+            type: number
+          structure_score:
+            children: null
+            type: number
+          character_score:
+            children: null
+            type: number
+          background_score:
+            children: null
+            type: number
+          page_count:
+            children: null
+            type: number
+          issues:
+            children: null
+            type: array[string]
+          needs_enhancement:
+            children: null
+            type: string
+          enhancement_targets:
+            children: null
+            type: string
+          report:
+            children: null
+            type: string
+        selected: false
+        title: 'CODE: Quality Check Enhanced'
+        type: code
+        variables:
+        - value_selector:
+          - conversation
+          - yaml_content
+          value_type: string
+          variable: yaml_content
+        - value_selector:
+          - conversation
+          - design_json
+          value_type: string
+          variable: design_json
+        - value_selector:
+          - conversation
+          - story_json
+          value_type: string
+          variable: story_json
+      height: 80
+      id: '1000000013'
+      position:
+        x: 680
+        y: 750
+      positionAbsolute:
+        x: 680
+        y: 750
+      selected: false
+      sourcePosition: right
+      targetPosition: left
+      type: custom
+      width: 242
+
+    # [14] LLM: Consistency Check
+    - data:
+        context:
+          enabled: false
+          variable_selector: []
+        desc: 'Content consistency check'
+        edition_type: basic
+        memory:
+          role_prefix:
+            assistant: ''
+            user: ''
+          window:
+            enabled: false
+            size: 50
+        model:
+          completion_params:
+            frequency_penalty: 0
+            max_tokens: 1024
+            presence_penalty: 0
+            temperature: 0.3
+            top_p: 1
+          mode: chat
+          name: gpt-4o
+          provider: langgenius/openai/openai
+        prompt_template:
+        - role: system
+          text: |
+            あなたは教育マンガの品質管理エキスパートです。
+
+            以下の観点でYAMLコンテンツを評価してください：
+            1. ストーリーの一貫性（起承転結の流れ）
+            2. 教育内容の妥当性
+            3. キャラクターの行動・台詞の自然さ
+            4. 視覚的な説明の適切性
+
+            簡潔な日本語で評価結果を出力してください。最後に総合スコア（0-100）を出力。
+        - role: user
+          text: |
+            構造チェック結果:
+            {{#1000000013.report#}}
+
+            設計JSON:
+            {{#conversation.design_json#}}
+
+            ストーリーJSON:
+            {{#conversation.story_json#}}
+
+            上記の内容を評価し、品質レポートを出力してください。
+        selected: false
+        structured_output_enabled: false
+        title: 'LLM: Consistency'
+        type: llm
+        variables: []
+        vision:
+          enabled: false
+      height: 98
+      id: '1000000014'
+      position:
+        x: 960
+        y: 750
+      positionAbsolute:
+        x: 960
+        y: 750
+      selected: false
+      sourcePosition: right
+      targetPosition: left
+      type: custom
+      width: 242
+
+    # [15] ANSWER: Show Report
+    - data:
+        answer: |
+          ## 品質チェック結果
+
+          ### 構造スコア: {{#1000000013.structure_score#}}点
+
+          {{#1000000014.text#}}
+
+          ---
+
+          **画像生成の準備ができました。**
+
+          「OK」または「次へ」と入力すると、Nano Banana Pro でマンガ画像を生成します。
+        desc: ''
+        selected: false
+        title: 'Answer: Report'
+        type: answer
+        variables:
+        - value_selector:
+          - '1000000013'
+          - structure_score
+          variable: score
+        - value_selector:
+          - '1000000014'
+          - text
+          variable: report
+      height: 116
+      id: '1000000015'
+      position:
+        x: 1240
+        y: 750
+      positionAbsolute:
+        x: 1240
+        y: 750
+      selected: false
+      sourcePosition: right
+      targetPosition: left
+      type: custom
+      width: 242
+
+    # [16] ANSWER: Help
+    - data:
+        answer: |
+          ## マンガ生成パイプラインの使い方
+
+          このチャットボットは、建設業界向け教育マンガを自動生成します。
+
+          ### 基本的な流れ
+
+          1. **テーマを入力**: マンガにしたい内容を入力してください
+             例: 「足場の安全点検について、タケルとカズさんで4ページのマンガを作成して」
+
+          2. **設計を確認**: 生成された教育設計を確認し、「承認」と入力
+
+          3. **ストーリーを確認**: 詳細なストーリーを確認し、「生成開始」と入力
+
+          4. **YAMLを確認**: 生成されたYAMLを確認し、「品質チェック」と入力
+
+          ### 利用可能なキャラクター
+
+          - タケル (takeru): 若手作業員
+          - カズさん (kazusan): ベテラン作業員
+          - リュウさん (ryusan): 監督
+          - 所長 (shochou): 現場所長
+
+          ### コマンド
+
+          - 「承認」「次へ」「OK」: 次のステップへ進む
+          - 「生成開始」: YAML生成を開始
+          - 「品質チェック」: 品質検証を実行
+          - 新しいテーマを入力: 最初からやり直し
+
+          何かご質問があればお気軽にどうぞ。
+        desc: ''
+        selected: false
+        title: 'Answer: Help'
+        type: answer
+        variables: []
+      height: 116
+      id: '1000000017'
+      position:
+        x: 680
+        y: 950
+      positionAbsolute:
+        x: 680
+        y: 950
+      selected: false
+      sourcePosition: right
+      targetPosition: left
+      type: custom
+      width: 242
+
+    # [18] CODE: Format Design
+    - data:
+        code: |
+          import json
+
+          def main(design_json: str) -> dict:
+              """
+              Parse design JSON and create formatted summary for display.
+              """
+              try:
+                  data = json.loads(design_json)
+                  overview = data.get("story_overview", {})
+                  pages = data.get("pages", [])
+                  objectives = data.get("learning_objectives", [])
+                  arc = overview.get("story_arc", {})
+
+                  # Build formatted output
+                  lines = []
+                  lines.append(f"### {overview.get('title', 'Untitled')}")
+                  lines.append("")
+                  lines.append("| 項目 | 値 |")
+                  lines.append("|------|-----|")
+                  lines.append(f"| テーマ | {overview.get('theme', '-')} |")
+                  lines.append(f"| 学習目標 | {overview.get('learning_goal', '-')} |")
+                  lines.append(f"| 対象者 | {overview.get('target_audience', '-')} |")
+                  lines.append(f"| ページ数 | {overview.get('total_pages', '-')} |")
+                  lines.append("")
+                  lines.append("### 起承転結")
+                  lines.append(f"- **起**: {arc.get('ki', '-')}")
+                  lines.append(f"- **承**: {arc.get('sho', '-')}")
+                  lines.append(f"- **転**: {arc.get('ten', '-')}")
+                  lines.append(f"- **結**: {arc.get('ketsu', '-')}")
+                  lines.append("")
+                  lines.append("### 学習目標")
+                  for i, obj in enumerate(objectives, 1):
+                      lines.append(f"{i}. {obj}")
+                  lines.append("")
+                  lines.append("### ページ構成")
+                  for p in pages:
+                      pn = p.get('page_number', '?')
+                      phase = p.get('arc_phase', '?')
+                      focus = p.get('learning_focus', '-')
+                      lines.append(f"- P{pn} ({phase}): {focus}")
+
+                  formatted = "\n".join(lines)
+                  return {
+                      "formatted_output": formatted,
+                      "raw_json": design_json,
+                      "page_count": len(pages)
+                  }
+              except Exception as e:
+                  return {
+                      "formatted_output": f"JSON解析エラー: {str(e)}",
+                      "raw_json": design_json,
+                      "page_count": 0
+                  }
+        code_language: python3
+        outputs:
+          formatted_output:
+            children: null
+            type: string
+          raw_json:
+            children: null
+            type: string
+          page_count:
+            children: null
+            type: number
+        selected: false
+        title: 'CODE: Format Design'
+        type: code
+        variables:
+        - value_selector:
+          - '1000000005'
+          - text
+          value_type: string
+          variable: design_json
+      height: 80
+      id: '1000000018'
+      position:
+        x: 1520
+        y: 150
+      positionAbsolute:
+        x: 1520
+        y: 150
+      selected: false
+      sourcePosition: right
+      targetPosition: left
+      type: custom
+      width: 242
+
+    # [20] CODE: Parse Pages for Image (v2.0 - Full prompt with character binding)
+    - data:
+        code: |
+          import json
+          import re
+
+          def extract_json(text: str) -> str:
+              """Extract JSON from markdown code block or raw text."""
+              match = re.search(r'```json\s*([\s\S]*?)\s*```', text)
+              if match:
+                  return match.group(1).strip()
+              match = re.search(r'```\s*([\s\S]*?)\s*```', text)
+              if match:
+                  return match.group(1).strip()
+              match = re.search(r'\{[\s\S]*\}', text)
+              if match:
+                  return match.group(0)
+              return text
+
+          # Character ID normalization map
+          CHARACTER_ID_MAP = {
+              "takeru": "takeru",
+              "kazusan": "kazu",
+              "kazu": "kazu",
+              "ryusan": "ryu",
+              "ryu": "ryu",
+              "shochou": "director",
+              "director": "director"
+          }
+
+          # Character display names for prompt
+          CHARACTER_DISPLAY = {
+              "takeru": "Takeru",
+              "kazu": "Kazu-san",
+              "ryu": "Ryu-san",
+              "director": "Director"
+          }
+
+          # 5-panel layout patterns based on emphasis_point
+          LAYOUT_PATTERNS = {
+              "opening": """
+          +-------------------------+
+          |      Panel 1 (wide)      |  <- EMPHASIS: Introduction
+          +------------+------------+
+          |  Panel 3   |  Panel 2   |  <- Row 2 (RIGHT to LEFT)
+          +------------+------------+
+          |  Panel 5   |  Panel 4   |  <- Row 3 (RIGHT to LEFT)
+          +------------+------------+
+          Reading order: 1 -> 2 -> 3 -> 4 -> 5""",
+
+              "turning": """
+          +------------+------------+
+          |  Panel 2   |  Panel 1   |  <- Row 1 (RIGHT to LEFT)
+          +------------+------------+
+          |      Panel 3 (wide)      |  <- EMPHASIS: Turning Point
+          +------------+------------+
+          |  Panel 5   |  Panel 4   |  <- Row 3 (RIGHT to LEFT)
+          +------------+------------+
+          Reading order: 1 -> 2 -> 3 -> 4 -> 5""",
+
+              "conclusion": """
+          +------------+------------+
+          |  Panel 2   |  Panel 1   |  <- Row 1 (RIGHT to LEFT)
+          +------------+------------+
+          |  Panel 4   |  Panel 3   |  <- Row 2 (RIGHT to LEFT)
+          +------------+------------+
+          |      Panel 5 (wide)      |  <- EMPHASIS: Conclusion
+          +-------------------------+
+          Reading order: 1 -> 2 -> 3 -> 4 -> 5"""
+          }
+
+          def normalize_character_names(characters_str: str) -> list:
+              """Normalize character names to standard IDs."""
+              normalized = []
+              for char in characters_str.lower().replace(" ", "").split(","):
+                  char = char.strip()
+                  if char in CHARACTER_ID_MAP:
+                      char_id = CHARACTER_ID_MAP[char]
+                      if char_id not in normalized:
+                          normalized.append(char_id)
+              # Default characters if none found
+              if not normalized:
+                  normalized = ["takeru", "kazu"]
+              return normalized[:4]  # Max 4 characters
+
+          def build_character_binding_section(char_ids: list) -> str:
+              """Build CHARACTER IMAGE BINDING section."""
+              section = """
+          ============================================================
+          [CRITICAL: CHARACTER IMAGE BINDING]
+          ============================================================
+
+          UPLOADED IMAGES (YOU MUST USE THESE):
+          """
+              for i, char_id in enumerate(char_ids):
+                  display = CHARACTER_DISPLAY.get(char_id, char_id)
+                  section += f"- Image {i+1}: {display}_reference.png\n"
+
+              section += """
+          CHARACTER BINDING TABLE:
+          +-----------+------------------------------+
+          | Character | Reference Image              |
+          +-----------+------------------------------+
+          """
+              for i, char_id in enumerate(char_ids):
+                  display = CHARACTER_DISPLAY.get(char_id, char_id)
+                  section += f"| {display:9} | Image {i+1} - TRACE THIS IMAGE   |\n"
+
+              section += """+-----------+------------------------------+
+
+          TRACE INSTRUCTION:
+          """
+              for i, char_id in enumerate(char_ids):
+                  display = CHARACTER_DISPLAY.get(char_id, char_id)
+                  section += f"- When drawing {display} -> LOOK at Image {i+1} and TRACE it\n"
+
+              section += """
+          - DO NOT create new character designs
+          - COPY the face, clothes, and colors EXACTLY from the images
+          """
+              return section
+
+          def build_art_style_section() -> str:
+              """Build ART STYLE section."""
+              return """
+          ============================================================
+          [ART STYLE: KUNIO-KUN / Hot-blooded Deformed Style]
+          ============================================================
+
+          Style Reference:
+          - Kunio-kun series (Nekketsu Kouha Kunio-kun)
+          - Downtown Nekketsu Monogatari
+          - 4-5 head proportions with hot-blooded expressions
+
+          REQUIRED Elements:
+          - 4-5 head proportion deformed body style
+          - Bold outlines (thick, clear lines)
+          - Speed lines (for surprise/determination scenes)
+          - Sound effects (DOON, GAAN, KIRAAN in Japanese style)
+          - Exaggerated expressions (dot eyes, sweat drops, tears, anger marks)
+          - Hot-blooded poses (fist pump, salute, pointing)
+          - Comical movements (stumbling, jumping in surprise)
+
+          Color Palette:
+          - Vivid colors (primary colors)
+          - Healthy tan skin tone
+          - Bright backgrounds
+
+          NOT ALLOWED:
+          - Moe/cute girl style
+          - Realistic 8-head proportions
+          - Dark atmosphere only
+          """
+
+          def build_panel_layout_section(emphasis_point: str, panel_count: int) -> str:
+              """Build PANEL LAYOUT section based on emphasis_point."""
+              layout = LAYOUT_PATTERNS.get(emphasis_point, LAYOUT_PATTERNS["conclusion"])
+
+              return f"""
+          ============================================================
+          [PANEL LAYOUT: {panel_count} PANELS / EMPHASIS: {emphasis_point.upper()}]
+          ============================================================
+
+          PAGE FORMAT: 2:3 vertical (portrait)
+          MAX LAYOUT: 2 columns x 3 rows (Japanese manga standard)
+
+          CRITICAL RULES:
+          - Fill 100% of the page with panels
+          - NO blank areas
+          - NO decorative elements outside panels
+          - NO standalone character portraits
+          - EVERY pixel must be inside a panel
+          - Reading order: RIGHT to LEFT (Japanese style)
+
+          THIS PAGE LAYOUT ({emphasis_point.upper()}):
+          {layout}
+
+          Panel borders: 2-3px black solid lines
+          Gutter: 4-6px white space
+          """
+
+          def build_panel_details_section(page: dict, char_ids: list) -> str:
+              """Build PANEL DETAILS section with background, emotion, effects."""
+              panels = page.get("panels", [])
+              dialogues = page.get("dialogue", [])
+              # Page-level background (fallback)
+              page_background = page.get("background", page.get("scene", {}).get("background", "Construction site"))
+
+              section = """
+          ============================================================
+          [PANEL DETAILS]
+          ============================================================
+          """
+              for panel in panels:
+                  pnum = panel.get("panel_number", 1)
+                  desc = panel.get("description", "")
+                  position = panel.get("position", "")
+                  size = panel.get("size", "medium")
+                  panel_chars = panel.get("characters", [])
+                  camera = panel.get("camera", {})
+                  # v4.0: Extract emotion, effects, background
+                  emotion = panel.get("emotion", "")
+                  effects = panel.get("effects", [])
+                  background = panel.get("background", page_background)
+
+                  section += f"""
+          Panel {pnum} ({position}, {size}):
+          - Scene: {desc}
+          - Background: {background}
+          - Camera: {camera.get('shot_type', 'medium_shot')}, {camera.get('angle', 'eye_level')}
+          """
+                  # v4.0: Add emotion if present
+                  if emotion:
+                      section += f"- Emotion: {emotion}\n"
+                  # v4.0: Add effects if present
+                  if effects:
+                      if isinstance(effects, list):
+                          section += f"- Visual Effects: {', '.join(effects)}\n"
+                      else:
+                          section += f"- Visual Effects: {effects}\n"
+
+                  # Character references
+                  for char_name in panel_chars:
+                      char_id = CHARACTER_ID_MAP.get(char_name.lower(), char_name.lower())
+                      if char_id in char_ids:
+                          idx = char_ids.index(char_id) + 1
+                          display = CHARACTER_DISPLAY.get(char_id, char_id)
+                          section += f"- Character: {display} (TRACE Image {idx})\n"
+
+                  # Dialogues for this panel
+                  panel_dialogues = [d for d in dialogues if d.get("panel") == pnum]
+                  for d in panel_dialogues:
+                      speaker = d.get("character", "")
+                      text = d.get("text", "")
+                      section += f"- Dialogue: {speaker}: [{text}]\n"
+
+              return section
+
+          def main(story_json: str, yaml_content: str, characters: str) -> dict:
+              """
+              Parse story JSON to extract pages for image generation.
+              v2.0: Full prompt with CHARACTER IMAGE BINDING, KUNIO-KUN style, 5-panel layout.
+              """
+              try:
+                  json_str = extract_json(story_json)
+                  data = json.loads(json_str)
+                  pages = data.get("pages", [])
+
+                  # Normalize character names
+                  char_ids = normalize_character_names(characters)
+
+                  page_prompts = []
+                  total_pages = len(pages)
+
+                  for page in pages:
+                      pn = page.get("page_number", 1)
+                      emphasis = page.get("emphasis_point", "conclusion")
+                      key_scene = page.get("key_scene", "")
+                      key_msg = page.get("key_message", "")
+                      arc_phase = page.get("arc_phase", "sho")
+                      panels = page.get("panels", [])
+                      panel_count = len(panels) if panels else 5
+
+                      # Build full prompt with all sections
+                      prompt = f"""Create page {pn} of {total_pages} of a Japanese educational manga about construction safety.
+
+          {build_character_binding_section(char_ids)}
+          {build_art_style_section()}
+          {build_panel_layout_section(emphasis, panel_count)}
+          {build_panel_details_section(page, char_ids)}
+
+          ============================================================
+          [STORY CONTEXT]
+          ============================================================
+
+          Page: {pn} of {total_pages}
+          Arc Phase: {arc_phase}
+          Scene: {key_scene}
+          Key Message: {key_msg}
+
+          ============================================================
+          [QUALITY CHECKLIST]
+          ============================================================
+
+          Before generating, verify:
+          - [ ] Characters MATCH reference images (Image 1-4)
+          - [ ] Kunio-kun style (4-5 head proportions, hot-blooded, effects)
+          - [ ] Panel layout matches emphasis_point: {emphasis}
+          - [ ] Reading order: RIGHT to LEFT within rows
+          - [ ] Clear panel borders (2-3px black)
+          - [ ] Readable Japanese text in speech bubbles
+          - [ ] Speed lines and sound effects included where appropriate
+          - [ ] No empty space outside panels
+          - [ ] Background matches scene description (v4.0)
+          - [ ] Character emotions correctly depicted (v4.0)
+          - [ ] Visual effects (sweat drops, question marks, impact lines) where specified (v4.0)
+          """
+                      page_prompts.append({
+                          "page_number": pn,
+                          "prompt": prompt,
+                          "scene": key_scene,
+                          "emphasis_point": emphasis,
+                          "character_names": char_ids
+                      })
+
+                  return {
+                      "pages": page_prompts,
+                      "page_count": len(page_prompts),
+                      "character_names_json": json.dumps(char_ids)
+                  }
+              except Exception as e:
+                  return {
+                      "pages": [],
+                      "page_count": 0,
+                      "error": str(e),
+                      "character_names_json": "[]"
+                  }
+        code_language: python3
+        outputs:
+          pages:
+            children: null
+            type: array[object]
+          page_count:
+            children: null
+            type: number
+          character_names_json:
+            children: null
+            type: string
+        selected: false
+        title: 'CODE: Parse Pages for Image'
+        type: code
+        variables:
+        - value_selector:
+          - conversation
+          - story_json
+          value_type: string
+          variable: story_json
+        - value_selector:
+          - conversation
+          - yaml_content
+          value_type: string
+          variable: yaml_content
+        - value_selector:
+          - conversation
+          - characters
+          value_type: string
+          variable: characters
+      height: 80
+      id: '1000000020'
+      position:
+        x: 680
+        y: 1150
+      positionAbsolute:
+        x: 680
+        y: 1150
+      selected: false
+      sourcePosition: right
+      targetPosition: left
+      type: custom
+      width: 242
+
+    # [21] ITERATION: Image Generation
+    - data:
+        error_handle_mode: terminated
+        flatten_output: false
+        is_parallel: false
+        iterator_input_type: array[object]
+        iterator_selector:
+        - '1000000020'
+        - pages
+        output_selector:
+        - '1000000025'
+        - result
+        output_type: array[object]
+        parallel_nums: 1
+        selected: false
+        start_node_id: '1000000021start'
+        title: 'Iteration: Image Generation'
+        type: iteration
+        width: 1100
+      height: 200
+      id: '1000000021'
+      position:
+        x: 1260
+        y: 1100
+      positionAbsolute:
+        x: 1260
+        y: 1100
+      selected: false
+      sourcePosition: right
+      targetPosition: left
+      type: custom
+      width: 1100
+      zIndex: 1
+
+    # [21start] ITERATION START
+    - data:
+        desc: ''
+        isInIteration: true
+        selected: false
+        title: ''
+        type: iteration-start
+      draggable: false
+      height: 48
+      id: '1000000021start'
+      parentId: '1000000021'
+      position:
+        x: 24
+        y: 100
+      positionAbsolute:
+        x: 1284
+        y: 1200
+      selectable: false
+      sourcePosition: right
+      targetPosition: left
+      type: custom-iteration-start
+      width: 44
+      zIndex: 1002
+
+    # [22] CODE: Build Image Prompt (inside iteration) v2.0
+    - data:
+        isInIteration: true
+        isInLoop: false
+        iteration_id: '1000000021'
+        code: |
+          import json
+
+          def main(page_data: dict) -> dict:
+              """
+              Build prompt for Gemini image generation.
+              v2.0: Includes character_names for multimodal API.
+              """
+              prompt = page_data.get("prompt", "")
+              page_number = page_data.get("page_number", 1)
+              character_names = page_data.get("character_names", [])
+              emphasis_point = page_data.get("emphasis_point", "conclusion")
+
+              return {
+                  "prompt": prompt,
+                  "page_number": page_number,
+                  "character_names": character_names,
+                  "character_names_json": json.dumps(character_names),
+                  "emphasis_point": emphasis_point
+              }
+        code_language: python3
+        outputs:
+          prompt:
+            children: null
+            type: string
+          page_number:
+            children: null
+            type: number
+          character_names:
+            children: null
+            type: array[string]
+          character_names_json:
+            children: null
+            type: string
+          emphasis_point:
+            children: null
+            type: string
+        selected: false
+        title: 'CODE: Build Prompt'
+        type: code
+        variables:
+        - value_selector:
+          - '1000000021'
+          - item
+          value_type: object
+          variable: page_data
+      height: 80
+      id: '1000000022'
+      parentId: '1000000021'
+      position:
+        x: 120
+        y: 80
+      positionAbsolute:
+        x: 1380
+        y: 1180
+      sourcePosition: right
+      targetPosition: left
+      type: custom
+      width: 200
+      zIndex: 1002
+
+    # [23] HTTP Request: GAS Gemini Proxy (inside iteration) v3.0
+    # Nano Banana Pro を GAS 経由で呼び出し、Dify SSRF プロキシを回避
+    # v3.0: referenceImageId パラメータ追加（スタイルアンカー画像参照）
+    - data:
+        isInIteration: true
+        isInLoop: false
+        iteration_id: '1000000021'
+        authorization:
+          config: null
+          type: no-auth
+        body:
+          type: json
+          data: |
+            {
+              "prompt": "Using the reference image as style guide, maintain exact character appearance and art style.\n\n{{#1000000022.prompt#}}",
+              "sessionId": "{{#1000000028.session_id#}}",
+              "pageNumber": {{#1000000022.page_number#}},
+              "character_names": {{#1000000022.character_names_json#}},
+              "referenceImageId": "{{#conversation.reference_image_id#}}"
+            }
+        headers: ''
+        method: post
+        params: ''
+        selected: false
+        timeout:
+          connect: 60
+          read: 300
+          write: 60
+        title: 'HTTP: GAS Gemini Proxy'
+        type: http-request
+        url: '{{#env.GAS_GEMINI_PROXY_URL#}}'
+        variables: []
+      height: 80
+      id: '1000000023'
+      parentId: '1000000021'
+      position:
+        x: 340
+        y: 80
+      positionAbsolute:
+        x: 1600
+        y: 1180
+      sourcePosition: right
+      targetPosition: left
+      type: custom
+      width: 200
+      zIndex: 1002
+
+    # [24] CODE: Parse GAS Response (inside iteration)
+    # GAS プロキシのレスポンスから URL を抽出
+    - data:
+        isInIteration: true
+        isInLoop: false
+        iteration_id: '1000000021'
+        code: |
+          import json
+
+          def main(gas_response: str, page_number: int) -> dict:
+              """
+              Parse GAS Gemini Proxy response to extract Drive URLs.
+              GAS returns: {success, message, fileId, url, downloadUrl, folder, page_number}
+              """
+              try:
+                  data = json.loads(gas_response)
+                  if data.get("success"):
+                      return {
+                          "page_number": data.get("page_number", page_number),
+                          "status": "saved",
+                          "url": data.get("url", ""),
+                          "downloadUrl": data.get("downloadUrl", ""),
+                          "folder": data.get("folder", ""),
+                          "fileId": data.get("fileId", "")
+                      }
+                  else:
+                      return {
+                          "page_number": page_number,
+                          "status": f"error: {data.get('message', 'Unknown error')}",
+                          "url": "",
+                          "downloadUrl": "",
+                          "folder": "",
+                          "fileId": ""
+                      }
+              except Exception as e:
+                  return {
+                      "page_number": page_number,
+                      "status": f"parse_error: {str(e)}",
+                      "url": "",
+                      "downloadUrl": "",
+                      "folder": "",
+                      "fileId": ""
+                  }
+        code_language: python3
+        outputs:
+          page_number:
+            children: null
+            type: number
+          status:
+            children: null
+            type: string
+          url:
+            children: null
+            type: string
+          downloadUrl:
+            children: null
+            type: string
+          folder:
+            children: null
+            type: string
+          fileId:
+            children: null
+            type: string
+        selected: false
+        title: 'CODE: Parse GAS Response'
+        type: code
+        variables:
+        - value_selector:
+          - '1000000023'
+          - body
+          value_type: string
+          variable: gas_response
+        - value_selector:
+          - '1000000022'
+          - page_number
+          value_type: number
+          variable: page_number
+      height: 80
+      id: '1000000024'
+      parentId: '1000000021'
+      position:
+        x: 560
+        y: 80
+      positionAbsolute:
+        x: 1820
+        y: 1180
+      sourcePosition: right
+      targetPosition: left
+      type: custom
+      width: 200
+      zIndex: 1002
+
+    # [25] CODE: Build Result (inside iteration)
+    # 1000000024 (Parse GAS Response) から直接データを取得
+    - data:
+        isInIteration: true
+        isInLoop: false
+        iteration_id: '1000000021'
+        code: |
+          def main(page_number: int, status: str, url: str, downloadUrl: str, folder: str) -> dict:
+              """
+              Build result object for iteration output.
+              """
+              return {
+                  "result": {
+                      "page_number": page_number,
+                      "status": status,
+                      "url": url,
+                      "downloadUrl": downloadUrl,
+                      "folder": folder
+                  }
+              }
+        code_language: python3
+        outputs:
+          result:
+            children: null
+            type: object
+        selected: false
+        title: 'CODE: Build Result'
+        type: code
+        variables:
+        - value_selector:
+          - '1000000024'
+          - page_number
+          value_type: number
+          variable: page_number
+        - value_selector:
+          - '1000000024'
+          - status
+          value_type: string
+          variable: status
+        - value_selector:
+          - '1000000024'
+          - url
+          value_type: string
+          variable: url
+        - value_selector:
+          - '1000000024'
+          - downloadUrl
+          value_type: string
+          variable: downloadUrl
+        - value_selector:
+          - '1000000024'
+          - folder
+          value_type: string
+          variable: folder
+      height: 80
+      id: '1000000025'
+      parentId: '1000000021'
+      position:
+        x: 780
+        y: 80
+      positionAbsolute:
+        x: 2040
+        y: 1180
+      sourcePosition: right
+      targetPosition: left
+      type: custom
+      width: 200
+      zIndex: 1002
+
+    # [26] TEMPLATE TRANSFORM: Collect Results
+    - data:
+        selected: false
+        template: |
+          ## 画像生成結果
+
+          {% for result in results %}
+          - ページ {{ result.page_number }}: {{ result.status }}
+          {% if result.url %}
+            [Google Driveで開く]({{ result.url }})
+          {% endif %}
+          {% endfor %}
+
+          {% if results[0].folder %}
+          ---
+          保存フォルダ: {{ results[0].folder }}
+          {% endif %}
+        title: 'Template: Collect Results'
+        type: template-transform
+        variables:
+        - value_selector:
+          - '1000000021'
+          - output
+          value_type: array[object]
+          variable: results
+      height: 80
+      id: '1000000026'
+      position:
+        x: 2420
+        y: 1150
+      positionAbsolute:
+        x: 2420
+        y: 1150
+      selected: false
+      sourcePosition: right
+      targetPosition: left
+      type: custom
+      width: 242
+
+    # [27] ANSWER: Image Complete
+    - data:
+        answer: |
+          ## 画像生成が完了しました
+
+          {{#1000000026.output#}}
+
+          ---
+
+          生成された画像はGoogle Driveに保存されました。
+          上記のリンクをクリックして確認できます。
+
+          次のアクションを入力してください:
+          - 新しいテーマを入力して最初から作成
+          - 「ヘルプ」で使い方を確認
+        desc: ''
+        selected: false
+        title: 'Answer: Image Complete'
+        type: answer
+        variables:
+        - value_selector:
+          - '1000000026'
+          - output
+          variable: image_results
+      height: 116
+      id: '1000000027'
+      position:
+        x: 2700
+        y: 1150
+      positionAbsolute:
+        x: 2700
+        y: 1150
+      selected: false
+      sourcePosition: right
+      targetPosition: left
+      type: custom
+      width: 242
+
+    # [28] CODE: Generate Session ID
+    - data:
+        code: |
+          from datetime import datetime
+
+          def main() -> dict:
+              """
+              Generate session ID for folder naming.
+              Format: YYYYMMDD_HHmm
+              """
+              now = datetime.now()
+              session_id = now.strftime("%Y%m%d_%H%M")
+              return {"session_id": session_id}
+        code_language: python3
+        outputs:
+          session_id:
+            children: null
+            type: string
+        selected: false
+        title: 'CODE: Generate Session ID'
+        type: code
+        variables: []
+      height: 80
+      id: '1000000028'
+      position:
+        x: 960
+        y: 1150
+      positionAbsolute:
+        x: 960
+        y: 1150
+      selected: false
+      sourcePosition: right
+      targetPosition: left
+      type: custom
+      width: 242
+
+    # [19] CODE: Format Story
+    - data:
+        code: |
+          import json
+          import re
+
+          def extract_json(text: str) -> str:
+              """Extract JSON from markdown code block or raw text."""
+              # Try to extract from ```json ... ``` block
+              match = re.search(r'```json\s*([\s\S]*?)\s*```', text)
+              if match:
+                  return match.group(1).strip()
+              # Try to extract from ``` ... ``` block
+              match = re.search(r'```\s*([\s\S]*?)\s*```', text)
+              if match:
+                  return match.group(1).strip()
+              # Try to find JSON object directly
+              match = re.search(r'\{[\s\S]*\}', text)
+              if match:
+                  return match.group(0)
+              return text
+
+          EMPHASIS_LABELS = {
+              "opening": "上段横長",
+              "turning": "中段横長",
+              "conclusion": "下段横長"
+          }
+
+          def validate_emphasis(pages: list) -> list:
+              """Validate and adjust emphasis_point distribution."""
+              warnings = []
+              total = len(pages)
+
+              # Check turning count (should be <= 1/3)
+              turning_count = sum(1 for p in pages if p.get("emphasis_point") == "turning")
+              if turning_count > total // 3 + 1:
+                  warnings.append(f"turningが多すぎます ({turning_count}/{total})")
+
+              # Check consecutive same emphasis
+              prev = None
+              consecutive = 0
+              for i, page in enumerate(pages):
+                  current = page.get("emphasis_point", "conclusion")
+                  if current == prev:
+                      consecutive += 1
+                      if consecutive >= 2:
+                          warnings.append(f"P{i}: 連続3回以上の{current}")
+                  else:
+                      consecutive = 0
+                  prev = current
+
+              # Check first and last
+              if total >= 2:
+                  first = pages[0].get("emphasis_point", "")
+                  last = pages[-1].get("emphasis_point", "")
+                  if first != "opening":
+                      warnings.append(f"P1: openingが推奨 (現在: {first})")
+                  if last != "conclusion":
+                      warnings.append(f"P{total}: conclusionが推奨 (現在: {last})")
+
+              return warnings
+
+          def main(story_json: str) -> dict:
+              """
+              Parse story JSON, validate emphasis, and create formatted summary.
+              """
+              try:
+                  # Extract JSON from markdown code block if present
+                  json_str = extract_json(story_json)
+                  data = json.loads(json_str)
+                  pages = data.get("pages", [])
+
+                  # Validate emphasis distribution
+                  warnings = validate_emphasis(pages)
+
+                  lines = []
+                  lines.append("### ストーリー詳細")
+                  lines.append("")
+
+                  # Show emphasis distribution
+                  lines.append("**レイアウト構成**:")
+                  for page in pages:
+                      pn = page.get("page_number", "?")
+                      emp = page.get("emphasis_point", "conclusion")
+                      label = EMPHASIS_LABELS.get(emp, emp)
+                      reason = page.get("emphasis_reason", "")
+                      lines.append(f"- P{pn}: {emp} ({label}) - {reason}")
+                  lines.append("")
+
+                  if warnings:
+                      lines.append("**検証警告**:")
+                      for w in warnings:
+                          lines.append(f"- {w}")
+                      lines.append("")
+
+                  for page in pages:
+                      pn = page.get("page_number", "?")
+                      phase = page.get("arc_phase", "?")
+                      emphasis = page.get("emphasis_point", "-")
+                      key_msg = page.get("key_message", "-")
+                      key_scene = page.get("key_scene", "-")
+
+                      lines.append(f"#### ページ {pn} ({phase}) - {emphasis}")
+                      lines.append(f"**キーメッセージ**: {key_msg}")
+                      lines.append(f"**シーン**: {key_scene}")
+                      lines.append("")
+
+                      # Dialogue
+                      dialogues = page.get("dialogue", [])
+                      if dialogues:
+                          lines.append("**台詞**:")
+                          for d in dialogues:
+                              char = d.get("character", "?")
+                              text = d.get("text", "")
+                              panel = d.get("panel", "?")
+                              lines.append(f"- P{panel} {char}: 「{text}」")
+                          lines.append("")
+
+                      # Panels summary with layout info
+                      panels = page.get("panels", [])
+                      if panels:
+                          lines.append(f"**パネル数**: {len(panels)}コマ")
+                          for panel in panels:
+                              pnum = panel.get("panel_number", "?")
+                              pos = panel.get("position", "?")
+                              size = panel.get("size", "?")
+                              lines.append(f"  - パネル{pnum}: {pos} ({size})")
+                          lines.append("")
+
+                  formatted = "\n".join(lines)
+                  return {
+                      "formatted_output": formatted,
+                      "raw_json": story_json,
+                      "page_count": len(pages),
+                      "validation_warnings": len(warnings)
+                  }
+              except Exception as e:
+                  return {
+                      "formatted_output": f"JSON解析エラー: {str(e)}",
+                      "raw_json": story_json,
+                      "page_count": 0,
+                      "validation_warnings": 0
+                  }
+        code_language: python3
+        outputs:
+          formatted_output:
+            children: null
+            type: string
+          raw_json:
+            children: null
+            type: string
+          page_count:
+            children: null
+            type: number
+          validation_warnings:
+            children: null
+            type: number
+        selected: false
+        title: 'CODE: Format Story'
+        type: code
+        variables:
+        - value_selector:
+          - '1000000008'
+          - text
+          value_type: string
+          variable: story_json
+      height: 80
+      id: '1000000019'
+      position:
+        x: 960
+        y: 350
+      positionAbsolute:
+        x: 960
+        y: 350
+      selected: false
+      sourcePosition: right
+      targetPosition: left
+      type: custom
+      width: 242
+
+    # [30] IF-ELSE: Need Enhancement
+    # [FIX v2] Determines if quality enhancement is needed
+    - data:
+        cases:
+        - case_id: 'true'
+          conditions:
+          - comparison_operator: is
+            value: 'true'
+            variable_selector:
+            - '1000000013'
+            - needs_enhancement
+          logical_operator: and
+        desc: 'Check if character/background enhancement is needed'
+        selected: false
+        title: 'IF-ELSE: Need Enhancement'
+        type: if-else
+      height: 126
+      id: '1000000030'
+      position:
+        x: 960
+        y: 900
+      positionAbsolute:
+        x: 960
+        y: 900
+      selected: false
+      sourcePosition: right
+      targetPosition: left
+      type: custom
+      width: 242
+
+    # [31] LLM: Auto Enhance
+    # [FIX v2] Automatically enhances character/background details
+    - data:
+        context:
+          enabled: false
+          variable_selector: []
+        desc: 'Auto-enhance character and background details'
+        edition_type: basic
+        memory:
+          role_prefix:
+            assistant: ''
+            user: ''
+          window:
+            enabled: false
+            size: 50
+        model:
+          completion_params:
+            frequency_penalty: 0
+            max_tokens: 2048
+            presence_penalty: 0
+            temperature: 0.5
+            top_p: 1
+          mode: chat
+          name: gpt-4o
+          provider: langgenius/openai/openai
+        prompt_template:
+        - role: system
+          text: |
+            You are a construction industry educational manga content enhancement expert.
+
+            ## Task
+            Enhance missing details for characters and backgrounds based on quality check results.
+            Respect existing settings while adding specific details.
+
+            ## Character Enhancement Rules
+            - appearance: Add clothing, physique, distinctive accessories, typical expressions
+            - personality: Add behavior patterns, catchphrases, relationships with other characters
+            - role: Clarify function in story, expertise
+
+            ## Background Enhancement Rules
+            - location: Add specific facility names, surroundings, scale
+            - time_setting: Be specific (after morning meeting, lunch break, end of work)
+            - environment: Add weather, temperature, seasonal feel, sensory descriptions
+
+            ## Output Format
+            Output ONLY JSON with enhancement information:
+            {
+              "character_enhancements": [
+                {
+                  "id": "character_id",
+                  "appearance": "additional appearance description",
+                  "personality": "additional personality description",
+                  "role": "additional role description"
+                }
+              ],
+              "background_enhancements": {
+                "location_detail": "specific location description",
+                "time_setting": "time setting description",
+                "environment": "environment description"
+              }
+            }
+        - role: user
+          text: |
+            Enhancement targets: {{#1000000013.enhancement_targets#}}
+
+            Current issues:
+            {{#1000000013.report#}}
+
+            Current design JSON:
+            {{#conversation.design_json#}}
+
+            Please generate enhancement JSON. Output JSON only, no markdown code blocks.
+        selected: false
+        structured_output_enabled: false
+        title: 'LLM: Auto Enhance'
+        type: llm
+        variables: []
+        vision:
+          enabled: false
+      height: 98
+      id: '1000000031'
+      position:
+        x: 400
+        y: 1100
+      positionAbsolute:
+        x: 400
+        y: 1100
+      selected: false
+      sourcePosition: right
+      targetPosition: left
+      type: custom
+      width: 242
+
+    # [32] CODE: Merge Enhanced
+    # [FIX v2] Merges enhancement data into existing JSON
+    - data:
+        code: |
+          import json
+
+          def main(design_json: str, enhancement_text: str) -> dict:
+              """Merge enhancement data into existing design JSON"""
+              try:
+                  design = json.loads(design_json) if design_json else {}
+                  enhancements = json.loads(enhancement_text) if enhancement_text else {}
+              except json.JSONDecodeError as e:
+                  return {
+                      "merged_design": design_json,
+                      "merge_status": f"JSON parse error: {str(e)}"
+                  }
+
+              # Merge character enhancements
+              char_enhancements = enhancements.get("character_enhancements", [])
+              for enh in char_enhancements:
+                  char_id = enh.get("id")
+                  for char in design.get("characters", []):
+                      if char.get("id") == char_id:
+                          if enh.get("appearance"):
+                              existing = char.get("appearance", "")
+                              char["appearance"] = (existing + " " + enh["appearance"]).strip()
+                          if enh.get("personality"):
+                              existing = char.get("personality", "")
+                              char["personality"] = (existing + " " + enh["personality"]).strip()
+                          if enh.get("role"):
+                              existing = char.get("role", "")
+                              char["role"] = (existing + " " + enh["role"]).strip()
+                          break
+
+              # Merge background enhancements
+              bg_enhancements = enhancements.get("background_enhancements", {})
+              if bg_enhancements:
+                  if "story_overview" not in design:
+                      design["story_overview"] = {}
+                  if bg_enhancements.get("location_detail"):
+                      design["story_overview"]["location_detail"] = bg_enhancements["location_detail"]
+                  if bg_enhancements.get("time_setting"):
+                      design["story_overview"]["time_setting"] = bg_enhancements["time_setting"]
+                  if bg_enhancements.get("environment"):
+                      design["story_overview"]["environment"] = bg_enhancements["environment"]
+
+              return {
+                  "merged_design": json.dumps(design, ensure_ascii=False),
+                  "merge_status": "success"
+              }
+        code_language: python3
+        outputs:
+          merged_design:
+            children: null
+            type: string
+          merge_status:
+            children: null
+            type: string
+        selected: false
+        title: 'CODE: Merge Enhanced'
+        type: code
+        variables:
+        - value_selector:
+          - conversation
+          - design_json
+          value_type: string
+          variable: design_json
+        - value_selector:
+          - '1000000031'
+          - text
+          value_type: string
+          variable: enhancement_text
+      height: 80
+      id: '1000000032'
+      position:
+        x: 680
+        y: 1100
+      positionAbsolute:
+        x: 680
+        y: 1100
+      selected: false
+      sourcePosition: right
+      targetPosition: left
+      type: custom
+      width: 242
+
+    # [33] ASSIGNER: Update Enhanced
+    # [FIX v2] Updates conversation variables with enhanced data
+    - data:
+        desc: 'Save enhanced design_json to conversation'
+        items:
+        - input_type: variable
+          operation: over-write
+          value:
+          - '1000000032'
+          - merged_design
+          variable_selector:
+          - conversation
+          - design_json
+          write_mode: over-write
+        selected: false
+        title: 'ASSIGNER: Update Enhanced'
+        type: assigner
+        version: '2'
+      height: 54
+      id: '1000000033'
+      position:
+        x: 960
+        y: 1100
+      positionAbsolute:
+        x: 960
+        y: 1100
+      selected: false
+      sourcePosition: right
+      targetPosition: left
+      type: custom
+      width: 242
+
+    # [34] ASSIGNER: Set Quality Done
+    # Sets current_phase to quality_done after consistency check
+    - data:
+        desc: 'Set current_phase to quality_done for image generation'
+        items:
+        - input_type: constant
+          operation: over-write
+          value: quality_done
+          variable_selector:
+          - conversation
+          - current_phase
+          write_mode: over-write
+        selected: false
+        title: 'ASSIGNER: Set Quality Done'
+        type: assigner
+        version: '2'
+      height: 54
+      id: '1000000034'
+      position:
+        x: 1800
+        y: 900
+      positionAbsolute:
+        x: 1800
+        y: 900
+      selected: false
+      sourcePosition: right
+      targetPosition: left
+      type: custom
+      width: 242
+
+    # [35] CODE: Build Style Anchor Prompt
+    # キャラクター情報からスタイルアンカー画像生成用プロンプトを構築
+    - data:
+        code: |
+          import json
+
+          def main(characters: str, design_json: str) -> dict:
+              """
+              Build style anchor prompt from character information.
+              Only includes characters that appear in this manga.
+              """
+              # Parse design_json to get character details
+              char_details = []
+              try:
+                  design = json.loads(design_json) if design_json else {}
+                  chars = design.get("characters", {})
+
+                  # Get character names from the characters string
+                  char_names = [c.strip() for c in characters.split(",") if c.strip()]
+
+                  for name in char_names:
+                      if name in chars:
+                          char_info = chars[name]
+                          appearance = char_info.get("appearance", "")
+                          role = char_info.get("role", "")
+                          char_details.append(f"- {name}: {appearance} ({role})")
+                      else:
+                          char_details.append(f"- {name}")
+              except Exception as e:
+                  char_details = [f"- {c.strip()}" for c in characters.split(",") if c.strip()]
+
+              char_section = "\n".join(char_details) if char_details else "- Main character"
+
+              prompt = f"""Character design sheet for Japanese educational manga about construction safety.
+
+          CHARACTERS TO INCLUDE (ONLY THESE):
+          {char_section}
+
+          STYLE REQUIREMENTS:
+          - Kunio-kun style (4-5 head proportions, hot-blooded expressions)
+          - Clean line art with consistent stroke width
+          - Bright, clear colors suitable for educational manga
+          - Simple white background
+          - Show each character in 3 poses: neutral, happy, explaining
+          - Full body view for each character
+
+          DO NOT include any other characters or elements.
+          This image will be used as style reference for all manga pages."""
+
+              return {
+                  "style_anchor_prompt": prompt,
+                  "character_count": len(char_details)
+              }
+        code_language: python3
+        outputs:
+          style_anchor_prompt:
+            children: null
+            type: string
+          character_count:
+            children: null
+            type: number
+        selected: false
+        title: 'CODE: Build Style Anchor Prompt'
+        type: code
+        variables:
+        - value_selector:
+          - conversation
+          - characters
+          value_type: string
+          variable: characters
+        - value_selector:
+          - conversation
+          - design_json
+          value_type: string
+          variable: design_json
+      height: 80
+      id: '1000000035'
+      position:
+        x: 960
+        y: 1300
+      positionAbsolute:
+        x: 960
+        y: 1300
+      selected: false
+      sourcePosition: right
+      targetPosition: left
+      type: custom
+      width: 242
+
+    # [36] HTTP: Generate Style Anchor
+    # GAS経由でスタイルアンカー画像を生成
+    - data:
+        authorization:
+          config: null
+          type: no-auth
+        body:
+          type: json
+          data: |
+            {
+              "prompt": "{{#1000000035.style_anchor_prompt#}}",
+              "sessionId": "{{#1000000028.session_id#}}",
+              "pageNumber": 0
+            }
+        headers: ''
+        method: post
+        params: ''
+        selected: false
+        timeout:
+          connect: 60
+          read: 300
+          write: 60
+        title: 'HTTP: Generate Style Anchor'
+        type: http-request
+        url: '{{#env.GAS_GEMINI_PROXY_URL#}}'
+        variables: []
+      height: 80
+      id: '1000000036'
+      position:
+        x: 1100
+        y: 1300
+      positionAbsolute:
+        x: 1100
+        y: 1300
+      selected: false
+      sourcePosition: right
+      targetPosition: left
+      type: custom
+      width: 242
+
+    # [37] CODE: Extract Style Anchor FileId
+    # HTTPレスポンスからfileIdを抽出
+    - data:
+        code: |
+          import json
+
+          def main(http_response: str) -> dict:
+              """
+              Extract fileId from GAS Gemini Proxy response.
+              Response format: {"success": true, "fileId": "xxx", ...}
+              """
+              try:
+                  data = json.loads(http_response)
+                  file_id = data.get("fileId", "")
+                  return {"file_id": file_id}
+              except Exception as e:
+                  return {"file_id": ""}
+        code_language: python3
+        outputs:
+          file_id:
+            children: null
+            type: string
+        selected: false
+        title: 'CODE: Extract FileId'
+        type: code
+        variables:
+        - value_selector:
+          - '1000000036'
+          - body
+          value_type: string
+          variable: http_response
+      height: 80
+      id: '1000000037'
+      position:
+        x: 1240
+        y: 1300
+      positionAbsolute:
+        x: 1240
+        y: 1300
+      selected: false
+      sourcePosition: right
+      targetPosition: left
+      type: custom
+      width: 242
+
+    # [38] ASSIGNER: Save reference_image_id to conversation
+    # conversation変数にfileIdを保存してIteration内からアクセス可能にする
+    - data:
+        items:
+        - operation: over-write
+          value: '{{#1000000037.file_id#}}'
+          variable_selector:
+          - conversation
+          - reference_image_id
+        selected: false
+        title: 'ASSIGNER: Save FileId'
+        type: assigner
+      height: 80
+      id: '1000000038'
+      position:
+        x: 1380
+        y: 1300
+      positionAbsolute:
+        x: 1380
+        y: 1300
+      selected: false
+      sourcePosition: right
+      targetPosition: left
+      type: custom
+      width: 242
+
+    viewport:
+      x: -50
+      y: 0
+      zoom: 0.6
+
+  rag_pipeline_variables: []

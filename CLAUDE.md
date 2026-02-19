@@ -26,6 +26,7 @@
 ```
 Dify_project/
 ├── CLAUDE.md                    # 本ファイル
+├── .gitignore
 ├── .claude/
 │   └── skills/
 │       ├── dify-dsl-generator/  # DSL生成スキル（520行）
@@ -35,12 +36,19 @@ Dify_project/
 │   └── workflows/
 │       └── export_dify_workflows.yml  # 週次自動バックアップ
 ├── dsl/
-│   ├── templates/               # 47テンプレート（Awesome-Dify-Workflow）
+│   ├── templates/               # 42テンプレート（重複解消済み）
 │   ├── exported/                # バックアップDSL（GitHub Actions生成）
-│   └── generated/               # 生成DSL出力先
-├── gas_templates/               # GASコード出力先
+│   └── generated/
+│       ├── data_analysis_chatbot.yml
+│       └── manga/               # マンガDSL（10ファイル）
+├── gas_templates/
+│   ├── budget_management/       # 工事予算管理GAS（7ファイル）
+│   ├── manga/                   # マンガ関連GAS
+│   └── misc/                    # その他
+├── output/                      # PoC成果物（11ファイル）
 └── scripts/
     ├── export_dify_workflows.py # エクスポートスクリプト
+    ├── prepare_poc_data.py      # PoCテストデータ生成
     └── README.md
 ```
 

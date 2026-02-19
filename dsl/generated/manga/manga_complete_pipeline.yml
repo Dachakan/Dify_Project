@@ -1,0 +1,892 @@
+# Manga Complete Pipeline DSL v1.0
+# Generator + Quality Checker in one workflow
+# Compatible with Dify Cloud (version 0.1.2)
+#
+# Flow: Start -> [Generator] -> [Quality Checker] -> End
+#       Generator: LLM(Design) -> Code(emphasis) -> LLM(Story) -> Code(Prep) -> Iteration -> Template
+#       QC: Code(Validate) -> LLM(Consistency) -> Code(Score) -> Template(Report)
+
+app:
+  description: "Complete manga generation pipeline. Generates educational manga YAMLs and validates quality in one workflow."
+  icon: "\U0001F4D6"
+  icon_background: '#FFEAD5'
+  mode: workflow
+  name: "Manga Complete Pipeline"
+  use_icon_as_answer_icon: false
+kind: app
+version: 0.1.2
+
+workflow:
+  conversation_variables: []
+  environment_variables: []
+  features:
+    file_upload:
+      image:
+        enabled: false
+        number_limits: 3
+        transfer_methods:
+        - local_file
+        - remote_url
+    opening_statement: ''
+    retriever_resource:
+      enabled: false
+    sensitive_word_avoidance:
+      enabled: false
+    speech_to_text:
+      enabled: false
+    suggested_questions: []
+    suggested_questions_after_answer:
+      enabled: false
+    text_to_speech:
+      enabled: false
+      language: ''
+      voice: ''
+
+  graph:
+    edges:
+    # ===== GENERATOR SECTION =====
+    # Start -> LLM Design
+    - data:
+        isInIteration: false
+        sourceType: start
+        targetType: llm
+      id: edge-001
+      source: '1000000001'
+      sourceHandle: source
+      target: '1000000002'
+      targetHandle: target
+      type: custom
+      zIndex: 0
+
+    # LLM Design -> Code Emphasis
+    - data:
+        isInIteration: false
+        sourceType: llm
+        targetType: code
+      id: edge-002
+      source: '1000000002'
+      sourceHandle: source
+      target: '1000000003'
+      targetHandle: target
+      type: custom
+      zIndex: 0
+
+    # Code Emphasis -> LLM Story
+    - data:
+        isInIteration: false
+        sourceType: code
+        targetType: llm
+      id: edge-003
+      source: '1000000003'
+      sourceHandle: source
+      target: '1000000004'
+      targetHandle: target
+      type: custom
+      zIndex: 0
+
+    # LLM Story -> Code Prep
+    - data:
+        isInIteration: false
+        sourceType: llm
+        targetType: code
+      id: edge-004
+      source: '1000000004'
+      sourceHandle: source
+      target: '1000000005'
+      targetHandle: target
+      type: custom
+      zIndex: 0
+
+    # Code Prep -> Iteration
+    - data:
+        isInIteration: false
+        sourceType: code
+        targetType: iteration
+      id: edge-005
+      source: '1000000005'
+      sourceHandle: source
+      target: '1000000006'
+      targetHandle: target
+      type: custom
+      zIndex: 0
+
+    # Iteration internal: iteration-start -> Code Layout
+    - data:
+        isInIteration: true
+        iteration_id: '1000000006'
+        sourceType: iteration-start
+        targetType: code
+      id: edge-006
+      source: '1000000006000000'
+      sourceHandle: source
+      target: '1000000007'
+      targetHandle: target
+      type: custom
+      zIndex: 1002
+
+    # Iteration internal: Code Layout -> LLM YAML
+    - data:
+        isInIteration: true
+        iteration_id: '1000000006'
+        sourceType: code
+        targetType: llm
+      id: edge-007
+      source: '1000000007'
+      sourceHandle: source
+      target: '1000000008'
+      targetHandle: target
+      type: custom
+      zIndex: 1002
+
+    # Iteration -> Template Combine
+    - data:
+        isInIteration: false
+        sourceType: iteration
+        targetType: template-transform
+      id: edge-008
+      source: '1000000006'
+      sourceHandle: source
+      target: '1000000009'
+      targetHandle: target
+      type: custom
+      zIndex: 0
+
+    # ===== QUALITY CHECKER SECTION =====
+    # Template Combine -> Code Structure Check
+    - data:
+        isInIteration: false
+        sourceType: template-transform
+        targetType: code
+      id: edge-009
+      source: '1000000009'
+      sourceHandle: source
+      target: '1000000010'
+      targetHandle: target
+      type: custom
+      zIndex: 0
+
+    # Code Structure -> LLM Consistency
+    - data:
+        isInIteration: false
+        sourceType: code
+        targetType: llm
+      id: edge-010
+      source: '1000000010'
+      sourceHandle: source
+      target: '1000000011'
+      targetHandle: target
+      type: custom
+      zIndex: 0
+
+    # LLM Consistency -> Code Score
+    - data:
+        isInIteration: false
+        sourceType: llm
+        targetType: code
+      id: edge-011
+      source: '1000000011'
+      sourceHandle: source
+      target: '1000000012'
+      targetHandle: target
+      type: custom
+      zIndex: 0
+
+    # Code Score -> Template Report
+    - data:
+        isInIteration: false
+        sourceType: code
+        targetType: template-transform
+      id: edge-012
+      source: '1000000012'
+      sourceHandle: source
+      target: '1000000013'
+      targetHandle: target
+      type: custom
+      zIndex: 0
+
+    # Template Report -> End
+    - data:
+        isInIteration: false
+        sourceType: template-transform
+        targetType: end
+      id: edge-013
+      source: '1000000013'
+      sourceHandle: source
+      target: '1000000014'
+      targetHandle: target
+      type: custom
+      zIndex: 0
+
+    nodes:
+    # ========================================
+    # [1] START NODE - 4 input variables
+    # ========================================
+    - data:
+        desc: ''
+        selected: false
+        title: Start
+        type: start
+        variables:
+        - label: Theme
+          max_length: null
+          options: []
+          required: true
+          type: paragraph
+          variable: theme
+        - label: Learning Goal
+          max_length: null
+          options: []
+          required: true
+          type: text-input
+          variable: learning_goal
+        - default: 4
+          label: Total Pages
+          max_length: null
+          options: []
+          required: true
+          type: number
+          variable: total_pages
+        - label: Characters (JSON)
+          max_length: null
+          options: []
+          required: true
+          type: paragraph
+          variable: characters
+      height: 180
+      id: '1000000001'
+      position:
+        x: 80
+        y: 282
+      positionAbsolute:
+        x: 80
+        y: 282
+      selected: false
+      sourcePosition: right
+      targetPosition: left
+      type: custom
+      width: 244
+
+    # ========================================
+    # [2] LLM NODE - Learning Design
+    # ========================================
+    - data:
+        context:
+          enabled: false
+          variable_selector: []
+        desc: ''
+        model:
+          completion_params:
+            temperature: 0.7
+          mode: chat
+          name: gpt-4o
+          provider: openai
+        prompt_template:
+        - id: sys-design-001
+          role: system
+          text: |
+            You are an instructional design expert for educational manga.
+            Create a learning design and story structure.
+
+            Output JSON:
+            {"story_overview":{"logline":"...","structure":"kishoutenketsu"},"pages":[{"page_number":1,"story_arc":"Introduction/Development/Turning/Conclusion","story_role":"...","narrative_goal":"...","learning_content":"..."}]}
+        - id: user-design-001
+          role: user
+          text: |
+            Theme: {{#1000000001.theme#}}
+            Learning Goal: {{#1000000001.learning_goal#}}
+            Total Pages: {{#1000000001.total_pages#}}
+            Characters: {{#1000000001.characters#}}
+
+            Output valid JSON only.
+        selected: false
+        title: Learning Design
+        type: llm
+        variables: []
+        vision:
+          enabled: false
+      height: 98
+      id: '1000000002'
+      position:
+        x: 380
+        y: 282
+      positionAbsolute:
+        x: 380
+        y: 282
+      selected: false
+      sourcePosition: right
+      targetPosition: left
+      type: custom
+      width: 244
+
+    # ========================================
+    # [3] CODE NODE - Determine emphasis_point
+    # ========================================
+    - data:
+        code: "import json\n\ndef main(story_design_text: str) -> dict:\n    EMPHASIS_RULES = {\n        \"Introduction\": \"opening\",\n        \"Development\": \"turning\",\n        \"Turning\": \"turning\",\n        \"Conclusion\": \"conclusion\"\n    }\n\n    try:\n        design = json.loads(story_design_text)\n    except:\n        start = story_design_text.find('{')\n        end = story_design_text.rfind('}') + 1\n        if start >= 0 and end > start:\n            design = json.loads(story_design_text[start:end])\n        else:\n            design = {\"pages\": []}\n\n    pages = design.get(\"pages\", [])\n    prev_emphasis = None\n\n    for i, page in enumerate(pages):\n        arc = page.get(\"story_arc\", \"Development\")\n        emphasis = EMPHASIS_RULES.get(arc, \"turning\")\n        if emphasis == \"turning\" and prev_emphasis == \"turning\":\n            emphasis = \"even\"\n        page[\"emphasis_point\"] = emphasis\n        prev_emphasis = emphasis\n\n    return {\n        \"story_overview\": design.get(\"story_overview\", {}),\n        \"pages\": pages\n    }\n"
+        code_language: python3
+        desc: ''
+        outputs:
+          story_overview:
+            children: null
+            type: object
+          pages:
+            children: null
+            type: array[object]
+        selected: false
+        title: Emphasis Point
+        type: code
+        variables:
+        - value_selector:
+          - '1000000002'
+          - text
+          variable: story_design_text
+      height: 98
+      id: '1000000003'
+      position:
+        x: 680
+        y: 282
+      positionAbsolute:
+        x: 680
+        y: 282
+      selected: false
+      sourcePosition: right
+      targetPosition: left
+      type: custom
+      width: 244
+
+    # ========================================
+    # [4] LLM NODE - Story Details
+    # ========================================
+    - data:
+        context:
+          enabled: false
+          variable_selector: []
+        desc: ''
+        model:
+          completion_params:
+            temperature: 0.7
+          mode: chat
+          name: gpt-4o
+          provider: openai
+        prompt_template:
+        - id: sys-story-001
+          role: system
+          text: |
+            You are a manga story writer. Add detailed elements to each page:
+            - key_scene: Main visual scene
+            - dialogue_draft: Array of {speaker, line}
+            - panels: Array of 5-6 panel descriptions
+
+            Output complete JSON with all original fields plus new ones.
+        - id: user-story-001
+          role: user
+          text: |
+            Story Design:
+            {"story_overview": {{#1000000003.story_overview#}}, "pages": {{#1000000003.pages#}}}
+
+            Characters: {{#1000000001.characters#}}
+            Theme: {{#1000000001.theme#}}
+
+            Add key_scene, dialogue_draft, panels. Output valid JSON only.
+        selected: false
+        title: Story Details
+        type: llm
+        variables: []
+        vision:
+          enabled: false
+      height: 98
+      id: '1000000004'
+      position:
+        x: 980
+        y: 282
+      positionAbsolute:
+        x: 980
+        y: 282
+      selected: false
+      sourcePosition: right
+      targetPosition: left
+      type: custom
+      width: 244
+
+    # ========================================
+    # [5] CODE NODE - Prepare iteration array
+    # ========================================
+    - data:
+        code: "import json\n\ndef main(story_details_text: str, characters: str, theme: str, learning_goal: str, total_pages: int) -> dict:\n    try:\n        story = json.loads(story_details_text)\n    except:\n        start = story_details_text.find('{')\n        end = story_details_text.rfind('}') + 1\n        story = json.loads(story_details_text[start:end])\n\n    try:\n        chars = json.loads(characters)\n    except:\n        chars = [{\"name\": \"Character\", \"role\": \"Main\"}]\n\n    pages = story.get(\"pages\", [])\n    overview = story.get(\"story_overview\", {})\n    pages_array = []\n\n    for page in pages:\n        page_data = {\n            \"page_number\": page.get(\"page_number\", 1),\n            \"total_pages\": int(total_pages),\n            \"theme\": theme,\n            \"learning_goal\": learning_goal,\n            \"characters\": chars,\n            \"story_overview\": overview,\n            \"story_arc\": page.get(\"story_arc\", \"\"),\n            \"emphasis_point\": page.get(\"emphasis_point\", \"turning\"),\n            \"key_scene\": page.get(\"key_scene\", \"\"),\n            \"dialogue_draft\": page.get(\"dialogue_draft\", []),\n            \"panels\": page.get(\"panels\", [])\n        }\n        pages_array.append(json.dumps(page_data, ensure_ascii=False))\n\n    return {\n        \"pages_array\": pages_array,\n        \"count\": len(pages_array)\n    }\n"
+        code_language: python3
+        desc: ''
+        outputs:
+          pages_array:
+            children: null
+            type: array[string]
+          count:
+            children: null
+            type: number
+        selected: false
+        title: Prepare Iteration
+        type: code
+        variables:
+        - value_selector:
+          - '1000000004'
+          - text
+          variable: story_details_text
+        - value_selector:
+          - '1000000001'
+          - characters
+          variable: characters
+        - value_selector:
+          - '1000000001'
+          - theme
+          variable: theme
+        - value_selector:
+          - '1000000001'
+          - learning_goal
+          variable: learning_goal
+        - value_selector:
+          - '1000000001'
+          - total_pages
+          variable: total_pages
+      height: 98
+      id: '1000000005'
+      position:
+        x: 1280
+        y: 282
+      positionAbsolute:
+        x: 1280
+        y: 282
+      selected: false
+      sourcePosition: right
+      targetPosition: left
+      type: custom
+      width: 244
+
+    # ========================================
+    # [6] ITERATION NODE
+    # ========================================
+    - data:
+        desc: ''
+        error_handle_mode: terminated
+        is_parallel: false
+        iterator_selector:
+        - '1000000005'
+        - pages_array
+        output_type: array[string]
+        selected: false
+        title: Page Iterator
+        type: iteration
+      height: 400
+      id: '1000000006'
+      position:
+        x: 1580
+        y: 200
+      positionAbsolute:
+        x: 1580
+        y: 200
+      selected: false
+      sourcePosition: right
+      targetPosition: left
+      type: custom
+      width: 600
+      zIndex: 1
+
+    # ========================================
+    # [7] CODE NODE (inside iteration) - Layout
+    # ========================================
+    - data:
+        code: "import json\n\ndef main(page_data_str: str) -> dict:\n    LAYOUT_PATTERNS = {\n        \"opening\": {\"pattern\": \"opening\", \"total_panels\": 5, \"emphasis_panel\": 1},\n        \"turning\": {\"pattern\": \"turning\", \"total_panels\": 5, \"emphasis_panel\": 3},\n        \"conclusion\": {\"pattern\": \"conclusion\", \"total_panels\": 5, \"emphasis_panel\": 5},\n        \"dual\": {\"pattern\": \"dual\", \"total_panels\": 4, \"emphasis_panel\": \"1,4\"},\n        \"even\": {\"pattern\": \"even\", \"total_panels\": 6, \"emphasis_panel\": \"none\"}\n    }\n\n    page_data = json.loads(page_data_str)\n    emphasis = page_data.get(\"emphasis_point\", \"turning\")\n    layout = LAYOUT_PATTERNS.get(emphasis, LAYOUT_PATTERNS[\"turning\"])\n    page_data[\"layout\"] = layout\n\n    return {\"page_with_layout\": json.dumps(page_data, ensure_ascii=False)}\n"
+        code_language: python3
+        desc: ''
+        outputs:
+          page_with_layout:
+            children: null
+            type: string
+        selected: false
+        title: Layout Convert
+        type: code
+        variables:
+        - value_selector:
+          - '1000000006'
+          - item
+          variable: page_data_str
+      height: 98
+      id: '1000000007'
+      iteration_id: '1000000006'
+      position:
+        x: 1650
+        y: 320
+      positionAbsolute:
+        x: 1650
+        y: 320
+      selected: false
+      sourcePosition: right
+      targetPosition: left
+      type: custom
+      width: 220
+      zIndex: 1002
+
+    # ========================================
+    # [8] LLM NODE (inside iteration) - YAML
+    # ========================================
+    - data:
+        context:
+          enabled: false
+          variable_selector: []
+        desc: ''
+        model:
+          completion_params:
+            temperature: 0.5
+          mode: chat
+          name: gpt-4o
+          provider: openai
+        prompt_template:
+        - id: sys-yaml-001
+          role: system
+          text: |
+            You are a manga YAML generator.
+            Generate complete independent YAML for one manga page.
+
+            Rules:
+            - Complete independent YAML (no external references)
+            - Kunio-kun style (4-5 head proportions)
+            - Japanese reading order (right to left)
+            - Include prompt_natural_language section
+
+            Output valid YAML starting with "# ====="
+        - id: user-yaml-001
+          role: user
+          text: |
+            Page Data:
+            {{#1000000007.page_with_layout#}}
+
+            Generate complete YAML with sections: project, art_style, characters, panel_layout, setting, story_overview, this_page, prompt_natural_language.
+        selected: false
+        title: Generate YAML
+        type: llm
+        variables: []
+        vision:
+          enabled: false
+      height: 98
+      id: '1000000008'
+      iteration_id: '1000000006'
+      position:
+        x: 1920
+        y: 320
+      positionAbsolute:
+        x: 1920
+        y: 320
+      selected: false
+      sourcePosition: right
+      targetPosition: left
+      type: custom
+      width: 220
+      zIndex: 1002
+
+    # ========================================
+    # [9] TEMPLATE - Combine all pages
+    # ========================================
+    - data:
+        desc: ''
+        selected: false
+        template: |
+          # Manga Generation Complete
+          # Total Pages: {{ pages | length }}
+
+          {% for yaml_content in pages %}
+          ---
+          # PAGE {{ loop.index }}
+          {{ yaml_content }}
+
+          {% endfor %}
+        title: Combine Pages
+        type: template-transform
+        variables:
+        - value_selector:
+          - '1000000006'
+          - output
+          variable: pages
+      height: 82
+      id: '1000000009'
+      position:
+        x: 2280
+        y: 282
+      positionAbsolute:
+        x: 2280
+        y: 282
+      selected: false
+      sourcePosition: right
+      targetPosition: left
+      type: custom
+      width: 244
+
+    # ========================================
+    # [10] CODE NODE - Structure Check (QC)
+    # ========================================
+    - data:
+        code: "import re\n\ndef main(yaml_content: str) -> dict:\n    issues = []\n    warnings = []\n    info = []\n\n    required = [\"project:\", \"art_style:\", \"characters:\", \"panel_layout:\", \"setting:\", \"story_overview:\", \"this_page:\", \"prompt_natural_language:\"]\n    for s in required:\n        if s not in yaml_content:\n            issues.append(f\"Missing: {s}\")\n\n    lines = re.findall(r'line:\\s*[\"\\']?(.+?)[\"\\']?\\s*$', yaml_content, re.MULTILINE)\n    for line in lines:\n        if len(line) > 40:\n            warnings.append(f\"Long: {line[:20]}...\")\n\n    panels = re.findall(r'panel_number:\\s*(\\d+)', yaml_content)\n    if panels:\n        max_p = max(int(p) for p in panels)\n        if max_p < 4:\n            issues.append(f\"Few panels: {max_p}\")\n        else:\n            info.append(f\"Panels: {max_p}\")\n\n    if \"trace\" in yaml_content.lower():\n        info.append(\"TRACE found\")\n    else:\n        warnings.append(\"No TRACE\")\n\n    emp = re.findall(r'emphasis_point:\\s*[\"\\']?(opening|turning|conclusion|dual|even)[\"\\']?', yaml_content)\n    if emp:\n        info.append(f\"emphasis: {emp[0]}\")\n    else:\n        warnings.append(\"No emphasis\")\n\n    return {\"issues\": issues, \"warnings\": warnings, \"info\": info, \"issue_count\": len(issues), \"warning_count\": len(warnings)}\n"
+        code_language: python3
+        desc: ''
+        outputs:
+          issues:
+            children: null
+            type: array[string]
+          warnings:
+            children: null
+            type: array[string]
+          info:
+            children: null
+            type: array[string]
+          issue_count:
+            children: null
+            type: number
+          warning_count:
+            children: null
+            type: number
+        selected: false
+        title: Structure Check
+        type: code
+        variables:
+        - value_selector:
+          - '1000000009'
+          - output
+          variable: yaml_content
+      height: 98
+      id: '1000000010'
+      position:
+        x: 2580
+        y: 282
+      positionAbsolute:
+        x: 2580
+        y: 282
+      selected: false
+      sourcePosition: right
+      targetPosition: left
+      type: custom
+      width: 244
+
+    # ========================================
+    # [11] LLM NODE - Consistency Check (QC)
+    # ========================================
+    - data:
+        context:
+          enabled: false
+          variable_selector: []
+        desc: ''
+        model:
+          completion_params:
+            temperature: 0.3
+          mode: chat
+          name: gpt-4o
+          provider: openai
+        prompt_template:
+        - id: sys-qc-001
+          role: system
+          text: |
+            You are a QA expert for educational manga. Analyze:
+            1. Character consistency
+            2. Learning goal alignment
+            3. Story coherence
+            4. Panel continuity
+
+            Output JSON only:
+            {"character_consistency":{"score":0-100},"learning_alignment":{"score":0-100},"story_coherence":{"score":0-100},"panel_continuity":{"score":0-100},"overall":"..."}
+        - id: user-qc-001
+          role: user
+          text: |
+            YAML:
+            {{#1000000009.output#}}
+
+            Story Design:
+            {"story_overview": {{#1000000003.story_overview#}}, "pages": {{#1000000003.pages#}}}
+
+            Analyze and output JSON.
+        selected: false
+        title: Consistency Check
+        type: llm
+        variables: []
+        vision:
+          enabled: false
+      height: 98
+      id: '1000000011'
+      position:
+        x: 2880
+        y: 282
+      positionAbsolute:
+        x: 2880
+        y: 282
+      selected: false
+      sourcePosition: right
+      targetPosition: left
+      type: custom
+      width: 244
+
+    # ========================================
+    # [12] CODE NODE - Score Calculation (QC)
+    # ========================================
+    - data:
+        code: "import json\n\ndef main(issue_count: int, warning_count: int, consistency_text: str) -> dict:\n    try:\n        c = json.loads(consistency_text)\n    except:\n        start = consistency_text.find('{')\n        end = consistency_text.rfind('}') + 1\n        if start >= 0 and end > start:\n            c = json.loads(consistency_text[start:end])\n        else:\n            c = {\"character_consistency\":{\"score\":70},\"learning_alignment\":{\"score\":70},\"story_coherence\":{\"score\":70},\"panel_continuity\":{\"score\":70}}\n\n    structure_score = max(0, 100 - issue_count * 20 - warning_count * 5)\n    char_score = c.get(\"character_consistency\", {}).get(\"score\", 70)\n    learn_score = c.get(\"learning_alignment\", {}).get(\"score\", 70)\n    story_score = c.get(\"story_coherence\", {}).get(\"score\", 70)\n    panel_score = c.get(\"panel_continuity\", {}).get(\"score\", 70)\n\n    consistency_avg = (char_score + learn_score + story_score + panel_score) / 4\n    final_score = int(structure_score * 0.4 + consistency_avg * 0.6)\n    passed = \"PASSED\" if final_score >= 70 else \"FAILED\"\n\n    if final_score >= 90:\n        grade = \"A\"\n    elif final_score >= 80:\n        grade = \"B\"\n    elif final_score >= 70:\n        grade = \"C\"\n    elif final_score >= 60:\n        grade = \"D\"\n    else:\n        grade = \"F\"\n\n    return {\"final_score\": final_score, \"passed\": passed, \"grade\": grade, \"structure_score\": structure_score, \"consistency_avg\": round(consistency_avg, 1)}\n"
+        code_language: python3
+        desc: ''
+        outputs:
+          final_score:
+            children: null
+            type: number
+          passed:
+            children: null
+            type: string
+          grade:
+            children: null
+            type: string
+          structure_score:
+            children: null
+            type: number
+          consistency_avg:
+            children: null
+            type: number
+        selected: false
+        title: Score Calculation
+        type: code
+        variables:
+        - value_selector:
+          - '1000000010'
+          - issue_count
+          variable: issue_count
+        - value_selector:
+          - '1000000010'
+          - warning_count
+          variable: warning_count
+        - value_selector:
+          - '1000000011'
+          - text
+          variable: consistency_text
+      height: 98
+      id: '1000000012'
+      position:
+        x: 3180
+        y: 282
+      positionAbsolute:
+        x: 3180
+        y: 282
+      selected: false
+      sourcePosition: right
+      targetPosition: left
+      type: custom
+      width: 244
+
+    # ========================================
+    # [13] TEMPLATE - Quality Report
+    # ========================================
+    - data:
+        desc: ''
+        selected: false
+        template: |
+          # Quality Report
+          Score: {{ final_score }}/100 ({{ grade }})
+          Status: {{ passed }}
+          Structure: {{ structure_score }}
+          Consistency: {{ consistency_avg }}
+
+          ## Issues
+          {% for issue in issues %}
+          - {{ issue }}
+          {% endfor %}
+
+          ## Warnings
+          {% for warning in warnings %}
+          - {{ warning }}
+          {% endfor %}
+        title: Quality Report
+        type: template-transform
+        variables:
+        - value_selector:
+          - '1000000012'
+          - final_score
+          variable: final_score
+        - value_selector:
+          - '1000000012'
+          - grade
+          variable: grade
+        - value_selector:
+          - '1000000012'
+          - passed
+          variable: passed
+        - value_selector:
+          - '1000000012'
+          - structure_score
+          variable: structure_score
+        - value_selector:
+          - '1000000012'
+          - consistency_avg
+          variable: consistency_avg
+        - value_selector:
+          - '1000000010'
+          - issues
+          variable: issues
+        - value_selector:
+          - '1000000010'
+          - warnings
+          variable: warnings
+      height: 82
+      id: '1000000013'
+      position:
+        x: 3480
+        y: 282
+      positionAbsolute:
+        x: 3480
+        y: 282
+      selected: false
+      sourcePosition: right
+      targetPosition: left
+      type: custom
+      width: 244
+
+    # ========================================
+    # [14] END NODE - All outputs
+    # ========================================
+    - data:
+        desc: ''
+        outputs:
+        - value_selector:
+          - '1000000009'
+          - output
+          variable: yaml_prompts
+        - value_selector:
+          - '1000000003'
+          - story_overview
+          variable: story_overview
+        - value_selector:
+          - '1000000003'
+          - pages
+          variable: story_pages
+        - value_selector:
+          - '1000000013'
+          - output
+          variable: quality_report
+        - value_selector:
+          - '1000000012'
+          - final_score
+          variable: quality_score
+        - value_selector:
+          - '1000000012'
+          - passed
+          variable: passed
+        selected: false
+        title: End
+        type: end
+      height: 90
+      id: '1000000014'
+      position:
+        x: 3780
+        y: 282
+      positionAbsolute:
+        x: 3780
+        y: 282
+      selected: false
+      sourcePosition: right
+      targetPosition: left
+      type: custom
+      width: 244
+
+    viewport:
+      x: 0
+      y: 0
+      zoom: 0.5

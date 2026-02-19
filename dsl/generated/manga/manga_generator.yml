@@ -1,0 +1,810 @@
+# Manga Generator DSL v1.0
+# Educational manga YAML generator with emphasis_point-based layout
+# Compatible with Dify Cloud (version 0.1.2)
+#
+# Workflow: Start -> LLM(Design) -> Code(emphasis) -> LLM(Story) -> Code(Prep) -> Iteration[Code+LLM] -> Template -> End
+
+app:
+  description: "Educational manga YAML generator. Creates complete independent page YAMLs with automatic layout selection based on emphasis_point."
+  icon: "U0001F4D6"
+  icon_background: '#FFEAD5'
+  mode: workflow
+  name: "Manga Generator"
+kind: app
+version: 0.1.2
+
+workflow:
+  conversation_variables: []
+  environment_variables: []
+  features:
+    file_upload:
+      image:
+        enabled: false
+        number_limits: 3
+        transfer_methods:
+        - local_file
+        - remote_url
+    opening_statement: ''
+    retriever_resource:
+      enabled: false
+    sensitive_word_avoidance:
+      enabled: false
+    speech_to_text:
+      enabled: false
+    suggested_questions: []
+    suggested_questions_after_answer:
+      enabled: false
+    text_to_speech:
+      enabled: false
+      language: ''
+      voice: ''
+
+  graph:
+    edges:
+    # Start -> LLM Design
+    - data:
+        isInIteration: false
+        isInLoop: false
+        sourceType: start
+        targetType: llm
+      id: edge-001
+      source: '1000000001'
+      sourceHandle: source
+      target: '1000000002'
+      targetHandle: target
+      type: custom
+      zIndex: 0
+
+    # LLM Design -> Code Emphasis
+    - data:
+        isInIteration: false
+        isInLoop: false
+        sourceType: llm
+        targetType: code
+      id: edge-002
+      source: '1000000002'
+      sourceHandle: source
+      target: '1000000003'
+      targetHandle: target
+      type: custom
+      zIndex: 0
+
+    # Code Emphasis -> LLM Story
+    - data:
+        isInIteration: false
+        isInLoop: false
+        sourceType: code
+        targetType: llm
+      id: edge-003
+      source: '1000000003'
+      sourceHandle: source
+      target: '1000000004'
+      targetHandle: target
+      type: custom
+      zIndex: 0
+
+    # LLM Story -> Code Prep
+    - data:
+        isInIteration: false
+        isInLoop: false
+        sourceType: llm
+        targetType: code
+      id: edge-004
+      source: '1000000004'
+      sourceHandle: source
+      target: '1000000005'
+      targetHandle: target
+      type: custom
+      zIndex: 0
+
+    # Code Prep -> Iteration
+    - data:
+        isInIteration: false
+        isInLoop: false
+        sourceType: code
+        targetType: iteration
+      id: edge-005
+      source: '1000000005'
+      sourceHandle: source
+      target: '1000000006'
+      targetHandle: target
+      type: custom
+      zIndex: 0
+
+    # Iteration internal: iteration-start -> Code Layout
+    - data:
+        isInIteration: true
+        isInLoop: false
+        iteration_id: '1000000006'
+        sourceType: iteration-start
+        targetType: code
+      id: edge-006
+      source: '1000000006000000'
+      sourceHandle: source
+      target: '1000000007'
+      targetHandle: target
+      type: custom
+      zIndex: 1002
+
+    # Iteration internal: Code Layout -> LLM YAML
+    - data:
+        isInIteration: true
+        isInLoop: false
+        iteration_id: '1000000006'
+        sourceType: code
+        targetType: llm
+      id: edge-007
+      source: '1000000007'
+      sourceHandle: source
+      target: '1000000008'
+      targetHandle: target
+      type: custom
+      zIndex: 1002
+
+    # Iteration -> Template
+    - data:
+        isInIteration: false
+        isInLoop: false
+        sourceType: iteration
+        targetType: template-transform
+      id: edge-008
+      source: '1000000006'
+      sourceHandle: source
+      target: '1000000009'
+      targetHandle: target
+      type: custom
+      zIndex: 0
+
+    # Template -> End
+    - data:
+        isInIteration: false
+        isInLoop: false
+        sourceType: template-transform
+        targetType: end
+      id: edge-009
+      source: '1000000009'
+      sourceHandle: source
+      target: '1000000010'
+      targetHandle: target
+      type: custom
+      zIndex: 0
+
+    nodes:
+    # [1] START NODE - 4 input variables
+    - data:
+        desc: 'Input: theme, learning_goal, total_pages, characters'
+        selected: false
+        title: Start
+        type: start
+        variables:
+        - label: Theme
+          max_length: 500
+          options: []
+          required: true
+          type: paragraph
+          variable: theme
+        - label: Learning Goal
+          max_length: 200
+          options: []
+          required: true
+          type: text-input
+          variable: learning_goal
+        - default: 4
+          label: Total Pages
+          max_length: null
+          options: []
+          required: true
+          type: number
+          variable: total_pages
+        - label: Characters (JSON)
+          max_length: 2000
+          options: []
+          required: true
+          type: paragraph
+          variable: characters
+      height: 180
+      id: '1000000001'
+      position:
+        x: 80
+        y: 282
+      positionAbsolute:
+        x: 80
+        y: 282
+      selected: false
+      sourcePosition: right
+      targetPosition: left
+      type: custom
+      width: 244
+
+    # [2] LLM NODE - Learning Design + Story Overview
+    - data:
+        context:
+          enabled: false
+          variable_selector: []
+        desc: 'Design learning structure and story overview'
+        edition_type: basic
+        model:
+          completion_params:
+            temperature: 0.7
+          mode: chat
+          name: gpt-4o
+          provider: openai
+        prompt_template:
+        - id: sys-design-001
+          role: system
+          text: |
+            You are an instructional design and story structure expert for educational manga.
+            Create a learning design and story structure based on the given theme.
+
+            Output JSON format:
+            {
+              "story_overview": {
+                "logline": "One sentence summary",
+                "structure": "kishoutenketsu"
+              },
+              "pages": [
+                {
+                  "page_number": 1,
+                  "story_arc": "Introduction/Development/Turning/Conclusion",
+                  "story_role": "Brief description",
+                  "narrative_goal": "What this page achieves",
+                  "learning_content": "What is taught"
+                }
+              ]
+            }
+        - id: user-design-001
+          role: user
+          text: |
+            Theme: {{#1000000001.theme#}}
+            Learning Goal: {{#1000000001.learning_goal#}}
+            Total Pages: {{#1000000001.total_pages#}}
+            Characters: {{#1000000001.characters#}}
+
+            Create learning design and story structure. Output valid JSON only.
+        selected: false
+        structured_output_enabled: false
+        title: Learning Design
+        type: llm
+      height: 120
+      id: '1000000002'
+      position:
+        x: 380
+        y: 282
+      positionAbsolute:
+        x: 380
+        y: 282
+      selected: false
+      sourcePosition: right
+      targetPosition: left
+      type: custom
+      width: 244
+
+    # [3] CODE NODE - Determine emphasis_point
+    - data:
+        code: |
+          import json
+
+          def main(story_design_text: str) -> dict:
+              """
+              Determine emphasis_point for each page based on story_arc.
+              Returns: { pages: [...with emphasis_point added...] }
+              """
+              EMPHASIS_RULES = {
+                  "Introduction": "opening",
+                  "Development": "turning",
+                  "Turning": "turning",
+                  "Conclusion": "conclusion"
+              }
+
+              EMPHASIS_REASONS = {
+                  "opening": "Initial impact to draw readers in",
+                  "turning": "Emphasize discovery or key learning moment",
+                  "conclusion": "Resolution with lasting impression"
+              }
+
+              try:
+                  design = json.loads(story_design_text)
+              except json.JSONDecodeError:
+                  start = story_design_text.find('{')
+                  end = story_design_text.rfind('}') + 1
+                  if start >= 0 and end > start:
+                      design = json.loads(story_design_text[start:end])
+                  else:
+                      raise ValueError("Invalid JSON")
+
+              pages = design.get("pages", [])
+              total = len(pages)
+
+              # Check for consecutive turning - adjust if needed
+              prev_emphasis = None
+              for i, page in enumerate(pages):
+                  arc = page.get("story_arc", "Development")
+                  emphasis = EMPHASIS_RULES.get(arc, "turning")
+
+                  # Avoid 3+ consecutive turning
+                  if emphasis == "turning" and prev_emphasis == "turning":
+                      if i > 0 and pages[i-1].get("emphasis_point") == "turning":
+                          emphasis = "even"
+
+                  page["emphasis_point"] = emphasis
+                  page["emphasis_reason"] = EMPHASIS_REASONS.get(emphasis, "Balanced presentation")
+                  prev_emphasis = emphasis
+
+              return {
+                  "story_overview": design.get("story_overview", {}),
+                  "pages": pages
+              }
+        code_language: python3
+        desc: 'Assign emphasis_point based on story_arc'
+        outputs:
+          result:
+            children: null
+            type: object
+        selected: false
+        title: Emphasis Point
+        type: code
+        variables:
+        - value_selector:
+          - '1000000002'
+          - text
+          variable: story_design_text
+      height: 90
+      id: '1000000003'
+      position:
+        x: 680
+        y: 282
+      positionAbsolute:
+        x: 680
+        y: 282
+      selected: false
+      sourcePosition: right
+      targetPosition: left
+      type: custom
+      width: 244
+
+    # [4] LLM NODE - Story Details + key_scene + dialogue_draft
+    - data:
+        context:
+          enabled: false
+          variable_selector: []
+        desc: 'Add detailed story elements for each page'
+        edition_type: basic
+        model:
+          completion_params:
+            temperature: 0.7
+          mode: chat
+          name: gpt-4o
+          provider: openai
+        prompt_template:
+        - id: sys-story-001
+          role: system
+          text: |
+            You are a manga story writer. Add detailed elements to each page.
+            For each page, add:
+            - key_scene: The main visual scene description
+            - dialogue_draft: Array of {speaker, line} for this page (3-5 lines)
+            - panels: Array of 5-6 panel descriptions
+
+            Output complete JSON with all original fields plus new ones.
+        - id: user-story-001
+          role: user
+          text: |
+            Story Design with emphasis_point:
+            {{#1000000003.result#}}
+
+            Characters: {{#1000000001.characters#}}
+            Theme: {{#1000000001.theme#}}
+
+            Add key_scene, dialogue_draft, and panels for each page. Output valid JSON only.
+        selected: false
+        structured_output_enabled: false
+        title: Story Details
+        type: llm
+      height: 120
+      id: '1000000004'
+      position:
+        x: 980
+        y: 282
+      positionAbsolute:
+        x: 980
+        y: 282
+      selected: false
+      sourcePosition: right
+      targetPosition: left
+      type: custom
+      width: 244
+
+    # [5] CODE NODE - Prepare iteration array
+    - data:
+        code: |
+          import json
+
+          def main(story_details_text: str, characters: str, theme: str, learning_goal: str, total_pages: int) -> dict:
+              """
+              Prepare pages_array for iteration.
+              Each element contains all data needed for one page YAML.
+              """
+              try:
+                  story = json.loads(story_details_text)
+              except json.JSONDecodeError:
+                  start = story_details_text.find('{')
+                  end = story_details_text.rfind('}') + 1
+                  story = json.loads(story_details_text[start:end])
+
+              try:
+                  chars = json.loads(characters)
+              except json.JSONDecodeError:
+                  chars = [{"name": "Character", "role": "Main"}]
+
+              pages = story.get("pages", [])
+              overview = story.get("story_overview", {})
+
+              pages_array = []
+              for page in pages:
+                  page_data = {
+                      "page_number": page.get("page_number", 1),
+                      "total_pages": int(total_pages),
+                      "theme": theme,
+                      "learning_goal": learning_goal,
+                      "characters": chars,
+                      "story_overview": overview,
+                      "story_arc": page.get("story_arc", ""),
+                      "story_role": page.get("story_role", ""),
+                      "narrative_goal": page.get("narrative_goal", ""),
+                      "emphasis_point": page.get("emphasis_point", "turning"),
+                      "emphasis_reason": page.get("emphasis_reason", ""),
+                      "key_scene": page.get("key_scene", ""),
+                      "learning_content": page.get("learning_content", ""),
+                      "dialogue_draft": page.get("dialogue_draft", []),
+                      "panels": page.get("panels", [])
+                  }
+                  pages_array.append(json.dumps(page_data, ensure_ascii=False))
+
+              return {
+                  "pages_array": pages_array,
+                  "count": len(pages_array)
+              }
+        code_language: python3
+        desc: 'Create iteration array from story details'
+        outputs:
+          result:
+            children: null
+            type: object
+        selected: false
+        title: Prepare Iteration
+        type: code
+        variables:
+        - value_selector:
+          - '1000000004'
+          - text
+          variable: story_details_text
+        - value_selector:
+          - '1000000001'
+          - characters
+          variable: characters
+        - value_selector:
+          - '1000000001'
+          - theme
+          variable: theme
+        - value_selector:
+          - '1000000001'
+          - learning_goal
+          variable: learning_goal
+        - value_selector:
+          - '1000000001'
+          - total_pages
+          variable: total_pages
+      height: 90
+      id: '1000000005'
+      position:
+        x: 1280
+        y: 282
+      positionAbsolute:
+        x: 1280
+        y: 282
+      selected: false
+      sourcePosition: right
+      targetPosition: left
+      type: custom
+      width: 244
+
+    # [6] ITERATION NODE
+    - data:
+        desc: 'Process each page'
+        error_handle_mode: terminated
+        is_parallel: false
+        iterator_selector:
+        - '1000000005'
+        - result
+        - pages_array
+        output_type: array[string]
+        selected: false
+        title: Page Iterator
+        type: iteration
+      height: 400
+      id: '1000000006'
+      position:
+        x: 1580
+        y: 200
+      positionAbsolute:
+        x: 1580
+        y: 200
+      selected: false
+      sourcePosition: right
+      targetPosition: left
+      type: custom
+      width: 600
+      zIndex: 1
+
+    # [7] CODE NODE (inside iteration) - Layout conversion
+    - data:
+        code: |
+          import json
+
+          def main(page_data_str: str) -> dict:
+              """
+              Convert emphasis_point to layout pattern.
+              Returns layout diagram and panel positions.
+              """
+              LAYOUT_PATTERNS = {
+                  "opening": {
+                      "pattern": "opening",
+                      "total_panels": 5,
+                      "diagram": """
+          +-------------------------+
+          |      Panel 1 (wide)      |
+          +------------+------------+
+          |  Panel 3   |  Panel 2   |
+          +------------+------------+
+          |  Panel 5   |  Panel 4   |
+          +------------+------------+""",
+                      "positions": [
+                          {"panel": 1, "position": "row1-wide", "emphasis": True},
+                          {"panel": 2, "position": "row2-right"},
+                          {"panel": 3, "position": "row2-left"},
+                          {"panel": 4, "position": "row3-right"},
+                          {"panel": 5, "position": "row3-left"}
+                      ]
+                  },
+                  "turning": {
+                      "pattern": "turning",
+                      "total_panels": 5,
+                      "diagram": """
+          +------------+------------+
+          |  Panel 2   |  Panel 1   |
+          +------------+------------+
+          |      Panel 3 (wide)      |
+          +------------+------------+
+          |  Panel 5   |  Panel 4   |
+          +------------+------------+""",
+                      "positions": [
+                          {"panel": 1, "position": "row1-right"},
+                          {"panel": 2, "position": "row1-left"},
+                          {"panel": 3, "position": "row2-wide", "emphasis": True},
+                          {"panel": 4, "position": "row3-right"},
+                          {"panel": 5, "position": "row3-left"}
+                      ]
+                  },
+                  "conclusion": {
+                      "pattern": "conclusion",
+                      "total_panels": 5,
+                      "diagram": """
+          +------------+------------+
+          |  Panel 2   |  Panel 1   |
+          +------------+------------+
+          |  Panel 4   |  Panel 3   |
+          +------------+------------+
+          |      Panel 5 (wide)      |
+          +-------------------------+""",
+                      "positions": [
+                          {"panel": 1, "position": "row1-right"},
+                          {"panel": 2, "position": "row1-left"},
+                          {"panel": 3, "position": "row2-right"},
+                          {"panel": 4, "position": "row2-left"},
+                          {"panel": 5, "position": "row3-wide", "emphasis": True}
+                      ]
+                  },
+                  "dual": {
+                      "pattern": "dual",
+                      "total_panels": 4,
+                      "diagram": """
+          +-------------------------+
+          |      Panel 1 (wide)      |
+          +------------+------------+
+          |  Panel 3   |  Panel 2   |
+          +------------+------------+
+          |      Panel 4 (wide)      |
+          +-------------------------+""",
+                      "positions": [
+                          {"panel": 1, "position": "row1-wide", "emphasis": True},
+                          {"panel": 2, "position": "row2-right"},
+                          {"panel": 3, "position": "row2-left"},
+                          {"panel": 4, "position": "row3-wide", "emphasis": True}
+                      ]
+                  },
+                  "even": {
+                      "pattern": "even",
+                      "total_panels": 6,
+                      "diagram": """
+          +------------+------------+
+          |  Panel 2   |  Panel 1   |
+          +------------+------------+
+          |  Panel 4   |  Panel 3   |
+          +------------+------------+
+          |  Panel 6   |  Panel 5   |
+          +------------+------------+""",
+                      "positions": [
+                          {"panel": 1, "position": "row1-right"},
+                          {"panel": 2, "position": "row1-left"},
+                          {"panel": 3, "position": "row2-right"},
+                          {"panel": 4, "position": "row2-left"},
+                          {"panel": 5, "position": "row3-right"},
+                          {"panel": 6, "position": "row3-left"}
+                      ]
+                  }
+              }
+
+              page_data = json.loads(page_data_str)
+              emphasis = page_data.get("emphasis_point", "turning")
+              layout = LAYOUT_PATTERNS.get(emphasis, LAYOUT_PATTERNS["turning"])
+
+              page_data["layout"] = layout
+              return {"page_with_layout": json.dumps(page_data, ensure_ascii=False)}
+        code_language: python3
+        desc: 'Convert emphasis_point to layout pattern'
+        outputs:
+          result:
+            children: null
+            type: object
+        selected: false
+        title: Layout Convert
+        type: code
+        variables:
+        - value_selector:
+          - '1000000006'
+          - item
+          variable: page_data_str
+      height: 90
+      id: '1000000007'
+      iteration_id: '1000000006'
+      position:
+        x: 1650
+        y: 320
+      positionAbsolute:
+        x: 1650
+        y: 320
+      selected: false
+      sourcePosition: right
+      targetPosition: left
+      type: custom
+      width: 220
+      zIndex: 1002
+
+    # [8] LLM NODE (inside iteration) - Generate YAML
+    - data:
+        context:
+          enabled: false
+          variable_selector: []
+        desc: 'Generate complete page YAML'
+        edition_type: basic
+        model:
+          completion_params:
+            temperature: 0.5
+          mode: chat
+          name: gpt-4o
+          provider: openai
+        prompt_template:
+        - id: sys-yaml-001
+          role: system
+          text: |
+            You are a manga YAML generator for Nano Banana Pro.
+            Generate a complete, independent YAML for one manga page.
+
+            CRITICAL RULES:
+            - Each YAML must be completely independent (no external references)
+            - Include all metadata, character definitions, settings
+            - Use Kunio-kun style (4-5 head proportions, hot-blooded deformed)
+            - Image binding first (reference images over text descriptions)
+            - Zero empty space in panel layout
+            - Japanese reading order (right to left)
+            - Include prompt_natural_language section for copy-paste use
+
+            OUTPUT FORMAT: Valid YAML starting with "# =====" header
+        - id: user-yaml-001
+          role: user
+          text: |
+            Page Data with Layout:
+            {{#1000000007.result.page_with_layout#}}
+
+            Generate complete independent YAML for this page.
+            Include all sections: project, art_style, character_image_binding, characters, panel_layout, setting, story_overview, this_page, quality_criteria, reference_images, prompt_natural_language.
+
+            The prompt_natural_language section must be a complete, copy-paste ready prompt in English for Google AI Studio.
+        selected: false
+        structured_output_enabled: false
+        title: Generate YAML
+        type: llm
+      height: 120
+      id: '1000000008'
+      iteration_id: '1000000006'
+      position:
+        x: 1920
+        y: 320
+      positionAbsolute:
+        x: 1920
+        y: 320
+      selected: false
+      sourcePosition: right
+      targetPosition: left
+      type: custom
+      width: 220
+      zIndex: 1002
+
+    # [9] TEMPLATE TRANSFORM NODE - Combine all pages
+    - data:
+        desc: 'Combine all page YAMLs'
+        selected: false
+        template: |
+          # Manga Generation Complete
+          # Total Pages: {{ pages | length }}
+
+          {% for yaml_content in pages %}
+          ---
+          # PAGE {{ loop.index }}
+          {{ yaml_content }}
+
+          {% endfor %}
+        title: Combine Pages
+        type: template-transform
+        variables:
+        - value_selector:
+          - '1000000006'
+          - output
+          variable: pages
+      height: 90
+      id: '1000000009'
+      position:
+        x: 2280
+        y: 282
+      positionAbsolute:
+        x: 2280
+        y: 282
+      selected: false
+      sourcePosition: right
+      targetPosition: left
+      type: custom
+      width: 244
+
+    # [10] END NODE
+    - data:
+        desc: 'Output generated YAMLs and story design'
+        outputs:
+        - value_selector:
+          - '1000000009'
+          - output
+          variable: yaml_prompts
+        - value_selector:
+          - '1000000003'
+          - result
+          variable: story_design
+        selected: false
+        title: End
+        type: end
+      height: 90
+      id: '1000000010'
+      position:
+        x: 2580
+        y: 282
+      positionAbsolute:
+        x: 2580
+        y: 282
+      selected: false
+      sourcePosition: right
+      targetPosition: left
+      type: custom
+      width: 244
+
+    viewport:
+      x: 0
+      y: 0
+      zoom: 0.8

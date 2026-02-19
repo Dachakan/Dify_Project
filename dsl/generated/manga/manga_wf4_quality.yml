@@ -1,0 +1,644 @@
+app:
+  description: "WF4: Quality Check - 品質検証 + 合否判定"
+  icon: "✓"
+  icon_background: '#FFEAD5'
+  mode: workflow
+  name: "Manga WF4 - Quality Check"
+  use_icon_as_answer_icon: false
+kind: app
+version: 0.1.2
+
+workflow:
+  conversation_variables: []
+  environment_variables: []
+  features:
+    file_upload:
+      image:
+        enabled: false
+        number_limits: 3
+        transfer_methods:
+        - local_file
+        - remote_url
+    opening_statement: ''
+    retriever_resource:
+      enabled: false
+    sensitive_word_avoidance:
+      enabled: false
+    speech_to_text:
+      enabled: false
+    suggested_questions: []
+    suggested_questions_after_answer:
+      enabled: false
+    text_to_speech:
+      enabled: false
+      language: ''
+      voice: ''
+
+  graph:
+    edges:
+    - data:
+        isInIteration: false
+        isInLoop: false
+        sourceType: start
+        targetType: code
+      id: edge-start-to-structure
+      source: '1000000001'
+      sourceHandle: source
+      target: '1000000002'
+      targetHandle: target
+      type: custom
+      zIndex: 0
+    - data:
+        isInIteration: false
+        isInLoop: false
+        sourceType: code
+        targetType: llm
+      id: edge-structure-to-consistency
+      source: '1000000002'
+      sourceHandle: source
+      target: '1000000003'
+      targetHandle: target
+      type: custom
+      zIndex: 0
+    - data:
+        isInIteration: false
+        isInLoop: false
+        sourceType: llm
+        targetType: code
+      id: edge-consistency-to-score
+      source: '1000000003'
+      sourceHandle: source
+      target: '1000000004'
+      targetHandle: target
+      type: custom
+      zIndex: 0
+    - data:
+        isInIteration: false
+        isInLoop: false
+        sourceType: code
+        targetType: if-else
+      id: edge-score-to-gate
+      source: '1000000004'
+      sourceHandle: source
+      target: '1000000005'
+      targetHandle: target
+      type: custom
+      zIndex: 0
+    - data:
+        isInIteration: false
+        isInLoop: false
+        sourceType: if-else
+        targetType: template-transform
+      id: edge-gate-to-success
+      source: '1000000005'
+      sourceHandle: 'true'
+      target: '1000000006'
+      targetHandle: target
+      type: custom
+      zIndex: 0
+    - data:
+        isInIteration: false
+        isInLoop: false
+        sourceType: if-else
+        targetType: template-transform
+      id: edge-gate-to-failure
+      source: '1000000005'
+      sourceHandle: 'false'
+      target: '1000000007'
+      targetHandle: target
+      type: custom
+      zIndex: 0
+    - data:
+        isInIteration: false
+        isInLoop: false
+        sourceType: template-transform
+        targetType: end
+      id: edge-success-to-end
+      source: '1000000006'
+      sourceHandle: source
+      target: '1000000008'
+      targetHandle: target
+      type: custom
+      zIndex: 0
+    - data:
+        isInIteration: false
+        isInLoop: false
+        sourceType: template-transform
+        targetType: end
+      id: edge-failure-to-end
+      source: '1000000007'
+      sourceHandle: source
+      target: '1000000009'
+      targetHandle: target
+      type: custom
+      zIndex: 0
+
+    nodes:
+    - data:
+        desc: 'WF3からの入力を受け取る'
+        selected: false
+        title: Start
+        type: start
+        variables:
+        - label: yaml_content
+          max_length: 50000
+          options: []
+          required: true
+          type: paragraph
+          variable: yaml_content
+        - label: design_json
+          max_length: 10000
+          options: []
+          required: true
+          type: paragraph
+          variable: design_json
+      height: 140
+      id: '1000000001'
+      position:
+        x: 80
+        y: 282
+      positionAbsolute:
+        x: 80
+        y: 282
+      selected: false
+      sourcePosition: right
+      targetPosition: left
+      type: custom
+      width: 244
+
+    - data:
+        code: |
+          import json
+          import re
+
+          def main(yaml_content: str, design_json: str) -> dict:
+              """
+              YAML構造をチェックし、基本的な品質スコアを算出する。
+              """
+              issues = []
+              score = 100
+
+              # 1. YAML区切り文字チェック
+              pages = yaml_content.split("---")
+              page_count = len([p for p in pages if p.strip()])
+
+              if page_count == 0:
+                  issues.append("ページが見つかりません")
+                  score -= 50
+
+              # 2. 必須フィールドチェック
+              required_fields = ["page:", "layout:", "scene:", "panels:"]
+              for field in required_fields:
+                  if field not in yaml_content:
+                      issues.append(f"必須フィールド {field} が見つかりません")
+                      score -= 10
+
+              # 3. キャラクター画像URLチェック
+              url_pattern = r"image_url:\s*https?://"
+              url_matches = re.findall(url_pattern, yaml_content)
+              if len(url_matches) == 0:
+                  issues.append("キャラクター画像URLが見つかりません")
+                  score -= 15
+
+              # 4. 設計JSONとの整合性チェック（ページ数）
+              try:
+                  design = json.loads(design_json)
+                  expected_pages = design.get("story_overview", {}).get("total_pages", 0)
+                  if expected_pages == 0:
+                      expected_pages = len(design.get("pages", []))
+
+                  if expected_pages > 0 and page_count != expected_pages:
+                      issues.append(f"ページ数不一致: 期待={expected_pages}, 実際={page_count}")
+                      score -= 20
+              except json.JSONDecodeError:
+                  issues.append("design_jsonのパースに失敗")
+                  score -= 10
+
+              # スコアは0以上に制限
+              score = max(0, score)
+
+              return {
+                  "structure_score": score,
+                  "page_count": page_count,
+                  "structure_issues": issues,
+                  "structure_report": json.dumps({
+                      "score": score,
+                      "page_count": page_count,
+                      "issues": issues
+                  }, ensure_ascii=False)
+              }
+        code_language: python3
+        outputs:
+          structure_score:
+            children: null
+            type: number
+          page_count:
+            children: null
+            type: number
+          structure_issues:
+            children: null
+            type: array[string]
+          structure_report:
+            children: null
+            type: string
+        selected: false
+        title: 'CODE: Structure Check'
+        type: code
+        variables:
+        - value_selector:
+          - '1000000001'
+          - yaml_content
+          value_type: string
+          variable: yaml_content
+        - value_selector:
+          - '1000000001'
+          - design_json
+          value_type: string
+          variable: design_json
+      height: 54
+      id: '1000000002'
+      position:
+        x: 380
+        y: 282
+      positionAbsolute:
+        x: 380
+        y: 282
+      selected: false
+      sourcePosition: right
+      targetPosition: left
+      type: custom
+      width: 244
+
+    - data:
+        context:
+          enabled: false
+          variable_selector: []
+        desc: '内容の一貫性チェック'
+        edition_type: basic
+        model:
+          completion_params:
+            temperature: 0.3
+          mode: chat
+          name: gpt-4o
+          provider: langgenius/openai/openai
+        prompt_template:
+        - id: sys-check
+          role: system
+          text: |
+            あなたは教育マンガの品質管理エキスパートです。
+
+            以下の観点でYAMLコンテンツを評価してください：
+            1. ストーリーの一貫性（起承転結の流れ）
+            2. 教育内容の妥当性
+            3. キャラクターの行動・台詞の自然さ
+            4. 視覚的な説明の適切性
+
+            出力は必ず以下のJSON形式で出力してください：
+            {
+              "consistency_score": 0-100の数値,
+              "story_flow": "良い/普通/要改善",
+              "educational_value": "高い/普通/低い",
+              "character_consistency": "良い/普通/要改善",
+              "visual_clarity": "良い/普通/要改善",
+              "issues": ["問題点1", "問題点2"],
+              "suggestions": ["改善提案1", "改善提案2"]
+            }
+        - id: user-check
+          role: user
+          text: |
+            設計JSON:
+            {{#1000000001.design_json#}}
+
+            生成されたYAML:
+            {{#1000000001.yaml_content#}}
+
+            構造チェック結果:
+            {{#1000000002.structure_report#}}
+
+            上記の内容を評価し、JSONで結果を出力してください。
+        selected: false
+        structured_output_enabled: false
+        title: 'LLM: Consistency Check'
+        type: llm
+        variables: []
+        vision:
+          enabled: false
+      height: 98
+      id: '1000000003'
+      position:
+        x: 680
+        y: 282
+      positionAbsolute:
+        x: 680
+        y: 282
+      selected: false
+      sourcePosition: right
+      targetPosition: left
+      type: custom
+      width: 244
+
+    - data:
+        code: |
+          import json
+
+          def main(structure_score: int, consistency_result: str) -> dict:
+              """
+              構造スコアと一貫性スコアを統合し、最終スコアを算出する。
+              """
+              try:
+                  consistency = json.loads(consistency_result)
+                  consistency_score = consistency.get("consistency_score", 50)
+              except (json.JSONDecodeError, TypeError):
+                  consistency_score = 50
+                  consistency = {"issues": ["一貫性チェック結果のパースに失敗"]}
+
+              # 加重平均（構造40%、一貫性60%）
+              final_score = int(structure_score * 0.4 + consistency_score * 0.6)
+
+              # 合否判定
+              passed = final_score >= 70
+
+              return {
+                  "final_score": final_score,
+                  "passed": "PASSED" if passed else "FAILED",
+                  "structure_score": structure_score,
+                  "consistency_score": consistency_score,
+                  "consistency_issues": consistency.get("issues", []),
+                  "suggestions": consistency.get("suggestions", [])
+              }
+        code_language: python3
+        outputs:
+          final_score:
+            children: null
+            type: number
+          passed:
+            children: null
+            type: string
+          structure_score:
+            children: null
+            type: number
+          consistency_score:
+            children: null
+            type: number
+          consistency_issues:
+            children: null
+            type: array[string]
+          suggestions:
+            children: null
+            type: array[string]
+        selected: false
+        title: 'CODE: Score Calculation'
+        type: code
+        variables:
+        - value_selector:
+          - '1000000002'
+          - structure_score
+          value_type: number
+          variable: structure_score
+        - value_selector:
+          - '1000000003'
+          - text
+          value_type: string
+          variable: consistency_result
+      height: 54
+      id: '1000000004'
+      position:
+        x: 980
+        y: 282
+      positionAbsolute:
+        x: 980
+        y: 282
+      selected: false
+      sourcePosition: right
+      targetPosition: left
+      type: custom
+      width: 244
+
+    - data:
+        cases:
+        - case_id: 'true'
+          conditions:
+          - comparison_operator: ge
+            value: '70'
+            variable_selector:
+            - '1000000004'
+            - final_score
+          logical_operator: and
+        desc: 'スコア70以上で合格'
+        selected: false
+        title: 'IF-ELSE: Quality Gate'
+        type: if-else
+      height: 126
+      id: '1000000005'
+      position:
+        x: 1280
+        y: 282
+      positionAbsolute:
+        x: 1280
+        y: 282
+      selected: false
+      sourcePosition: right
+      targetPosition: left
+      type: custom
+      width: 244
+
+    - data:
+        selected: false
+        template: |
+          # 品質チェック結果: PASSED
+
+          ## スコア
+          - 最終スコア: {{ final_score }}点
+          - 構造スコア: {{ structure_score }}点
+          - 一貫性スコア: {{ consistency_score }}点
+
+          ## 判定
+          品質基準（70点以上）をクリアしました。
+
+          ## 生成ページ数
+          {{ page_count }}ページ
+
+          ---
+          品質チェック完了日時: {{ timestamp }}
+        title: 'TEMPLATE: Quality Report'
+        type: template-transform
+        variables:
+        - value_selector:
+          - '1000000004'
+          - final_score
+          value_type: number
+          variable: final_score
+        - value_selector:
+          - '1000000004'
+          - structure_score
+          value_type: number
+          variable: structure_score
+        - value_selector:
+          - '1000000004'
+          - consistency_score
+          value_type: number
+          variable: consistency_score
+        - value_selector:
+          - '1000000002'
+          - page_count
+          value_type: number
+          variable: page_count
+      height: 54
+      id: '1000000006'
+      position:
+        x: 1580
+        y: 200
+      positionAbsolute:
+        x: 1580
+        y: 200
+      selected: false
+      sourcePosition: right
+      targetPosition: left
+      type: custom
+      width: 244
+
+    - data:
+        selected: false
+        template: |
+          # 品質チェック結果: FAILED
+
+          ## スコア
+          - 最終スコア: {{ final_score }}点（基準: 70点以上）
+          - 構造スコア: {{ structure_score }}点
+          - 一貫性スコア: {{ consistency_score }}点
+
+          ## 検出された問題
+          {% for issue in consistency_issues %}
+          - {{ issue }}
+          {% endfor %}
+
+          {% for issue in structure_issues %}
+          - {{ issue }}
+          {% endfor %}
+
+          ## 改善提案
+          {% for suggestion in suggestions %}
+          - {{ suggestion }}
+          {% endfor %}
+
+          ## 推奨アクション
+          問題の内容に応じて、以下のワークフローを再実行してください：
+          - ストーリーの問題 → WF2（Story Details）を修正して再実行
+          - YAML構造の問題 → WF3（Page Generation）を再実行
+        title: 'TEMPLATE: Error Report'
+        type: template-transform
+        variables:
+        - value_selector:
+          - '1000000004'
+          - final_score
+          value_type: number
+          variable: final_score
+        - value_selector:
+          - '1000000004'
+          - structure_score
+          value_type: number
+          variable: structure_score
+        - value_selector:
+          - '1000000004'
+          - consistency_score
+          value_type: number
+          variable: consistency_score
+        - value_selector:
+          - '1000000004'
+          - consistency_issues
+          value_type: array[string]
+          variable: consistency_issues
+        - value_selector:
+          - '1000000002'
+          - structure_issues
+          value_type: array[string]
+          variable: structure_issues
+        - value_selector:
+          - '1000000004'
+          - suggestions
+          value_type: array[string]
+          variable: suggestions
+      height: 54
+      id: '1000000007'
+      position:
+        x: 1580
+        y: 360
+      positionAbsolute:
+        x: 1580
+        y: 360
+      selected: false
+      sourcePosition: right
+      targetPosition: left
+      type: custom
+      width: 244
+
+    - data:
+        desc: '品質チェック合格'
+        outputs:
+        - value_selector:
+          - '1000000004'
+          - passed
+          variable: passed
+        - value_selector:
+          - '1000000004'
+          - final_score
+          variable: final_score
+        - value_selector:
+          - '1000000006'
+          - output
+          variable: quality_report
+        selected: false
+        title: 'End: PASSED'
+        type: end
+      height: 148
+      id: '1000000008'
+      position:
+        x: 1880
+        y: 200
+      positionAbsolute:
+        x: 1880
+        y: 200
+      selected: false
+      sourcePosition: right
+      targetPosition: left
+      type: custom
+      width: 244
+
+    - data:
+        desc: '品質チェック不合格'
+        outputs:
+        - value_selector:
+          - '1000000004'
+          - passed
+          variable: passed
+        - value_selector:
+          - '1000000004'
+          - final_score
+          variable: final_score
+        - value_selector:
+          - '1000000007'
+          - output
+          variable: error_report
+        selected: false
+        title: 'End: FAILED'
+        type: end
+      height: 148
+      id: '1000000009'
+      position:
+        x: 1880
+        y: 360
+      positionAbsolute:
+        x: 1880
+        y: 360
+      selected: false
+      sourcePosition: right
+      targetPosition: left
+      type: custom
+      width: 244
+
+    viewport:
+      x: 0
+      y: 0
+      zoom: 0.8
+
+  rag_pipeline_variables: []

@@ -1,0 +1,2075 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>森組_工事管理マスター - Google Sheets</title>
+<script src="https://cdn.tailwindcss.com"></script>
+<style>
+  * { box-sizing: border-box; }
+  body { font-family: 'Arial', 'Helvetica', sans-serif; margin: 0; padding: 0; background: #fff; overflow: hidden; }
+
+  /* Toolbar */
+  .toolbar-top { background: #f9fbfd; border-bottom: 1px solid #dadce0; padding: 4px 8px; display: flex; align-items: center; gap: 8px; }
+  .sheets-icon { width: 24px; height: 24px; background: #0f9d58; border-radius: 3px; display: flex; align-items: center; justify-content: center; color: #fff; font-weight: bold; font-size: 14px; flex-shrink: 0; }
+  .file-name { font-size: 18px; color: #202124; font-weight: 400; white-space: nowrap; }
+
+  /* Menu bar */
+  .menu-bar { background: #f9fbfd; display: flex; align-items: center; padding: 0 8px; gap: 0; border-bottom: 1px solid #e0e0e0; }
+  .menu-item { padding: 6px 12px; font-size: 13px; color: #202124; cursor: pointer; border-radius: 4px; white-space: nowrap; }
+  .menu-item:hover { background: #e8eaed; }
+
+  /* Formula bar */
+  .formula-bar { display: flex; align-items: center; border-bottom: 1px solid #e0e0e0; background: #fff; height: 30px; }
+  .cell-address { width: 80px; text-align: center; font-size: 13px; color: #202124; border-right: 1px solid #e0e0e0; height: 100%; display: flex; align-items: center; justify-content: center; background: #f8f9fa; flex-shrink: 0; }
+  .fx-label { padding: 0 8px; color: #70757a; font-size: 14px; font-style: italic; border-right: 1px solid #e0e0e0; height: 100%; display: flex; align-items: center; flex-shrink: 0; }
+  .formula-input { flex: 1; padding: 0 8px; font-size: 13px; color: #202124; border: none; outline: none; height: 100%; }
+
+  /* Spreadsheet area */
+  .sheet-container { overflow: auto; height: calc(100vh - 148px); background: #fff; }
+  .sheet-table { border-collapse: collapse; font-size: 13px; min-width: 100%; }
+  .sheet-table th, .sheet-table td { border: 1px solid #D1D5DB; padding: 2px 6px; height: 25px; white-space: nowrap; }
+
+  /* Column headers */
+  .col-header { background: #f8f9fa; color: #202124; font-weight: 400; text-align: center; min-width: 80px; position: sticky; top: 0; z-index: 2; border-bottom: 2px solid #c0c0c0; user-select: none; }
+  .corner-header { background: #f8f9fa; width: 40px; min-width: 40px; position: sticky; top: 0; left: 0; z-index: 3; border-bottom: 2px solid #c0c0c0; }
+
+  /* Row numbers */
+  .row-num { background: #f8f9fa; color: #202124; font-weight: 400; text-align: center; width: 40px; min-width: 40px; position: sticky; left: 0; z-index: 1; user-select: none; }
+
+  /* Cell colors */
+  .cell-input { background: #E8F5E9; }
+  .cell-calc { background: #EEEEEE; }
+  .cell-header { background: #E0E0E0; font-weight: 700; text-align: center; }
+  .cell-normal { background: #fff; }
+
+  /* Selected cell */
+  .cell-selected { outline: 2px solid #1a73e8; outline-offset: -1px; }
+
+  /* Conditional formatting */
+  .bg-red-alert { background: #FFCDD2 !important; }
+  .bg-yellow-alert { background: #FFF9C4 !important; }
+  .text-red { color: #E53935; }
+  .text-orange { color: #F57C00; }
+  .text-blue-pos { color: #1565C0; }
+  .text-green-good { color: #2E7D32; }
+
+  /* Tab bar */
+  .tab-bar { display: flex; align-items: flex-end; background: #f8f9fa; border-top: 1px solid #dadce0; height: 36px; padding: 0 8px; overflow-x: auto; flex-shrink: 0; position: fixed; bottom: 0; left: 0; right: 0; z-index: 10; }
+  .tab-btn { padding: 6px 16px; font-size: 12px; cursor: pointer; border: 1px solid #dadce0; border-bottom: none; border-radius: 4px 4px 0 0; margin-right: 2px; white-space: nowrap; background: #F3F4F6; color: #5f6368; transition: background 0.15s; }
+  .tab-btn:hover:not(.active) { background: #e8eaed; }
+  .tab-btn.tab-green.active { border-bottom: 3px solid #0f9d58; background: #fff; color: #202124; font-weight: 500; }
+  .tab-btn.tab-blue.active { border-bottom: 3px solid #1565C0; background: #fff; color: #202124; font-weight: 500; }
+  .tab-add { width: 28px; height: 28px; display: flex; align-items: center; justify-content: center; border-radius: 50%; cursor: pointer; color: #5f6368; font-size: 18px; margin-left: 4px; }
+  .tab-add:hover { background: #e8eaed; }
+  .tab-separator { width: 2px; height: 24px; background: #9e9e9e; margin: 6px 8px 0 8px; flex-shrink: 0; }
+
+  /* Dashboard KPI cards */
+  .kpi-card { border: 1px solid #D1D5DB; text-align: center; }
+  .kpi-label { background: #E0E0E0; font-weight: 700; padding: 8px; font-size: 13px; border-bottom: 1px solid #D1D5DB; }
+  .kpi-value { padding: 16px 8px; font-size: 24px; font-weight: 700; background: #fff; }
+
+  /* Chart placeholder */
+  .chart-area { border: 2px dashed #bdbdbd; margin: 8px; padding: 20px; text-align: center; color: #757575; background: #fafafa; border-radius: 4px; }
+  .chart-box { display: inline-block; border: 1px solid #bdbdbd; padding: 12px 24px; margin: 8px; border-radius: 4px; background: #fff; font-size: 13px; color: #424242; }
+
+  /* Wider columns for specific tabs */
+  .col-wide { min-width: 140px; }
+  .col-medium { min-width: 110px; }
+  .col-narrow { min-width: 60px; }
+  .col-amount { min-width: 120px; text-align: right; }
+</style>
+</head>
+<body>
+
+<!-- Top toolbar -->
+<div class="toolbar-top">
+  <div class="sheets-icon">S</div>
+  <div class="file-name" id="fileName">森組_海潟漁港R7-1工区_工事管理</div>
+</div>
+
+<!-- Menu bar -->
+<div class="menu-bar">
+  <div class="menu-item">ファイル</div>
+  <div class="menu-item">編集</div>
+  <div class="menu-item">表示</div>
+  <div class="menu-item">挿入</div>
+  <div class="menu-item">書式</div>
+  <div class="menu-item">データ</div>
+  <div class="menu-item">ツール</div>
+</div>
+
+<!-- Formula bar -->
+<div class="formula-bar">
+  <div class="cell-address" id="cellAddress">A1</div>
+  <div class="fx-label">fx</div>
+  <input type="text" class="formula-input" id="formulaInput" value="" readonly>
+</div>
+
+<!-- Sheet container -->
+<div class="sheet-container" id="sheetContainer">
+
+  <!-- Tab 1: 支払明細入力 -->
+  <div id="tab1" class="tab-content">
+    <!-- SITE-01: 前行コピーボタン + 入力期限注記 -->
+    <div style="padding:8px 12px;">
+      <button style="padding:6px 12px; background:#4CAF50; color:white; border:none; border-radius:4px; cursor:pointer; margin-bottom:8px;">前行コピー</button>
+      <span style="font-size:12px; color:#666; margin-left:8px;">同じ業者の連続入力時に、前行の業者名・費目を次行にコピーします</span>
+    </div>
+    <!-- 工種階層DD: B列(カテゴリ) -> C列(工事種別) -> D列(工種) -> E列(費目/要素) の連動ドロップダウン -->
+    <!-- M列(予算箱ID)は B-E列の組み合わせからGASが自動解決。実行予算に存在しない場合は赤アラート -->
+    <table class="sheet-table">
+      <thead>
+        <!-- SITE-02: エリア区分ラベル行 -->
+        <tr>
+          <th class="corner-header" rowspan="2"></th>
+          <th colspan="8" style="background:#E8F5E9; text-align:center; font-weight:700; font-size:12px; border:1px solid #D1D5DB; padding:4px;">所長入力エリア</th>
+          <th colspan="2" style="background:#E3F2FD; text-align:center; font-weight:700; font-size:12px; border:1px solid #D1D5DB; padding:4px;">事務員追記エリア</th>
+          <th colspan="4" style="background:#EEEEEE; text-align:center; font-weight:700; font-size:12px; border:1px solid #D1D5DB; padding:4px;">自動計算</th>
+        </tr>
+        <tr>
+          <th class="col-header col-narrow">A</th>
+          <th class="col-header col-medium">B</th>
+          <th class="col-header col-wide">C</th>
+          <th class="col-header col-wide">D</th>
+          <th class="col-header col-medium">E</th>
+          <th class="col-header col-wide">F</th>
+          <th class="col-header col-wide">G</th>
+          <th class="col-header col-amount">H</th>
+          <th class="col-header col-amount" style="background:#E3F2FD;">I</th>
+          <th class="col-header col-medium" style="background:#E3F2FD;">J</th>
+          <th class="col-header col-amount">K</th>
+          <th class="col-header col-amount">L</th>
+          <th class="col-header col-wide">M</th>
+          <th class="col-header col-medium">N</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td class="row-num">1</td>
+          <td class="cell-header" style="background:#E8F5E9;">月度</td>
+          <td class="cell-header" style="background:#E8F5E9;">カテゴリ</td>
+          <td class="cell-header" style="background:#E8F5E9;">工事種別</td>
+          <td class="cell-header" style="background:#E8F5E9;">工種</td>
+          <td class="cell-header" style="background:#E8F5E9;">費目/要素</td>
+          <td class="cell-header" style="background:#E8F5E9;">支払先</td>
+          <td class="cell-header" style="background:#E8F5E9;">摘要</td>
+          <td class="cell-header" style="background:#E8F5E9;">支払金額(税抜)</td>
+          <td class="cell-header" style="background:#E3F2FD;">相殺額</td>
+          <td class="cell-header" style="background:#E3F2FD;">相殺先</td>
+          <td class="cell-header">消費税</td>
+          <td class="cell-header">税込金額</td>
+          <td class="cell-header">予算箱ID</td>
+          <td class="cell-header">登録日時</td>
+        </tr>
+        <tr>
+          <td class="row-num">2</td>
+          <td class="cell-input cell-selected" data-cell="A2" data-formula="">2025-10</td>
+          <td class="cell-input" data-cell="B2" data-formula="">直接工事費</td>
+          <td class="cell-input" data-cell="C2" data-formula="">コンクリート工事</td>
+          <td class="cell-input" data-cell="D2" data-formula="">コンクリート工</td>
+          <td class="cell-input" data-cell="E2" data-formula="">外注費</td>
+          <td class="cell-input" data-cell="F2" data-formula="">川越建設</td>
+          <td class="cell-input" data-cell="G2" data-formula="">コンクリート打設工事</td>
+          <td class="cell-input col-amount" data-cell="H2" data-formula="">5,316,667</td>
+          <td class="cell-input col-amount" data-cell="I2" data-formula="" style="background:#E3F2FD;">0</td>
+          <td class="cell-input" data-cell="J2" data-formula="" style="background:#E3F2FD;">- <span style="background:#FFF9C4; padding:2px 6px; border-radius:3px; font-size:11px;">仮</span></td>
+          <td class="cell-calc col-amount" data-cell="K2" data-formula="=ROUND((H2-I2)*0.1,0)">531,667</td>
+          <td class="cell-calc col-amount" data-cell="L2" data-formula="=(H2-I2)+K2">5,848,334</td>
+          <td class="cell-calc" data-cell="M2" data-formula="">C01-W02-K0201-E14</td>
+          <td class="cell-calc" data-cell="N2" data-formula="">2025/10/31</td>
+        </tr>
+        <tr>
+          <td class="row-num">3</td>
+          <td class="cell-input" data-cell="A3" data-formula="">2025-10</td>
+          <td class="cell-input" data-cell="B3" data-formula="">直接工事費</td>
+          <td class="cell-input" data-cell="C3" data-formula="">コンクリート工事</td>
+          <td class="cell-input" data-cell="D3" data-formula="">コンクリート工</td>
+          <td class="cell-input" data-cell="E3" data-formula="">材料費</td>
+          <td class="cell-input" data-cell="F3" data-formula="">桜島生コンクリート</td>
+          <td class="cell-input" data-cell="G3" data-formula="">生コン(相殺)</td>
+          <td class="cell-input col-amount" data-cell="H3" data-formula="">2,993,670</td>
+          <td class="cell-input col-amount" data-cell="I3" data-formula="" style="background:#E3F2FD;">2,993,670</td>
+          <td class="cell-input" data-cell="J3" data-formula="" style="background:#E3F2FD;">川越建設</td>
+          <td class="cell-calc col-amount" data-cell="K3" data-formula="=ROUND((H3-I3)*0.1,0)">0</td>
+          <td class="cell-calc col-amount" data-cell="L3" data-formula="=(H3-I3)+K3">0</td>
+          <td class="cell-calc" data-cell="M3" data-formula="">C01-W02-K0201-E11</td>
+          <td class="cell-calc" data-cell="N3" data-formula="">2025/10/28</td>
+        </tr>
+        <tr>
+          <td class="row-num">4</td>
+          <td class="cell-input" data-cell="A4" data-formula="">2025-10</td>
+          <td class="cell-input" data-cell="B4" data-formula="">直接工事費</td>
+          <td class="cell-input" data-cell="C4" data-formula="">コンクリート工事</td>
+          <td class="cell-input" data-cell="D4" data-formula="">型枠工</td>
+          <td class="cell-input" data-cell="E4" data-formula="">外注費</td>
+          <td class="cell-input" data-cell="F4" data-formula="">菱和コンクリート</td>
+          <td class="cell-input" data-cell="G4" data-formula="">型枠(相殺1,000,000+持越690,200)</td>
+          <td class="cell-input col-amount" data-cell="H4" data-formula="">1,910,000</td>
+          <td class="cell-input col-amount" data-cell="I4" data-formula="" style="background:#E3F2FD;">1,000,000</td>
+          <td class="cell-input" data-cell="J4" data-formula="" style="background:#E3F2FD;">川越建設</td>
+          <td class="cell-calc col-amount" data-cell="K4" data-formula="=ROUND((H4-I4)*0.1,0)">91,000</td>
+          <td class="cell-calc col-amount" data-cell="L4" data-formula="=(H4-I4)+K4">1,001,000</td>
+          <td class="cell-calc" data-cell="M4" data-formula="">C01-W02-K0202-E14</td>
+          <td class="cell-calc" data-cell="N4" data-formula="">2025/10/25</td>
+        </tr>
+        <tr>
+          <td class="row-num">5</td>
+          <td class="cell-input" data-cell="A5" data-formula="">2025-10</td>
+          <td class="cell-input" data-cell="B5" data-formula="">共通仮設費</td>
+          <td class="cell-input" data-cell="C5" data-formula=""></td>
+          <td class="cell-input" data-cell="D5" data-formula=""></td>
+          <td class="cell-input" data-cell="E5" data-formula="">運搬費</td>
+          <td class="cell-input" data-cell="F5" data-formula="">(有)大建測量設計</td>
+          <td class="cell-input" data-cell="G5" data-formula="">着工前測量</td>
+          <td class="cell-input col-amount" data-cell="H5" data-formula="">170,000</td>
+          <td class="cell-input col-amount" data-cell="I5" data-formula="" style="background:#E3F2FD;">0</td>
+          <td class="cell-input" data-cell="J5" data-formula="" style="background:#E3F2FD;">- <span style="background:#FFF9C4; padding:2px 6px; border-radius:3px; font-size:11px;">仮</span></td>
+          <td class="cell-calc col-amount" data-cell="K5" data-formula="=ROUND((H5-I5)*0.1,0)">17,000</td>
+          <td class="cell-calc col-amount" data-cell="L5" data-formula="=(H5-I5)+K5">187,000</td>
+          <td class="cell-calc" data-cell="M5" data-formula="">C02-F31</td>
+          <td class="cell-calc" data-cell="N5" data-formula="">2025/10/20</td>
+        </tr>
+        <tr>
+          <td class="row-num">6</td>
+          <td class="cell-input" data-cell="A6" data-formula="">2025-11</td>
+          <td class="cell-input" data-cell="B6" data-formula="">直接工事費</td>
+          <td class="cell-input" data-cell="C6" data-formula="">護岸・海岸工事</td>
+          <td class="cell-input" data-cell="D6" data-formula="">護岸工</td>
+          <td class="cell-input" data-cell="E6" data-formula="">外注費</td>
+          <td class="cell-input" data-cell="F6" data-formula="">川越建設</td>
+          <td class="cell-input" data-cell="G6" data-formula="">護岸工事(11月分)</td>
+          <td class="cell-input col-amount" data-cell="H6" data-formula="">4,350,333</td>
+          <td class="cell-input col-amount" data-cell="I6" data-formula="" style="background:#E3F2FD;">0</td>
+          <td class="cell-input" data-cell="J6" data-formula="" style="background:#E3F2FD;">- <span style="background:#FFF9C4; padding:2px 6px; border-radius:3px; font-size:11px;">仮</span></td>
+          <td class="cell-calc col-amount" data-cell="K6" data-formula="=ROUND((H6-I6)*0.1,0)">435,033</td>
+          <td class="cell-calc col-amount" data-cell="L6" data-formula="=(H6-I6)+K6">4,785,366</td>
+          <td class="cell-calc" data-cell="M6" data-formula="">C01-W04-K0401-E14</td>
+          <td class="cell-calc" data-cell="N6" data-formula="">2025/11/30</td>
+        </tr>
+        <tr>
+          <td class="row-num">7</td>
+          <td class="cell-input" data-cell="A7" data-formula="">2025-11</td>
+          <td class="cell-input" data-cell="B7" data-formula="">直接工事費</td>
+          <td class="cell-input" data-cell="C7" data-formula="">排水工事</td>
+          <td class="cell-input" data-cell="D7" data-formula="">管渠工（排水工）</td>
+          <td class="cell-input" data-cell="E7" data-formula="">外注費</td>
+          <td class="cell-input" data-cell="F7" data-formula="">(有)濱畑水道</td>
+          <td class="cell-input" data-cell="G7" data-formula="">排水工事(11月)</td>
+          <td class="cell-input col-amount" data-cell="H7" data-formula="">1,803,189</td>
+          <td class="cell-input col-amount" data-cell="I7" data-formula="" style="background:#E3F2FD;">0</td>
+          <td class="cell-input" data-cell="J7" data-formula="" style="background:#E3F2FD;">- <span style="background:#FFF9C4; padding:2px 6px; border-radius:3px; font-size:11px;">仮</span></td>
+          <td class="cell-calc col-amount" data-cell="K7" data-formula="=ROUND((H7-I7)*0.1,0)">180,319</td>
+          <td class="cell-calc col-amount" data-cell="L7" data-formula="=(H7-I7)+K7">1,983,508</td>
+          <td class="cell-calc" data-cell="M7" data-formula="">C01-W11-K1101-E14</td>
+          <td class="cell-calc" data-cell="N7" data-formula="">2025/11/25</td>
+        </tr>
+        <tr>
+          <td class="row-num">8</td>
+          <td class="cell-input" data-cell="A8" data-formula="">2025-11</td>
+          <td class="cell-input" data-cell="B8" data-formula="">直接工事費</td>
+          <td class="cell-input" data-cell="C8" data-formula="">コンクリート工事</td>
+          <td class="cell-input" data-cell="D8" data-formula="">コンクリート工</td>
+          <td class="cell-input" data-cell="E8" data-formula="">材料費</td>
+          <td class="cell-input" data-cell="F8" data-formula="">桜島生コンクリート</td>
+          <td class="cell-input" data-cell="G8" data-formula="">生コン(相殺)</td>
+          <td class="cell-input col-amount" data-cell="H8" data-formula="">1,986,480</td>
+          <td class="cell-input col-amount" data-cell="I8" data-formula="" style="background:#E3F2FD;">1,986,480</td>
+          <td class="cell-input" data-cell="J8" data-formula="" style="background:#E3F2FD;">川越建設</td>
+          <td class="cell-calc col-amount" data-cell="K8" data-formula="=ROUND((H8-I8)*0.1,0)">0</td>
+          <td class="cell-calc col-amount" data-cell="L8" data-formula="=(H8-I8)+K8">0</td>
+          <td class="cell-calc" data-cell="M8" data-formula="">C01-W02-K0201-E11</td>
+          <td class="cell-calc" data-cell="N8" data-formula="">2025/11/28</td>
+        </tr>
+        <tr>
+          <td class="row-num">9</td>
+          <td class="cell-input" data-cell="A9" data-formula="">2025-12</td>
+          <td class="cell-input" data-cell="B9" data-formula="">直接工事費</td>
+          <td class="cell-input" data-cell="C9" data-formula="">排水工事</td>
+          <td class="cell-input" data-cell="D9" data-formula="">管渠工（排水工）</td>
+          <td class="cell-input" data-cell="E9" data-formula="">外注費</td>
+          <td class="cell-input" data-cell="F9" data-formula="">(有)濱畑水道</td>
+          <td class="cell-input" data-cell="G9" data-formula="">排水工事(12月)</td>
+          <td class="cell-input col-amount" data-cell="H9" data-formula="">2,752,805</td>
+          <td class="cell-input col-amount" data-cell="I9" data-formula="" style="background:#E3F2FD;">0</td>
+          <td class="cell-input" data-cell="J9" data-formula="" style="background:#E3F2FD;">- <span style="background:#FFF9C4; padding:2px 6px; border-radius:3px; font-size:11px;">仮</span></td>
+          <td class="cell-calc col-amount" data-cell="K9" data-formula="=ROUND((H9-I9)*0.1,0)">275,281</td>
+          <td class="cell-calc col-amount" data-cell="L9" data-formula="=(H9-I9)+K9">3,028,086</td>
+          <td class="cell-calc" data-cell="M9" data-formula="">C01-W11-K1101-E14</td>
+          <td class="cell-calc" data-cell="N9" data-formula="">2025/12/25</td>
+        </tr>
+        <tr>
+          <td class="row-num">10</td>
+          <td class="cell-input" data-cell="A10" data-formula="">2025-12</td>
+          <td class="cell-input" data-cell="B10" data-formula="">直接工事費</td>
+          <td class="cell-input" data-cell="C10" data-formula="">護岸・海岸工事</td>
+          <td class="cell-input" data-cell="D10" data-formula="">護岸工</td>
+          <td class="cell-input" data-cell="E10" data-formula="">材料費</td>
+          <td class="cell-input" data-cell="F10" data-formula="">(株)加根又本店</td>
+          <td class="cell-input" data-cell="G10" data-formula="">根固め用材料</td>
+          <td class="cell-input col-amount" data-cell="H10" data-formula="">504,649</td>
+          <td class="cell-input col-amount" data-cell="I10" data-formula="" style="background:#E3F2FD;">0</td>
+          <td class="cell-input" data-cell="J10" data-formula="" style="background:#E3F2FD;">- <span style="background:#FFF9C4; padding:2px 6px; border-radius:3px; font-size:11px;">仮</span></td>
+          <td class="cell-calc col-amount" data-cell="K10" data-formula="=ROUND((H10-I10)*0.1,0)">50,465</td>
+          <td class="cell-calc col-amount" data-cell="L10" data-formula="=(H10-I10)+K10">555,114</td>
+          <td class="cell-calc" data-cell="M10" data-formula="">C01-W04-K0401-E11</td>
+          <td class="cell-calc" data-cell="N10" data-formula="">2025/12/20</td>
+        </tr>
+        <tr>
+          <td class="row-num">11</td>
+          <td class="cell-input" data-cell="A11" data-formula="">2025-12</td>
+          <td class="cell-input" data-cell="B11" data-formula="">共通仮設費</td>
+          <td class="cell-input" data-cell="C11" data-formula=""></td>
+          <td class="cell-input" data-cell="D11" data-formula=""></td>
+          <td class="cell-input" data-cell="E11" data-formula="">安全対策費</td>
+          <td class="cell-input" data-cell="F11" data-formula="">(株)グリーンクロス</td>
+          <td class="cell-input" data-cell="G11" data-formula="">安全資材</td>
+          <td class="cell-input col-amount" data-cell="H11" data-formula="">340,000</td>
+          <td class="cell-input col-amount" data-cell="I11" data-formula="" style="background:#E3F2FD;">0</td>
+          <td class="cell-input" data-cell="J11" data-formula="" style="background:#E3F2FD;">- <span style="background:#FFF9C4; padding:2px 6px; border-radius:3px; font-size:11px;">仮</span></td>
+          <td class="cell-calc col-amount" data-cell="K11" data-formula="=ROUND((H11-I11)*0.1,0)">34,000</td>
+          <td class="cell-calc col-amount" data-cell="L11" data-formula="=(H11-I11)+K11">374,000</td>
+          <td class="cell-calc" data-cell="M11" data-formula="">C02-F35</td>
+          <td class="cell-calc" data-cell="N11" data-formula="">2025/12/15</td>
+        </tr>
+        <!-- Empty rows (14列分) -->
+        <tr><td class="row-num">12</td><td class="cell-normal"></td><td class="cell-normal"></td><td class="cell-normal"></td><td class="cell-normal"></td><td class="cell-normal"></td><td class="cell-normal"></td><td class="cell-normal"></td><td class="cell-normal"></td><td class="cell-normal"></td><td class="cell-normal"></td><td class="cell-normal"></td><td class="cell-normal"></td><td class="cell-normal"></td><td class="cell-normal"></td></tr>
+        <tr><td class="row-num">13</td><td class="cell-normal"></td><td class="cell-normal"></td><td class="cell-normal"></td><td class="cell-normal"></td><td class="cell-normal"></td><td class="cell-normal"></td><td class="cell-normal"></td><td class="cell-normal"></td><td class="cell-normal"></td><td class="cell-normal"></td><td class="cell-normal"></td><td class="cell-normal"></td><td class="cell-normal"></td><td class="cell-normal"></td></tr>
+        <tr><td class="row-num">14</td><td class="cell-normal"></td><td class="cell-normal"></td><td class="cell-normal"></td><td class="cell-normal"></td><td class="cell-normal"></td><td class="cell-normal"></td><td class="cell-normal"></td><td class="cell-normal"></td><td class="cell-normal"></td><td class="cell-normal"></td><td class="cell-normal"></td><td class="cell-normal"></td><td class="cell-normal"></td><td class="cell-normal"></td></tr>
+        <tr><td class="row-num">15</td><td class="cell-normal"></td><td class="cell-normal"></td><td class="cell-normal"></td><td class="cell-normal"></td><td class="cell-normal"></td><td class="cell-normal"></td><td class="cell-normal"></td><td class="cell-normal"></td><td class="cell-normal"></td><td class="cell-normal"></td><td class="cell-normal"></td><td class="cell-normal"></td><td class="cell-normal"></td><td class="cell-normal"></td></tr>
+        <tr><td class="row-num">16</td><td class="cell-normal"></td><td class="cell-normal"></td><td class="cell-normal"></td><td class="cell-normal"></td><td class="cell-normal"></td><td class="cell-normal"></td><td class="cell-normal"></td><td class="cell-normal"></td><td class="cell-normal"></td><td class="cell-normal"></td><td class="cell-normal"></td><td class="cell-normal"></td><td class="cell-normal"></td><td class="cell-normal"></td></tr>
+      </tbody>
+    </table>
+    <!-- SITE-01: 入力期限注記 -->
+    <div style="padding:8px 12px; font-size:12px; color:#666;">毎月15日までに前月分の入力を完了してください（未完了の場合、メール通知が届きます）</div>
+  </div>
+
+  <!-- Tab 2: 予算設定 -->
+  <div id="tab2" class="tab-content" style="display:none;">
+    <!-- SITE-03: 簡易/詳細モード切替 -->
+    <div style="padding:8px 12px; display:flex; align-items:center; gap:16px;">
+      <label style="font-size:13px; cursor:pointer;">
+        <input type="radio" name="budgetMode" value="simple" checked onclick="switchBudgetMode('simple')"> 簡易モード（所長向け）
+      </label>
+      <label style="font-size:13px; cursor:pointer;">
+        <input type="radio" name="budgetMode" value="detail" onclick="switchBudgetMode('detail')"> 詳細モード（経理向け）
+      </label>
+    </div>
+    <!-- 簡易モード テーブル -->
+    <div id="budgetSimple">
+    <table class="sheet-table">
+      <thead>
+        <tr>
+          <th class="corner-header"></th>
+          <th class="col-header col-wide">A</th>
+          <th class="col-header col-amount">B</th>
+          <th class="col-header col-amount">C</th>
+          <th class="col-header col-amount">D</th>
+          <th class="col-header col-narrow">E</th>
+          <th class="col-header col-narrow">F</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td class="row-num">1</td>
+          <td class="cell-header">費目</td>
+          <td class="cell-header">年間予算額</td>
+          <td class="cell-header">累計実績</td>
+          <td class="cell-header">残額</td>
+          <td class="cell-header">消化率</td>
+          <td class="cell-header">アラート</td>
+        </tr>
+        <tr>
+          <td class="row-num">2</td>
+          <td class="cell-input" style="font-weight:600;">材料費</td>
+          <td class="cell-input col-amount">5,484,319</td>
+          <td class="cell-calc col-amount">3,498,319</td>
+          <td class="cell-calc col-amount">1,986,000</td>
+          <td class="cell-calc">63.8%</td>
+          <td class="cell-calc">-</td>
+        </tr>
+        <tr>
+          <td class="row-num">3</td>
+          <td class="cell-input" style="font-weight:600;">機械経費</td>
+          <td class="cell-input col-amount">1,200,000</td>
+          <td class="cell-calc col-amount">1,114,200</td>
+          <td class="cell-calc col-amount">85,800</td>
+          <td class="cell-calc bg-yellow-alert">92.9%</td>
+          <td class="cell-calc text-orange">注意</td>
+        </tr>
+        <tr>
+          <td class="row-num">4</td>
+          <td class="cell-input" style="font-weight:600;">機械経費(損料)</td>
+          <td class="cell-input col-amount">2,016,000</td>
+          <td class="cell-calc col-amount">806,400</td>
+          <td class="cell-calc col-amount">1,209,600</td>
+          <td class="cell-calc">40.0%</td>
+          <td class="cell-calc">-</td>
+        </tr>
+        <tr>
+          <td class="row-num">5</td>
+          <td class="cell-input" style="font-weight:600;">外注費</td>
+          <td class="cell-input col-amount">21,617,667</td>
+          <td class="cell-calc col-amount">14,506,554</td>
+          <td class="cell-calc col-amount">7,111,113</td>
+          <td class="cell-calc">67.1%</td>
+          <td class="cell-calc">-</td>
+        </tr>
+        <tr>
+          <td class="row-num">6</td>
+          <td class="cell-input" style="font-weight:600;">労務費</td>
+          <td class="cell-input col-amount">1,890,000</td>
+          <td class="cell-calc col-amount">944,000</td>
+          <td class="cell-calc col-amount">946,000</td>
+          <td class="cell-calc">49.9%</td>
+          <td class="cell-calc">-</td>
+        </tr>
+        <tr>
+          <td class="row-num">7</td>
+          <td class="cell-input" style="font-weight:600; background:#C8E6C9;">共通仮設費（合計）</td>
+          <td class="cell-input col-amount" style="background:#C8E6C9;">956,000</td>
+          <td class="cell-calc col-amount">538,631</td>
+          <td class="cell-calc col-amount">417,369</td>
+          <td class="cell-calc">56.3%</td>
+          <td class="cell-calc">-</td>
+        </tr>
+        <tr>
+          <td class="row-num">8</td>
+          <td class="cell-input" style="font-weight:600; background:#FFE0B2;">現場管理費（合計）</td>
+          <td class="cell-input col-amount" style="background:#FFE0B2;">4,136,949</td>
+          <td class="cell-calc col-amount">2,950,940</td>
+          <td class="cell-calc col-amount">1,186,009</td>
+          <td class="cell-calc">71.3%</td>
+          <td class="cell-calc">-</td>
+        </tr>
+        <tr>
+          <td class="row-num">9</td>
+          <td class="cell-header" style="font-weight:700;">合計</td>
+          <td class="cell-calc col-amount" style="font-weight:700;">37,300,935</td>
+          <td class="cell-calc col-amount" style="font-weight:700;">24,359,044</td>
+          <td class="cell-calc col-amount" style="font-weight:700;">12,941,891</td>
+          <td class="cell-calc" style="font-weight:700;">65.3%</td>
+          <td class="cell-calc">-</td>
+        </tr>
+      </tbody>
+    </table>
+    </div>
+    <!-- 詳細モード テーブル（既存の26項目） -->
+    <div id="budgetDetail" style="display:none;">
+    <table class="sheet-table">
+      <thead>
+        <tr>
+          <th class="corner-header"></th>
+          <th class="col-header col-narrow">A</th>
+          <th class="col-header col-wide">B</th>
+          <th class="col-header col-medium">C</th>
+          <th class="col-header col-amount">D</th>
+          <th class="col-header col-amount">E</th>
+          <th class="col-header col-amount">F</th>
+          <th class="col-header col-narrow">G</th>
+          <th class="col-header col-narrow">H</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td class="row-num">1</td>
+          <td class="cell-header">経費コード</td>
+          <td class="cell-header">費目名</td>
+          <td class="cell-header">カテゴリ</td>
+          <td class="cell-header">年間予算額</td>
+          <td class="cell-header">累計実績</td>
+          <td class="cell-header">残額</td>
+          <td class="cell-header">消化率</td>
+          <td class="cell-header">アラート</td>
+        </tr>
+        <tr>
+          <td class="row-num">2</td>
+          <td class="cell-input" data-cell="A2" data-formula="">14</td>
+          <td class="cell-input" data-cell="B2" data-formula="">外注費</td>
+          <td class="cell-input" data-cell="C2" data-formula="">直接工事費</td>
+          <td class="cell-input col-amount" data-cell="D2" data-formula="">21,617,667</td>
+          <td class="cell-calc col-amount" data-cell="E2" data-formula="=SUMIFS(支払明細!D:D,支払明細!C:C,B2)">14,506,554</td>
+          <td class="cell-calc col-amount" data-cell="F2" data-formula="=D2-E2">7,111,113</td>
+          <td class="cell-calc" data-cell="G2" data-formula="=E2/D2*100">67.1%</td>
+          <td class="cell-calc" data-cell="H2" data-formula='=IF(G2>100,"超過",IF(G2>80,"注意","-"))'>-</td>
+        </tr>
+        <tr>
+          <td class="row-num">3</td>
+          <td class="cell-input" data-cell="A3" data-formula="">52</td>
+          <td class="cell-input" data-cell="B3" data-formula="">法定福利費</td>
+          <td class="cell-input" data-cell="C3" data-formula="">現場管理費</td>
+          <td class="cell-input col-amount" data-cell="D3" data-formula="">690,039</td>
+          <td class="cell-calc col-amount" data-cell="E3" data-formula="">870,940</td>
+          <td class="cell-calc col-amount text-red" data-cell="F3" data-formula="=D3-E3">-180,901</td>
+          <td class="cell-calc bg-red-alert" data-cell="G3" data-formula="=E3/D3*100">126.2%</td>
+          <td class="cell-calc text-red" data-cell="H3" data-formula='=IF(G3>100,"超過",IF(G3>80,"注意","-"))'>超過</td>
+        </tr>
+        <tr>
+          <td class="row-num">4</td>
+          <td class="cell-input" data-cell="A4" data-formula="">54</td>
+          <td class="cell-input" data-cell="B4" data-formula="">地代家賃</td>
+          <td class="cell-input" data-cell="C4" data-formula="">現場管理費</td>
+          <td class="cell-input col-amount" data-cell="D4" data-formula="">131,910</td>
+          <td class="cell-calc col-amount" data-cell="E4" data-formula="">150,000</td>
+          <td class="cell-calc col-amount text-red" data-cell="F4" data-formula="=D4-E4">-18,090</td>
+          <td class="cell-calc bg-red-alert" data-cell="G4" data-formula="=E4/D4*100">113.7%</td>
+          <td class="cell-calc text-red" data-cell="H4" data-formula='=IF(G4>100,"超過",IF(G4>80,"注意","-"))'>超過</td>
+        </tr>
+        <tr>
+          <td class="row-num">5</td>
+          <td class="cell-input" data-cell="A5" data-formula="">36</td>
+          <td class="cell-input" data-cell="B5" data-formula="">水道光熱費</td>
+          <td class="cell-input" data-cell="C5" data-formula="">共通仮設費</td>
+          <td class="cell-input col-amount" data-cell="D5" data-formula="">65,000</td>
+          <td class="cell-calc col-amount" data-cell="E5" data-formula="">73,477</td>
+          <td class="cell-calc col-amount text-red" data-cell="F5" data-formula="=D5-E5">-8,477</td>
+          <td class="cell-calc bg-red-alert" data-cell="G5" data-formula="=E5/D5*100">113.0%</td>
+          <td class="cell-calc text-red" data-cell="H5" data-formula='=IF(G5>100,"超過",IF(G5>80,"注意","-"))'>超過</td>
+        </tr>
+        <tr>
+          <td class="row-num">6</td>
+          <td class="cell-input" data-cell="A6" data-formula="">31</td>
+          <td class="cell-input" data-cell="B6" data-formula="">運搬費</td>
+          <td class="cell-input" data-cell="C6" data-formula="">共通仮設費</td>
+          <td class="cell-input col-amount" data-cell="D6" data-formula="">170,000</td>
+          <td class="cell-calc col-amount" data-cell="E6" data-formula="">170,000</td>
+          <td class="cell-calc col-amount" data-cell="F6" data-formula="=D6-E6">0</td>
+          <td class="cell-calc bg-yellow-alert" data-cell="G6" data-formula="=E6/D6*100">100.0%</td>
+          <td class="cell-calc text-orange" data-cell="H6" data-formula='=IF(G6>=100,"消化済",IF(G6>80,"注意","-"))'>消化済</td>
+        </tr>
+        <tr>
+          <td class="row-num">7</td>
+          <td class="cell-input" data-cell="A7" data-formula="">38</td>
+          <td class="cell-input" data-cell="B7" data-formula="">役務費</td>
+          <td class="cell-input" data-cell="C7" data-formula="">共通仮設費</td>
+          <td class="cell-input col-amount" data-cell="D7" data-formula="">56,000</td>
+          <td class="cell-calc col-amount" data-cell="E7" data-formula="">56,000</td>
+          <td class="cell-calc col-amount" data-cell="F7" data-formula="=D7-E7">0</td>
+          <td class="cell-calc bg-yellow-alert" data-cell="G7" data-formula="=E7/D7*100">100.0%</td>
+          <td class="cell-calc text-orange" data-cell="H7" data-formula='=IF(G7>=100,"消化済",IF(G7>80,"注意","-"))'>消化済</td>
+        </tr>
+        <tr>
+          <td class="row-num">8</td>
+          <td class="cell-input" data-cell="A8" data-formula="">53</td>
+          <td class="cell-input" data-cell="B8" data-formula="">租税公課</td>
+          <td class="cell-input" data-cell="C8" data-formula="">現場管理費</td>
+          <td class="cell-input col-amount" data-cell="D8" data-formula="">215,000</td>
+          <td class="cell-calc col-amount" data-cell="E8" data-formula="">180,000</td>
+          <td class="cell-calc col-amount" data-cell="F8" data-formula="=D8-E8">35,000</td>
+          <td class="cell-calc bg-yellow-alert" data-cell="G8" data-formula="=E8/D8*100">83.7%</td>
+          <td class="cell-calc text-orange" data-cell="H8" data-formula='=IF(G8>100,"超過",IF(G8>80,"注意","-"))'>注意</td>
+        </tr>
+        <tr>
+          <td class="row-num">9</td>
+          <td class="cell-input" data-cell="A9" data-formula="">35</td>
+          <td class="cell-input" data-cell="B9" data-formula="">安全対策費</td>
+          <td class="cell-input" data-cell="C9" data-formula="">共通仮設費</td>
+          <td class="cell-input col-amount" data-cell="D9" data-formula="">100,000</td>
+          <td class="cell-calc col-amount" data-cell="E9" data-formula="">74,249</td>
+          <td class="cell-calc col-amount" data-cell="F9" data-formula="=D9-E9">25,751</td>
+          <td class="cell-calc" data-cell="G9" data-formula="=E9/D9*100">74.2%</td>
+          <td class="cell-calc" data-cell="H9" data-formula='=IF(G9>100,"超過",IF(G9>80,"注意","-"))'>-</td>
+        </tr>
+        <tr>
+          <td class="row-num">10</td>
+          <td class="cell-input" data-cell="A10" data-formula="">56</td>
+          <td class="cell-input" data-cell="B10" data-formula="">従業員給料手当</td>
+          <td class="cell-input" data-cell="C10" data-formula="">現場管理費</td>
+          <td class="cell-input col-amount" data-cell="D10" data-formula="">3,100,000</td>
+          <td class="cell-calc col-amount" data-cell="E10" data-formula="">1,750,000</td>
+          <td class="cell-calc col-amount" data-cell="F10" data-formula="=D10-E10">1,350,000</td>
+          <td class="cell-calc" data-cell="G10" data-formula="=E10/D10*100">56.5%</td>
+          <td class="cell-calc" data-cell="H10" data-formula='=IF(G10>100,"超過",IF(G10>80,"注意","-"))'>-</td>
+        </tr>
+        <tr>
+          <td class="row-num">11</td>
+          <td class="cell-input" data-cell="A11" data-formula="">37</td>
+          <td class="cell-input" data-cell="B11" data-formula="">産業廃棄物処理費</td>
+          <td class="cell-input" data-cell="C11" data-formula="">共通仮設費</td>
+          <td class="cell-input col-amount" data-cell="D11" data-formula="">565,000</td>
+          <td class="cell-calc col-amount" data-cell="E11" data-formula="">164,905</td>
+          <td class="cell-calc col-amount" data-cell="F11" data-formula="=D11-E11">400,095</td>
+          <td class="cell-calc" data-cell="G11" data-formula="=E11/D11*100">29.2%</td>
+          <td class="cell-calc" data-cell="H11" data-formula='=IF(G11>100,"超過",IF(G11>80,"注意","-"))'>-</td>
+        </tr>
+        <!-- Empty rows -->
+        <tr><td class="row-num">12</td><td class="cell-normal"></td><td class="cell-normal"></td><td class="cell-normal"></td><td class="cell-normal"></td><td class="cell-normal"></td><td class="cell-normal"></td><td class="cell-normal"></td><td class="cell-normal"></td></tr>
+        <tr><td class="row-num">13</td><td class="cell-normal"></td><td class="cell-normal"></td><td class="cell-normal"></td><td class="cell-normal"></td><td class="cell-normal"></td><td class="cell-normal"></td><td class="cell-normal"></td><td class="cell-normal"></td></tr>
+        <tr><td class="row-num">14</td><td class="cell-normal"></td><td class="cell-normal"></td><td class="cell-normal"></td><td class="cell-normal"></td><td class="cell-normal"></td><td class="cell-normal"></td><td class="cell-normal"></td><td class="cell-normal"></td></tr>
+        <tr><td class="row-num">15</td><td class="cell-normal"></td><td class="cell-normal"></td><td class="cell-normal"></td><td class="cell-normal"></td><td class="cell-normal"></td><td class="cell-normal"></td><td class="cell-normal"></td><td class="cell-normal"></td></tr>
+        <tr><td class="row-num">16</td><td class="cell-normal"></td><td class="cell-normal"></td><td class="cell-normal"></td><td class="cell-normal"></td><td class="cell-normal"></td><td class="cell-normal"></td><td class="cell-normal"></td><td class="cell-normal"></td></tr>
+        <tr><td class="row-num">17</td><td class="cell-normal"></td><td class="cell-normal"></td><td class="cell-normal"></td><td class="cell-normal"></td><td class="cell-normal"></td><td class="cell-normal"></td><td class="cell-normal"></td><td class="cell-normal"></td></tr>
+        <tr><td class="row-num">18</td><td class="cell-normal"></td><td class="cell-normal"></td><td class="cell-normal"></td><td class="cell-normal"></td><td class="cell-normal"></td><td class="cell-normal"></td><td class="cell-normal"></td><td class="cell-normal"></td></tr>
+        <tr><td class="row-num">19</td><td class="cell-normal"></td><td class="cell-normal"></td><td class="cell-normal"></td><td class="cell-normal"></td><td class="cell-normal"></td><td class="cell-normal"></td><td class="cell-normal"></td><td class="cell-normal"></td></tr>
+        <tr><td class="row-num">20</td><td class="cell-normal"></td><td class="cell-normal"></td><td class="cell-normal"></td><td class="cell-normal"></td><td class="cell-normal"></td><td class="cell-normal"></td><td class="cell-normal"></td><td class="cell-normal"></td></tr>
+      </tbody>
+    </table>
+    </div><!-- /budgetDetail -->
+  </div>
+
+  <!-- Tab 3: 月次調整 (NEW) -->
+  <div id="tab3" class="tab-content" style="display:none;">
+    <table class="sheet-table">
+      <thead>
+        <tr>
+          <th class="corner-header"></th>
+          <th class="col-header col-narrow">A</th>
+          <th class="col-header col-medium">B</th>
+          <th class="col-header col-medium">C</th>
+          <th class="col-header col-wide">D</th>
+          <th class="col-header col-narrow">E</th>
+          <th class="col-header col-narrow">F</th>
+          <th class="col-header col-amount">G</th>
+          <th class="col-header col-amount">H</th>
+        </tr>
+      </thead>
+      <tbody>
+        <!-- SITE-04 + QA-04: 今月の出来高率 -->
+        <tr>
+          <td class="row-num">1</td>
+          <td class="cell-header" colspan="3">今月の出来高率（%）</td>
+          <td class="cell-input" style="background:#E8F5E9; font-size:16px; font-weight:700; text-align:center;" data-cell="D1" data-formula="">15</td>
+          <td class="cell-normal" colspan="4" style="font-size:12px; color:#666; vertical-align:middle; padding-left:8px;">今月の工事全体の進捗を%で入力してください（例: 全体の15%が完了→15）</td>
+        </tr>
+        <tr>
+          <td class="row-num">2</td>
+          <td class="cell-normal" colspan="8" style="font-size:11px; color:#888; padding:3px 8px;">未入力の場合、支出額ベース（EV=AC）で自動計算されます</td>
+        </tr>
+        <tr>
+          <td class="row-num">3</td>
+          <td class="cell-normal" colspan="8"></td>
+        </tr>
+        <!-- Section 1: Machine Operations -->
+        <tr>
+          <td class="row-num">4</td>
+          <td class="cell-header">月度</td>
+          <td class="cell-header">機械名</td>
+          <td class="cell-header">稼働数量</td>
+          <td class="cell-header">単位</td>
+          <td class="cell-header col-amount">単価</td>
+          <td class="cell-header col-amount">金額</td>
+          <td class="cell-normal"></td>
+          <td class="cell-normal"></td>
+        </tr>
+        <tr>
+          <td class="row-num">2</td>
+          <td class="cell-input" data-cell="A2" data-formula="">10月</td>
+          <td class="cell-input" data-cell="B2" data-formula="">0.7BH(CAT320)</td>
+          <td class="cell-input" data-cell="C2" data-formula="">1</td>
+          <td class="cell-calc" data-cell="D2" data-formula="">月</td>
+          <td class="cell-calc col-amount" data-cell="E2" data-formula="">201,600</td>
+          <td class="cell-calc col-amount" data-cell="F2" data-formula="=C2*E2">201,600</td>
+          <td class="cell-normal"></td>
+          <td class="cell-normal"></td>
+        </tr>
+        <tr>
+          <td class="row-num">3</td>
+          <td class="cell-input" data-cell="A3" data-formula="">10月</td>
+          <td class="cell-input" data-cell="B3" data-formula="">2tダンプ</td>
+          <td class="cell-input" data-cell="C3" data-formula="">15</td>
+          <td class="cell-calc" data-cell="D3" data-formula="">日</td>
+          <td class="cell-calc col-amount" data-cell="E3" data-formula="">10,200</td>
+          <td class="cell-calc col-amount" data-cell="F3" data-formula="=C3*E3">153,000</td>
+          <td class="cell-normal"></td>
+          <td class="cell-normal"></td>
+        </tr>
+        <tr>
+          <td class="row-num">4</td>
+          <td class="cell-input" data-cell="A4" data-formula="">10月</td>
+          <td class="cell-input" data-cell="B4" data-formula="">4tダンプ</td>
+          <td class="cell-input" data-cell="C4" data-formula="">12</td>
+          <td class="cell-calc" data-cell="D4" data-formula="">日</td>
+          <td class="cell-calc col-amount" data-cell="E4" data-formula="">14,500</td>
+          <td class="cell-calc col-amount" data-cell="F4" data-formula="=C4*E4">174,000</td>
+          <td class="cell-normal"></td>
+          <td class="cell-normal"></td>
+        </tr>
+        <tr>
+          <td class="row-num">5</td>
+          <td class="cell-input" data-cell="A5" data-formula="">11月</td>
+          <td class="cell-input" data-cell="B5" data-formula="">0.7BH(CAT320)</td>
+          <td class="cell-input" data-cell="C5" data-formula="">1</td>
+          <td class="cell-calc" data-cell="D5" data-formula="">月</td>
+          <td class="cell-calc col-amount" data-cell="E5" data-formula="">201,600</td>
+          <td class="cell-calc col-amount" data-cell="F5" data-formula="=C5*E5">201,600</td>
+          <td class="cell-normal"></td>
+          <td class="cell-normal"></td>
+        </tr>
+        <tr>
+          <td class="row-num">6</td>
+          <td class="cell-input" data-cell="A6" data-formula="">11月</td>
+          <td class="cell-input" data-cell="B6" data-formula="">10t運搬車</td>
+          <td class="cell-input" data-cell="C6" data-formula="">8</td>
+          <td class="cell-calc" data-cell="D6" data-formula="">日</td>
+          <td class="cell-calc col-amount" data-cell="E6" data-formula="">48,000</td>
+          <td class="cell-calc col-amount" data-cell="F6" data-formula="=C6*E6">384,000</td>
+          <td class="cell-normal"></td>
+          <td class="cell-normal"></td>
+        </tr>
+        <!-- Empty rows 7-8 -->
+        <tr><td class="row-num">7</td><td class="cell-normal"></td><td class="cell-normal"></td><td class="cell-normal"></td><td class="cell-normal"></td><td class="cell-normal"></td><td class="cell-normal"></td><td class="cell-normal"></td><td class="cell-normal"></td></tr>
+        <tr><td class="row-num">8</td><td class="cell-normal"></td><td class="cell-normal"></td><td class="cell-normal"></td><td class="cell-normal"></td><td class="cell-normal"></td><td class="cell-normal"></td><td class="cell-normal"></td><td class="cell-normal"></td></tr>
+        <!-- Section separator: 直用作業員 人工管理 -->
+        <tr>
+          <td class="row-num">9</td>
+          <td class="cell-header" colspan="6">直用作業員 人工管理</td>
+          <td colspan="2" style="background:#FFF9C4; font-size:11px; padding:3px 6px; vertical-align:middle;">
+            直用作業員のみ対象（常傭社員の給与はF56従業員給料手当で別途計上）｜E15労務費として集計
+          </td>
+        </tr>
+        <!-- Section 2: Labor（詳細版） -->
+        <tr>
+          <td class="row-num">10</td>
+          <td class="cell-header">月度</td>
+          <td class="cell-header">職種</td>
+          <td class="cell-header">工種（W##）</td>
+          <td class="cell-header">作業内容</td>
+          <td class="cell-header">作業日数</td>
+          <td class="cell-header">延べ人工数</td>
+          <td class="cell-header col-amount">日額（マスタ参照）</td>
+          <td class="cell-header col-amount">金額</td>
+        </tr>
+        <tr>
+          <td class="row-num">11</td>
+          <td class="cell-input" data-cell="A11" data-formula="">10月</td>
+          <td class="cell-input" data-cell="B11" data-formula="">オペレーター</td>
+          <td class="cell-input" data-cell="C11" data-formula="">W04 護岸・海岸</td>
+          <td class="cell-input" data-cell="D11" data-formula="">石材投入・据付補助</td>
+          <td class="cell-input" data-cell="E11" data-formula="">20</td>
+          <td class="cell-input" data-cell="F11" data-formula="">20</td>
+          <td class="cell-calc col-amount" data-cell="G11" data-formula="">18,000</td>
+          <td class="cell-calc col-amount" data-cell="H11" data-formula="=F11*G11">360,000</td>
+        </tr>
+        <tr>
+          <td class="row-num">12</td>
+          <td class="cell-input" data-cell="A12" data-formula="">10月</td>
+          <td class="cell-input" data-cell="B12" data-formula="">普通作業員</td>
+          <td class="cell-input" data-cell="C12" data-formula="">W04 護岸・海岸</td>
+          <td class="cell-input" data-cell="D12" data-formula="">掘削補助・残土処理</td>
+          <td class="cell-input" data-cell="E12" data-formula="">10</td>
+          <td class="cell-input" data-cell="F12" data-formula="">10</td>
+          <td class="cell-calc col-amount" data-cell="G12" data-formula="">15,000</td>
+          <td class="cell-calc col-amount" data-cell="H12" data-formula="=F12*G12">150,000</td>
+        </tr>
+        <tr>
+          <td class="row-num">13</td>
+          <td class="cell-input" data-cell="A13" data-formula="">11月</td>
+          <td class="cell-input" data-cell="B13" data-formula="">オペレーター</td>
+          <td class="cell-input" data-cell="C13" data-formula="">W02 コンクリート</td>
+          <td class="cell-input" data-cell="D13" data-formula="">型枠取付け・締固め補助</td>
+          <td class="cell-input" data-cell="E13" data-formula="">18</td>
+          <td class="cell-input" data-cell="F13" data-formula="">18</td>
+          <td class="cell-calc col-amount" data-cell="G13" data-formula="">18,000</td>
+          <td class="cell-calc col-amount" data-cell="H13" data-formula="=F13*G13">324,000</td>
+        </tr>
+        <tr>
+          <td class="row-num">14</td>
+          <td class="cell-input" data-cell="A14" data-formula="">11月</td>
+          <td class="cell-input" data-cell="B14" data-formula="">特殊作業員</td>
+          <td class="cell-input" data-cell="C14" data-formula="">W04 護岸・海岸</td>
+          <td class="cell-input" data-cell="D14" data-formula="">潜水確認・水中作業</td>
+          <td class="cell-input" data-cell="E14" data-formula="">5</td>
+          <td class="cell-input" data-cell="F14" data-formula="">5</td>
+          <td class="cell-calc col-amount" data-cell="G14" data-formula="">22,000</td>
+          <td class="cell-calc col-amount" data-cell="H14" data-formula="=F14*G14">110,000</td>
+        </tr>
+        <!-- Empty rows 15-20 -->
+        <tr><td class="row-num">15</td><td class="cell-normal"></td><td class="cell-normal"></td><td class="cell-normal"></td><td class="cell-normal"></td><td class="cell-normal"></td><td class="cell-normal"></td><td class="cell-normal"></td><td class="cell-normal"></td></tr>
+        <tr><td class="row-num">16</td><td class="cell-normal"></td><td class="cell-normal"></td><td class="cell-normal"></td><td class="cell-normal"></td><td class="cell-normal"></td><td class="cell-normal"></td><td class="cell-normal"></td><td class="cell-normal"></td></tr>
+        <tr><td class="row-num">17</td><td class="cell-normal"></td><td class="cell-normal"></td><td class="cell-normal"></td><td class="cell-normal"></td><td class="cell-normal"></td><td class="cell-normal"></td><td class="cell-normal"></td><td class="cell-normal"></td></tr>
+        <tr><td class="row-num">18</td><td class="cell-normal"></td><td class="cell-normal"></td><td class="cell-normal"></td><td class="cell-normal"></td><td class="cell-normal"></td><td class="cell-normal"></td><td class="cell-normal"></td><td class="cell-normal"></td></tr>
+        <tr><td class="row-num">19</td><td class="cell-normal"></td><td class="cell-normal"></td><td class="cell-normal"></td><td class="cell-normal"></td><td class="cell-normal"></td><td class="cell-normal"></td><td class="cell-normal"></td><td class="cell-normal"></td></tr>
+        <tr><td class="row-num">20</td><td class="cell-normal"></td><td class="cell-normal"></td><td class="cell-normal"></td><td class="cell-normal"></td><td class="cell-normal"></td><td class="cell-normal"></td><td class="cell-normal"></td><td class="cell-normal"></td></tr>
+      </tbody>
+    </table>
+  </div>
+
+  <!-- Tab 4: 経営者ダッシュボード (was Tab 3) -->
+  <div id="tab4" class="tab-content" style="display:none;">
+    <table class="sheet-table">
+      <thead>
+        <tr>
+          <th class="corner-header"></th>
+          <th class="col-header" style="min-width:200px;">A</th>
+          <th class="col-header" style="min-width:200px;">B</th>
+          <th class="col-header" style="min-width:200px;">C</th>
+          <th class="col-header" style="min-width:200px;">D</th>
+          <th class="col-header" style="min-width:120px;">E</th>
+        </tr>
+      </thead>
+      <tbody>
+        <!-- KPI row headers -->
+        <tr>
+          <td class="row-num">1</td>
+          <td class="cell-header" style="font-size:14px;">工事益率</td>
+          <td class="cell-header" style="font-size:14px;">純工事益率</td>
+          <td class="cell-header" style="font-size:14px;">予算消化率</td>
+          <td class="cell-header" style="font-size:14px;">累計支出</td>
+          <td class="cell-normal"></td>
+        </tr>
+        <!-- KPI values -->
+        <tr>
+          <td class="row-num">2</td>
+          <td class="cell-calc" style="font-size:26px; font-weight:700; text-align:center; padding:16px; color:#1565C0;" data-cell="A2" data-formula="=(契約額-累計支出)/契約額*100">58.9%</td>
+          <td class="cell-calc" style="font-size:26px; font-weight:700; text-align:center; padding:16px; color:#1565C0;" data-cell="B2" data-formula="=(契約額-累計支出-現場管理費)/契約額*100">45.9%</td>
+          <td class="cell-calc" style="font-size:26px; font-weight:700; text-align:center; padding:16px; color:#F57C00;" data-cell="C2" data-formula="=累計実績合計/予算合計*100">47.5%</td>
+          <td class="cell-calc" style="font-size:26px; font-weight:700; text-align:center; padding:16px; color:#202124;" data-cell="D2" data-formula="=SUM(支払明細!I:I)/1000">16,357千円</td>
+          <td class="cell-normal"></td>
+        </tr>
+        <!-- Spacer -->
+        <tr>
+          <td class="row-num">3</td>
+          <td class="cell-normal"></td><td class="cell-normal"></td><td class="cell-normal"></td><td class="cell-normal"></td><td class="cell-normal"></td>
+        </tr>
+        <!-- Chart area header -->
+        <tr>
+          <td class="row-num">4</td>
+          <td colspan="4" style="border:none; padding:0;">
+            <div class="chart-area">
+              <div style="font-size:15px; font-weight:700; color:#424242; margin-bottom:12px;">グラフエリア（Sheets埋め込みグラフ）</div>
+              <div style="display:flex; justify-content:center; gap:16px; flex-wrap:wrap;">
+                <div class="chart-box">月別支出推移グラフ</div>
+                <div class="chart-box">費目別構成グラフ</div>
+              </div>
+              <div style="margin-top:12px; font-size:12px; color:#9e9e9e;">※ 実際のスプレッドシートではグラフが表示されます</div>
+            </div>
+          </td>
+          <td class="cell-normal"></td>
+        </tr>
+        <!-- Spacer rows for chart area -->
+        <tr><td class="row-num">5</td><td class="cell-normal"></td><td class="cell-normal"></td><td class="cell-normal"></td><td class="cell-normal"></td><td class="cell-normal"></td></tr>
+        <tr><td class="row-num">6</td><td class="cell-normal"></td><td class="cell-normal"></td><td class="cell-normal"></td><td class="cell-normal"></td><td class="cell-normal"></td></tr>
+        <tr><td class="row-num">7</td><td class="cell-normal"></td><td class="cell-normal"></td><td class="cell-normal"></td><td class="cell-normal"></td><td class="cell-normal"></td></tr>
+        <tr><td class="row-num">8</td><td class="cell-normal"></td><td class="cell-normal"></td><td class="cell-normal"></td><td class="cell-normal"></td><td class="cell-normal"></td></tr>
+        <!-- Summary table header -->
+        <tr>
+          <td class="row-num">9</td>
+          <td class="cell-header">前月支出</td>
+          <td class="cell-header">当月支出</td>
+          <td class="cell-header">増減</td>
+          <td class="cell-normal"></td>
+          <td class="cell-normal"></td>
+        </tr>
+        <tr>
+          <td class="row-num">10</td>
+          <td class="cell-calc" style="text-align:right; font-size:14px; font-weight:600;" data-cell="A10" data-formula="">8,458,604</td>
+          <td class="cell-calc" style="text-align:right; font-size:14px; font-weight:600;" data-cell="B10" data-formula="">4,332,077</td>
+          <td class="cell-calc text-green-good" style="text-align:right; font-size:14px; font-weight:600;" data-cell="C10" data-formula="=B10-A10">-4,126,527</td>
+          <td class="cell-normal"></td>
+          <td class="cell-normal"></td>
+        </tr>
+        <!-- Empty rows -->
+        <tr><td class="row-num">11</td><td class="cell-normal"></td><td class="cell-normal"></td><td class="cell-normal"></td><td class="cell-normal"></td><td class="cell-normal"></td></tr>
+        <tr><td class="row-num">12</td><td class="cell-normal"></td><td class="cell-normal"></td><td class="cell-normal"></td><td class="cell-normal"></td><td class="cell-normal"></td></tr>
+        <tr><td class="row-num">13</td><td class="cell-normal"></td><td class="cell-normal"></td><td class="cell-normal"></td><td class="cell-normal"></td><td class="cell-normal"></td></tr>
+        <tr><td class="row-num">14</td><td class="cell-normal"></td><td class="cell-normal"></td><td class="cell-normal"></td><td class="cell-normal"></td><td class="cell-normal"></td></tr>
+        <tr><td class="row-num">15</td><td class="cell-normal"></td><td class="cell-normal"></td><td class="cell-normal"></td><td class="cell-normal"></td><td class="cell-normal"></td></tr>
+        <tr><td class="row-num">16</td><td class="cell-normal"></td><td class="cell-normal"></td><td class="cell-normal"></td><td class="cell-normal"></td><td class="cell-normal"></td></tr>
+        <tr><td class="row-num">17</td><td class="cell-normal"></td><td class="cell-normal"></td><td class="cell-normal"></td><td class="cell-normal"></td><td class="cell-normal"></td></tr>
+        <tr><td class="row-num">18</td><td class="cell-normal"></td><td class="cell-normal"></td><td class="cell-normal"></td><td class="cell-normal"></td><td class="cell-normal"></td></tr>
+        <tr><td class="row-num">19</td><td class="cell-normal"></td><td class="cell-normal"></td><td class="cell-normal"></td><td class="cell-normal"></td><td class="cell-normal"></td></tr>
+        <tr><td class="row-num">20</td><td class="cell-normal"></td><td class="cell-normal"></td><td class="cell-normal"></td><td class="cell-normal"></td><td class="cell-normal"></td></tr>
+      </tbody>
+    </table>
+  </div>
+
+  <!-- Tab 5: 現場代理人ダッシュボード (NEW) -->
+  <div id="tab5" class="tab-content" style="display:none;">
+    <table class="sheet-table">
+      <thead>
+        <tr>
+          <th class="corner-header"></th>
+          <th class="col-header" style="min-width:200px;">A</th>
+          <th class="col-header" style="min-width:200px;">B</th>
+          <th class="col-header" style="min-width:200px;">C</th>
+          <th class="col-header" style="min-width:200px;">D</th>
+          <th class="col-header" style="min-width:120px;">E</th>
+        </tr>
+      </thead>
+      <tbody>
+        <!-- KPI row headers -->
+        <tr>
+          <td class="row-num">1</td>
+          <td class="cell-header" style="font-size:14px;">当月入力件数</td>
+          <td class="cell-header" style="font-size:14px;">累計入力件数</td>
+          <td class="cell-header" style="font-size:14px;">予算消化率</td>
+          <td class="cell-header" style="font-size:14px;">累計支出</td>
+          <td class="cell-normal"></td>
+        </tr>
+        <!-- KPI values -->
+        <tr>
+          <td class="row-num">2</td>
+          <td class="cell-calc" style="font-size:26px; font-weight:700; text-align:center; padding:16px;" data-cell="A2" data-formula="">25件</td>
+          <td class="cell-calc" style="font-size:26px; font-weight:700; text-align:center; padding:16px;" data-cell="B2" data-formula="">82件</td>
+          <td class="cell-calc" style="font-size:26px; font-weight:700; text-align:center; padding:16px; color:#F57C00;" data-cell="C2" data-formula="">47.5%</td>
+          <td class="cell-calc" style="font-size:26px; font-weight:700; text-align:center; padding:16px; color:#202124;" data-cell="D2" data-formula="">16,357千円</td>
+          <td class="cell-normal"></td>
+        </tr>
+        <!-- Spacer -->
+        <tr>
+          <td class="row-num">3</td>
+          <td class="cell-normal"></td><td class="cell-normal"></td><td class="cell-normal"></td><td class="cell-normal"></td><td class="cell-normal"></td>
+        </tr>
+        <!-- Section header: 月度別入力件数 -->
+        <tr>
+          <td class="row-num">4</td>
+          <td class="cell-header" colspan="2">月度別入力件数</td>
+          <td class="cell-normal"></td><td class="cell-normal"></td><td class="cell-normal"></td>
+        </tr>
+        <tr>
+          <td class="row-num">5</td>
+          <td class="cell-header">月度</td>
+          <td class="cell-header">入力件数</td>
+          <td class="cell-normal"></td><td class="cell-normal"></td><td class="cell-normal"></td>
+        </tr>
+        <tr>
+          <td class="row-num">6</td>
+          <td class="cell-calc" data-cell="A6" data-formula="">10月</td>
+          <td class="cell-calc" data-cell="B6" data-formula="" style="text-align:right;">31件</td>
+          <td class="cell-normal"></td><td class="cell-normal"></td><td class="cell-normal"></td>
+        </tr>
+        <tr>
+          <td class="row-num">7</td>
+          <td class="cell-calc" data-cell="A7" data-formula="">11月</td>
+          <td class="cell-calc" data-cell="B7" data-formula="" style="text-align:right;">26件</td>
+          <td class="cell-normal"></td><td class="cell-normal"></td><td class="cell-normal"></td>
+        </tr>
+        <tr>
+          <td class="row-num">8</td>
+          <td class="cell-calc" data-cell="A8" data-formula="">12月</td>
+          <td class="cell-calc" data-cell="B8" data-formula="" style="text-align:right;">25件</td>
+          <td class="cell-normal"></td><td class="cell-normal"></td><td class="cell-normal"></td>
+        </tr>
+        <!-- Spacer -->
+        <tr>
+          <td class="row-num">9</td>
+          <td class="cell-normal"></td><td class="cell-normal"></td><td class="cell-normal"></td><td class="cell-normal"></td><td class="cell-normal"></td>
+        </tr>
+        <!-- Section header: 費目別構成 -->
+        <tr>
+          <td class="row-num">10</td>
+          <td class="cell-header" colspan="2">費目別構成</td>
+          <td class="cell-normal"></td><td class="cell-normal"></td><td class="cell-normal"></td>
+        </tr>
+        <tr>
+          <td class="row-num">11</td>
+          <td class="cell-header">費目</td>
+          <td class="cell-header">構成比</td>
+          <td class="cell-normal"></td><td class="cell-normal"></td><td class="cell-normal"></td>
+        </tr>
+        <tr>
+          <td class="row-num">12</td>
+          <td class="cell-calc" data-cell="A12" data-formula="">外注費</td>
+          <td class="cell-calc" data-cell="B12" data-formula="" style="text-align:right;">66%</td>
+          <td class="cell-normal"></td><td class="cell-normal"></td><td class="cell-normal"></td>
+        </tr>
+        <tr>
+          <td class="row-num">13</td>
+          <td class="cell-calc" data-cell="A13" data-formula="">材料費</td>
+          <td class="cell-calc" data-cell="B13" data-formula="" style="text-align:right;">12%</td>
+          <td class="cell-normal"></td><td class="cell-normal"></td><td class="cell-normal"></td>
+        </tr>
+        <tr>
+          <td class="row-num">14</td>
+          <td class="cell-calc" data-cell="A14" data-formula="">共通仮設費</td>
+          <td class="cell-calc" data-cell="B14" data-formula="" style="text-align:right;">6%</td>
+          <td class="cell-normal"></td><td class="cell-normal"></td><td class="cell-normal"></td>
+        </tr>
+        <tr>
+          <td class="row-num">15</td>
+          <td class="cell-calc" data-cell="A15" data-formula="">現場管理費</td>
+          <td class="cell-calc" data-cell="B15" data-formula="" style="text-align:right;">16%</td>
+          <td class="cell-normal"></td><td class="cell-normal"></td><td class="cell-normal"></td>
+        </tr>
+        <!-- Spacer -->
+        <tr>
+          <td class="row-num">16</td>
+          <td class="cell-normal"></td><td class="cell-normal"></td><td class="cell-normal"></td><td class="cell-normal"></td><td class="cell-normal"></td>
+        </tr>
+        <!-- Section header: 業者別支払TOP5 -->
+        <tr>
+          <td class="row-num">17</td>
+          <td class="cell-header" colspan="2">業者別支払TOP5</td>
+          <td class="cell-normal"></td><td class="cell-normal"></td><td class="cell-normal"></td>
+        </tr>
+        <tr>
+          <td class="row-num">18</td>
+          <td class="cell-header">業者名</td>
+          <td class="cell-header">累計支払額</td>
+          <td class="cell-normal"></td><td class="cell-normal"></td><td class="cell-normal"></td>
+        </tr>
+        <tr>
+          <td class="row-num">19</td>
+          <td class="cell-calc" data-cell="A19" data-formula="">川越建設</td>
+          <td class="cell-calc col-amount" data-cell="B19" data-formula="">9,667,000</td>
+          <td class="cell-normal"></td><td class="cell-normal"></td><td class="cell-normal"></td>
+        </tr>
+        <tr>
+          <td class="row-num">20</td>
+          <td class="cell-calc" data-cell="A20" data-formula="">桜島生コンクリート</td>
+          <td class="cell-calc col-amount" data-cell="B20" data-formula="">5,205,650</td>
+          <td class="cell-normal"></td><td class="cell-normal"></td><td class="cell-normal"></td>
+        </tr>
+        <tr>
+          <td class="row-num">21</td>
+          <td class="cell-calc" data-cell="A21" data-formula="">(有)濱畑水道</td>
+          <td class="cell-calc col-amount" data-cell="B21" data-formula="">4,839,554</td>
+          <td class="cell-normal"></td><td class="cell-normal"></td><td class="cell-normal"></td>
+        </tr>
+        <tr>
+          <td class="row-num">22</td>
+          <td class="cell-calc" data-cell="A22" data-formula="">菱和コンクリート</td>
+          <td class="cell-calc col-amount" data-cell="B22" data-formula="">1,910,000</td>
+          <td class="cell-normal"></td><td class="cell-normal"></td><td class="cell-normal"></td>
+        </tr>
+        <tr>
+          <td class="row-num">23</td>
+          <td class="cell-calc" data-cell="A23" data-formula="">(株)グリーンクロス</td>
+          <td class="cell-calc col-amount" data-cell="B23" data-formula="">432,940</td>
+          <td class="cell-normal"></td><td class="cell-normal"></td><td class="cell-normal"></td>
+        </tr>
+        <!-- Empty rows -->
+        <tr><td class="row-num">24</td><td class="cell-normal"></td><td class="cell-normal"></td><td class="cell-normal"></td><td class="cell-normal"></td><td class="cell-normal"></td></tr>
+        <tr><td class="row-num">25</td><td class="cell-normal"></td><td class="cell-normal"></td><td class="cell-normal"></td><td class="cell-normal"></td><td class="cell-normal"></td></tr>
+      </tbody>
+    </table>
+  </div>
+
+  <!-- Tab 10: _Mマスタ（費目4階層マスタ管理） -->
+  <div id="tab10" class="tab-content" style="display:none;">
+    <table class="sheet-table">
+      <thead>
+        <tr>
+          <th class="corner-header"></th>
+          <th class="col-header" style="min-width:60px;">A</th>
+          <th class="col-header" style="min-width:100px;">B</th>
+          <th class="col-header" style="min-width:140px;">C</th>
+          <th class="col-header" style="min-width:140px;">D</th>
+          <th class="col-header" style="min-width:140px;">E</th>
+          <th class="col-header" style="min-width:60px;">F</th>
+          <th class="col-header" style="min-width:200px;">G</th>
+          <th class="col-header" style="min-width:180px;">H</th>
+          <th class="col-header" style="min-width:80px;">I</th>
+          <th class="col-header" style="min-width:200px;">J</th>
+        </tr>
+      </thead>
+      <tbody>
+        <!-- ヘッダ行 -->
+        <tr>
+          <td class="row-num">1</td>
+          <td class="cell-header">カテゴリCD</td>
+          <td class="cell-header">カテゴリ名</td>
+          <td class="cell-header">工事種別CD</td>
+          <td class="cell-header">工事種別名</td>
+          <td class="cell-header">工種CD / 費目CD</td>
+          <td class="cell-header">費用要素CD</td>
+          <td class="cell-header">予算箱ID（自動生成）</td>
+          <td class="cell-header">使用ルール</td>
+          <td class="cell-header">アクティブ</td>
+          <td class="cell-header">備考</td>
+        </tr>
+        <!-- C01 直接工事費 -->
+        <tr>
+          <td class="row-num">2</td>
+          <td class="cell-input" style="background:#BBDEFB;" data-cell="A2" data-formula="">C01</td>
+          <td class="cell-input" style="background:#BBDEFB;" data-cell="B2" data-formula="">直接工事費</td>
+          <td class="cell-input" style="background:#E3F2FD;" data-cell="C2" data-formula="">W01</td>
+          <td class="cell-input" style="background:#E3F2FD;" data-cell="D2" data-formula="">仮設工事</td>
+          <td class="cell-input" data-cell="E2" data-formula="">K0101</td>
+          <td class="cell-input" data-cell="F2" data-formula="">E14</td>
+          <td class="cell-calc" data-cell="G2" data-formula="">C01-W01-K0101-E14</td>
+          <td class="cell-input" data-cell="H2" data-formula="">常時使用</td>
+          <td class="cell-calc" data-cell="I2" data-formula="" style="color:#2E7D32; font-weight:700;">TRUE</td>
+          <td class="cell-normal" data-cell="J2" data-formula=""></td>
+        </tr>
+        <tr>
+          <td class="row-num">3</td>
+          <td class="cell-normal"></td>
+          <td class="cell-normal"></td>
+          <td class="cell-input" style="background:#E3F2FD;" data-cell="C3" data-formula="">W02</td>
+          <td class="cell-input" style="background:#E3F2FD;" data-cell="D3" data-formula="">コンクリート工事</td>
+          <td class="cell-input" data-cell="E3" data-formula="">K0201</td>
+          <td class="cell-input" data-cell="F3" data-formula="">E11</td>
+          <td class="cell-calc" data-cell="G3" data-formula="">C01-W02-K0201-E11</td>
+          <td class="cell-input" data-cell="H3" data-formula="">常時使用</td>
+          <td class="cell-calc" data-cell="I3" data-formula="" style="color:#2E7D32; font-weight:700;">TRUE</td>
+          <td class="cell-normal" data-cell="J3" data-formula=""></td>
+        </tr>
+        <tr>
+          <td class="row-num">4</td>
+          <td class="cell-normal"></td>
+          <td class="cell-normal"></td>
+          <td class="cell-normal" style="background:#E3F2FD;"></td>
+          <td class="cell-normal" style="background:#E3F2FD;"></td>
+          <td class="cell-input" data-cell="E4" data-formula="">K0201</td>
+          <td class="cell-input" data-cell="F4" data-formula="">E14</td>
+          <td class="cell-calc" data-cell="G4" data-formula="">C01-W02-K0201-E14</td>
+          <td class="cell-input" data-cell="H4" data-formula="">常時使用</td>
+          <td class="cell-calc" data-cell="I4" data-formula="" style="color:#2E7D32; font-weight:700;">TRUE</td>
+          <td class="cell-normal" data-cell="J4" data-formula=""></td>
+        </tr>
+        <tr>
+          <td class="row-num">5</td>
+          <td class="cell-normal"></td>
+          <td class="cell-normal"></td>
+          <td class="cell-normal" style="background:#E3F2FD;"></td>
+          <td class="cell-normal" style="background:#E3F2FD;"></td>
+          <td class="cell-input" data-cell="E5" data-formula="">K0202</td>
+          <td class="cell-input" data-cell="F5" data-formula="">E14</td>
+          <td class="cell-calc" data-cell="G5" data-formula="">C01-W02-K0202-E14</td>
+          <td class="cell-input" data-cell="H5" data-formula="">常時使用</td>
+          <td class="cell-calc" data-cell="I5" data-formula="" style="color:#2E7D32; font-weight:700;">TRUE</td>
+          <td class="cell-normal" data-cell="J5" data-formula=""></td>
+        </tr>
+        <tr>
+          <td class="row-num">6</td>
+          <td class="cell-normal"></td>
+          <td class="cell-normal"></td>
+          <td class="cell-input" style="background:#E3F2FD;" data-cell="C6" data-formula="">W04</td>
+          <td class="cell-input" style="background:#E3F2FD;" data-cell="D6" data-formula="">護岸・海岸工事</td>
+          <td class="cell-input" data-cell="E6" data-formula="">K0401</td>
+          <td class="cell-input" data-cell="F6" data-formula="">E11</td>
+          <td class="cell-calc" data-cell="G6" data-formula="">C01-W04-K0401-E11</td>
+          <td class="cell-input" data-cell="H6" data-formula="">常時使用</td>
+          <td class="cell-calc" data-cell="I6" data-formula="" style="color:#2E7D32; font-weight:700;">TRUE</td>
+          <td class="cell-normal" data-cell="J6" data-formula=""></td>
+        </tr>
+        <tr>
+          <td class="row-num">7</td>
+          <td class="cell-normal"></td>
+          <td class="cell-normal"></td>
+          <td class="cell-normal" style="background:#E3F2FD;"></td>
+          <td class="cell-normal" style="background:#E3F2FD;"></td>
+          <td class="cell-input" data-cell="E7" data-formula="">K0401</td>
+          <td class="cell-input" data-cell="F7" data-formula="">E14</td>
+          <td class="cell-calc" data-cell="G7" data-formula="">C01-W04-K0401-E14</td>
+          <td class="cell-input" data-cell="H7" data-formula="">常時使用</td>
+          <td class="cell-calc" data-cell="I7" data-formula="" style="color:#2E7D32; font-weight:700;">TRUE</td>
+          <td class="cell-normal" data-cell="J7" data-formula=""></td>
+        </tr>
+        <tr>
+          <td class="row-num">8</td>
+          <td class="cell-normal"></td>
+          <td class="cell-normal"></td>
+          <td class="cell-input" style="background:#E3F2FD;" data-cell="C8" data-formula="">W11</td>
+          <td class="cell-input" style="background:#E3F2FD;" data-cell="D8" data-formula="">排水工事</td>
+          <td class="cell-input" data-cell="E8" data-formula="">K1101</td>
+          <td class="cell-input" data-cell="F8" data-formula="">E14</td>
+          <td class="cell-calc" data-cell="G8" data-formula="">C01-W11-K1101-E14</td>
+          <td class="cell-input" data-cell="H8" data-formula="">常時使用</td>
+          <td class="cell-calc" data-cell="I8" data-formula="" style="color:#2E7D32; font-weight:700;">TRUE</td>
+          <td class="cell-normal" data-cell="J8" data-formula=""></td>
+        </tr>
+        <tr>
+          <td class="row-num">9</td>
+          <td class="cell-normal"></td>
+          <td class="cell-normal"></td>
+          <td class="cell-input" style="background:#E3F2FD;" data-cell="C9" data-formula="">W99</td>
+          <td class="cell-input" style="background:#E3F2FD;" data-cell="D9" data-formula="">その他直接工事</td>
+          <td class="cell-input" data-cell="E9" data-formula="">K9901</td>
+          <td class="cell-input" data-cell="F9" data-formula="">E15</td>
+          <td class="cell-calc" data-cell="G9" data-formula="">C01-W99-K9901-E15</td>
+          <td class="cell-input" data-cell="H9" data-formula="">常時使用</td>
+          <td class="cell-calc" data-cell="I9" data-formula="" style="color:#2E7D32; font-weight:700;">TRUE</td>
+          <td class="cell-normal" data-cell="J9" data-formula=""></td>
+        </tr>
+        <!-- セパレータ -->
+        <tr>
+          <td class="row-num">10</td>
+          <td colspan="10" style="background:#E0E0E0; font-weight:700; padding:4px 8px; font-size:12px;">費用要素コード: E11=材料費 / E12=機械経費（損料） / E13=機械経費（燃料） / E14=外注費 / E15=労務費</td>
+        </tr>
+        <!-- C02 共通仮設費（図2-2準拠 7項目 + 森組独自2項目 = 9項目） -->
+        <tr>
+          <td class="row-num">11</td>
+          <td class="cell-input" style="background:#C8E6C9;" data-cell="A11" data-formula="">C02</td>
+          <td class="cell-input" style="background:#C8E6C9;" data-cell="B11" data-formula="">共通仮設費</td>
+          <td class="cell-normal" style="background:#E8F5E9;">（工事種別なし）</td>
+          <td class="cell-normal" style="background:#E8F5E9;">運搬費</td>
+          <td class="cell-input" data-cell="E11" data-formula="">F31</td>
+          <td class="cell-normal">-</td>
+          <td class="cell-calc" data-cell="G11" data-formula="">C02-F31</td>
+          <td class="cell-input" data-cell="H11" data-formula="">常時使用</td>
+          <td class="cell-calc" data-cell="I11" data-formula="" style="color:#2E7D32; font-weight:700;">TRUE</td>
+          <td class="cell-normal" data-cell="J11" data-formula=""></td>
+        </tr>
+        <tr>
+          <td class="row-num">12</td>
+          <td class="cell-normal"></td>
+          <td class="cell-normal"></td>
+          <td class="cell-normal" style="background:#E8F5E9;"></td>
+          <td class="cell-normal" style="background:#E8F5E9;">調査・準備費</td>
+          <td class="cell-input" data-cell="E12" data-formula="">F32</td>
+          <td class="cell-normal">-</td>
+          <td class="cell-calc" data-cell="G12" data-formula="">C02-F32</td>
+          <td class="cell-input" data-cell="H12" data-formula="">常時使用</td>
+          <td class="cell-calc" data-cell="I12" data-formula="" style="color:#2E7D32; font-weight:700;">TRUE</td>
+          <td class="cell-normal" data-cell="J12" data-formula=""></td>
+        </tr>
+        <tr>
+          <td class="row-num">13</td>
+          <td class="cell-normal"></td>
+          <td class="cell-normal"></td>
+          <td class="cell-normal" style="background:#E8F5E9;"></td>
+          <td class="cell-normal" style="background:#E8F5E9;">仮設建物費</td>
+          <td class="cell-input" data-cell="E13" data-formula="">F33</td>
+          <td class="cell-normal">-</td>
+          <td class="cell-calc" data-cell="G13" data-formula="">C02-F33</td>
+          <td class="cell-input" data-cell="H13" data-formula="">工事種別による</td>
+          <td class="cell-calc" data-cell="I13" data-formula="" style="color:#2E7D32; font-weight:700;">TRUE</td>
+          <td class="cell-normal" data-cell="J13" data-formula="">現場事務所・倉庫等の仮設建物</td>
+        </tr>
+        <tr>
+          <td class="row-num">14</td>
+          <td class="cell-normal"></td>
+          <td class="cell-normal"></td>
+          <td class="cell-normal" style="background:#E8F5E9;"></td>
+          <td class="cell-normal" style="background:#E8F5E9;">公害防止対策費</td>
+          <td class="cell-input" data-cell="E14" data-formula="">F34</td>
+          <td class="cell-normal">-</td>
+          <td class="cell-calc" data-cell="G14" data-formula="">C02-F34</td>
+          <td class="cell-input" data-cell="H14" data-formula="">工事種別による</td>
+          <td class="cell-calc" data-cell="I14" data-formula="" style="color:#2E7D32; font-weight:700;">TRUE</td>
+          <td class="cell-normal" data-cell="J14" data-formula="">騒音・振動・水質汚濁等の対策</td>
+        </tr>
+        <tr>
+          <td class="row-num">15</td>
+          <td class="cell-normal"></td>
+          <td class="cell-normal"></td>
+          <td class="cell-normal" style="background:#E8F5E9;"></td>
+          <td class="cell-normal" style="background:#E8F5E9;">安全対策費</td>
+          <td class="cell-input" data-cell="E15" data-formula="">F35</td>
+          <td class="cell-normal">-</td>
+          <td class="cell-calc" data-cell="G15" data-formula="">C02-F35</td>
+          <td class="cell-input" data-cell="H15" data-formula="">常時使用</td>
+          <td class="cell-calc" data-cell="I15" data-formula="" style="color:#2E7D32; font-weight:700;">TRUE</td>
+          <td class="cell-normal" data-cell="J15" data-formula=""></td>
+        </tr>
+        <tr>
+          <td class="row-num">16</td>
+          <td class="cell-normal"></td>
+          <td class="cell-normal"></td>
+          <td class="cell-normal" style="background:#E8F5E9;"></td>
+          <td class="cell-normal" style="background:#E8F5E9;">水道光熱費</td>
+          <td class="cell-input" data-cell="E16" data-formula="">F36</td>
+          <td class="cell-normal">-</td>
+          <td class="cell-calc" data-cell="G16" data-formula="">C02-F36</td>
+          <td class="cell-input" data-cell="H16" data-formula="">常時使用</td>
+          <td class="cell-calc" data-cell="I16" data-formula="" style="color:#2E7D32; font-weight:700;">TRUE</td>
+          <td class="cell-normal" data-cell="J16" data-formula=""></td>
+        </tr>
+        <tr>
+          <td class="row-num">17</td>
+          <td class="cell-normal"></td>
+          <td class="cell-normal"></td>
+          <td class="cell-normal" style="background:#E8F5E9;"></td>
+          <td class="cell-normal" style="background:#E8F5E9;">産業廃棄物処理費</td>
+          <td class="cell-input" data-cell="E17" data-formula="">F37</td>
+          <td class="cell-normal">-</td>
+          <td class="cell-calc" data-cell="G17" data-formula="">C02-F37</td>
+          <td class="cell-input" data-cell="H17" data-formula="">常時使用</td>
+          <td class="cell-calc" data-cell="I17" data-formula="" style="color:#2E7D32; font-weight:700;">TRUE</td>
+          <td class="cell-normal" data-cell="J17" data-formula=""></td>
+        </tr>
+        <tr>
+          <td class="row-num">18</td>
+          <td class="cell-normal"></td>
+          <td class="cell-normal"></td>
+          <td class="cell-normal" style="background:#E8F5E9;"></td>
+          <td class="cell-normal" style="background:#E8F5E9;">役務費</td>
+          <td class="cell-input" data-cell="E18" data-formula="">F38</td>
+          <td class="cell-normal">-</td>
+          <td class="cell-calc" data-cell="G18" data-formula="">C02-F38</td>
+          <td class="cell-input" data-cell="H18" data-formula="">常時使用</td>
+          <td class="cell-calc" data-cell="I18" data-formula="" style="color:#2E7D32; font-weight:700;">TRUE</td>
+          <td class="cell-normal" data-cell="J18" data-formula="">森組独自項目</td>
+        </tr>
+        <tr>
+          <td class="row-num">19</td>
+          <td class="cell-normal"></td>
+          <td class="cell-normal"></td>
+          <td class="cell-normal" style="background:#E8F5E9;"></td>
+          <td class="cell-normal" style="background:#E8F5E9;">営繕費</td>
+          <td class="cell-input" data-cell="E19" data-formula="">F39</td>
+          <td class="cell-normal">-</td>
+          <td class="cell-calc" data-cell="G19" data-formula="">C02-F39</td>
+          <td class="cell-input" data-cell="H19" data-formula="">常時使用</td>
+          <td class="cell-calc" data-cell="I19" data-formula="" style="color:#2E7D32; font-weight:700;">TRUE</td>
+          <td class="cell-normal" data-cell="J19" data-formula="">森組独自項目</td>
+        </tr>
+        <!-- セパレータ -->
+        <tr>
+          <td class="row-num">20</td>
+          <td colspan="10" style="background:#E0E0E0; font-weight:700; padding:4px 8px; font-size:12px;">共通仮設費（F31-F39）: 図2-2準拠7項目 + 森組独自2項目 = 9項目</td>
+        </tr>
+        <!-- C03 現場管理費（図2-2準拠 17項目） -->
+        <tr>
+          <td class="row-num">21</td>
+          <td class="cell-input" style="background:#FFE0B2;" data-cell="A21" data-formula="">C03</td>
+          <td class="cell-input" style="background:#FFE0B2;" data-cell="B21" data-formula="">現場管理費</td>
+          <td class="cell-normal" style="background:#FFF3E0;">（工事種別なし）</td>
+          <td class="cell-normal" style="background:#FFF3E0;">労務管理費</td>
+          <td class="cell-input" data-cell="E21" data-formula="">F51</td>
+          <td class="cell-normal">-</td>
+          <td class="cell-calc" data-cell="G21" data-formula="">C03-F51</td>
+          <td class="cell-input" data-cell="H21" data-formula="">常時使用</td>
+          <td class="cell-calc" data-cell="I21" data-formula="" style="color:#2E7D32; font-weight:700;">TRUE</td>
+          <td class="cell-normal" data-cell="J21" data-formula=""></td>
+        </tr>
+        <tr>
+          <td class="row-num">22</td>
+          <td class="cell-normal"></td>
+          <td class="cell-normal"></td>
+          <td class="cell-normal" style="background:#FFF3E0;"></td>
+          <td class="cell-normal" style="background:#FFF3E0;">法定福利費</td>
+          <td class="cell-input" data-cell="E22" data-formula="">F52</td>
+          <td class="cell-normal">-</td>
+          <td class="cell-calc" data-cell="G22" data-formula="">C03-F52</td>
+          <td class="cell-input" data-cell="H22" data-formula="">常時使用</td>
+          <td class="cell-calc" data-cell="I22" data-formula="" style="color:#2E7D32; font-weight:700;">TRUE</td>
+          <td class="cell-normal" data-cell="J22" data-formula=""></td>
+        </tr>
+        <tr>
+          <td class="row-num">23</td>
+          <td class="cell-normal"></td>
+          <td class="cell-normal"></td>
+          <td class="cell-normal" style="background:#FFF3E0;"></td>
+          <td class="cell-normal" style="background:#FFF3E0;">租税公課</td>
+          <td class="cell-input" data-cell="E23" data-formula="">F53</td>
+          <td class="cell-normal">-</td>
+          <td class="cell-calc" data-cell="G23" data-formula="">C03-F53</td>
+          <td class="cell-input" data-cell="H23" data-formula="">常時使用</td>
+          <td class="cell-calc" data-cell="I23" data-formula="" style="color:#2E7D32; font-weight:700;">TRUE</td>
+          <td class="cell-normal" data-cell="J23" data-formula=""></td>
+        </tr>
+        <tr>
+          <td class="row-num">24</td>
+          <td class="cell-normal"></td>
+          <td class="cell-normal"></td>
+          <td class="cell-normal" style="background:#FFF3E0;"></td>
+          <td class="cell-normal" style="background:#FFF3E0;">地代家賃</td>
+          <td class="cell-input" data-cell="E24" data-formula="">F54</td>
+          <td class="cell-normal">-</td>
+          <td class="cell-calc" data-cell="G24" data-formula="">C03-F54</td>
+          <td class="cell-input" data-cell="H24" data-formula="">工事種別による</td>
+          <td class="cell-calc" data-cell="I24" data-formula="" style="color:#E53935; font-weight:700;">FALSE</td>
+          <td class="cell-normal" data-cell="J24" data-formula="">用地確保が必要な工事のみ（本工事は公有地のため不要）</td>
+        </tr>
+        <tr>
+          <td class="row-num">25</td>
+          <td class="cell-normal"></td>
+          <td class="cell-normal"></td>
+          <td class="cell-normal" style="background:#FFF3E0;"></td>
+          <td class="cell-normal" style="background:#FFF3E0;">保険料</td>
+          <td class="cell-input" data-cell="E25" data-formula="">F55</td>
+          <td class="cell-normal">-</td>
+          <td class="cell-calc" data-cell="G25" data-formula="">C03-F55</td>
+          <td class="cell-input" data-cell="H25" data-formula="">常時使用</td>
+          <td class="cell-calc" data-cell="I25" data-formula="" style="color:#2E7D32; font-weight:700;">TRUE</td>
+          <td class="cell-normal" data-cell="J25" data-formula=""></td>
+        </tr>
+        <tr>
+          <td class="row-num">26</td>
+          <td class="cell-normal"></td>
+          <td class="cell-normal"></td>
+          <td class="cell-normal" style="background:#FFF3E0;"></td>
+          <td class="cell-normal" style="background:#FFF3E0;">従業員給料手当</td>
+          <td class="cell-input" data-cell="E26" data-formula="">F56</td>
+          <td class="cell-normal">-</td>
+          <td class="cell-calc" data-cell="G26" data-formula="">C03-F56</td>
+          <td class="cell-input" data-cell="H26" data-formula="">常時使用</td>
+          <td class="cell-calc" data-cell="I26" data-formula="" style="color:#2E7D32; font-weight:700;">TRUE</td>
+          <td class="cell-normal" data-cell="J26" data-formula="">常傭社員の給与はここに計上（直用作業員の日当はE15）</td>
+        </tr>
+        <tr>
+          <td class="row-num">27</td>
+          <td class="cell-normal"></td>
+          <td class="cell-normal"></td>
+          <td class="cell-normal" style="background:#FFF3E0;"></td>
+          <td class="cell-normal" style="background:#FFF3E0;">従業員賞与</td>
+          <td class="cell-input" data-cell="E27" data-formula="">F57</td>
+          <td class="cell-normal">-</td>
+          <td class="cell-calc" data-cell="G27" data-formula="">C03-F57</td>
+          <td class="cell-input" data-cell="H27" data-formula="">常時使用</td>
+          <td class="cell-calc" data-cell="I27" data-formula="" style="color:#2E7D32; font-weight:700;">TRUE</td>
+          <td class="cell-normal" data-cell="J27" data-formula=""></td>
+        </tr>
+        <tr>
+          <td class="row-num">28</td>
+          <td class="cell-normal"></td>
+          <td class="cell-normal"></td>
+          <td class="cell-normal" style="background:#FFF3E0;"></td>
+          <td class="cell-normal" style="background:#FFF3E0;">従業員退職金</td>
+          <td class="cell-input" data-cell="E28" data-formula="">F58</td>
+          <td class="cell-normal">-</td>
+          <td class="cell-calc" data-cell="G28" data-formula="">C03-F58</td>
+          <td class="cell-input" data-cell="H28" data-formula="">常時使用</td>
+          <td class="cell-calc" data-cell="I28" data-formula="" style="color:#2E7D32; font-weight:700;">TRUE</td>
+          <td class="cell-normal" data-cell="J28" data-formula=""></td>
+        </tr>
+        <tr>
+          <td class="row-num">29</td>
+          <td class="cell-normal"></td>
+          <td class="cell-normal"></td>
+          <td class="cell-normal" style="background:#FFF3E0;"></td>
+          <td class="cell-normal" style="background:#FFF3E0;">福利厚生費</td>
+          <td class="cell-input" data-cell="E29" data-formula="">F59</td>
+          <td class="cell-normal">-</td>
+          <td class="cell-calc" data-cell="G29" data-formula="">C03-F59</td>
+          <td class="cell-input" data-cell="H29" data-formula="">常時使用</td>
+          <td class="cell-calc" data-cell="I29" data-formula="" style="color:#2E7D32; font-weight:700;">TRUE</td>
+          <td class="cell-normal" data-cell="J29" data-formula=""></td>
+        </tr>
+        <tr>
+          <td class="row-num">30</td>
+          <td class="cell-normal"></td>
+          <td class="cell-normal"></td>
+          <td class="cell-normal" style="background:#FFF3E0;"></td>
+          <td class="cell-normal" style="background:#FFF3E0;">事務用品費</td>
+          <td class="cell-input" data-cell="E30" data-formula="">F60</td>
+          <td class="cell-normal">-</td>
+          <td class="cell-calc" data-cell="G30" data-formula="">C03-F60</td>
+          <td class="cell-input" data-cell="H30" data-formula="">常時使用</td>
+          <td class="cell-calc" data-cell="I30" data-formula="" style="color:#2E7D32; font-weight:700;">TRUE</td>
+          <td class="cell-normal" data-cell="J30" data-formula=""></td>
+        </tr>
+        <tr>
+          <td class="row-num">31</td>
+          <td class="cell-normal"></td>
+          <td class="cell-normal"></td>
+          <td class="cell-normal" style="background:#FFF3E0;"></td>
+          <td class="cell-normal" style="background:#FFF3E0;">旅費・交通費・通信費</td>
+          <td class="cell-input" data-cell="E31" data-formula="">F61</td>
+          <td class="cell-normal">-</td>
+          <td class="cell-calc" data-cell="G31" data-formula="">C03-F61</td>
+          <td class="cell-input" data-cell="H31" data-formula="">常時使用</td>
+          <td class="cell-calc" data-cell="I31" data-formula="" style="color:#2E7D32; font-weight:700;">TRUE</td>
+          <td class="cell-normal" data-cell="J31" data-formula=""></td>
+        </tr>
+        <tr>
+          <td class="row-num">32</td>
+          <td class="cell-normal"></td>
+          <td class="cell-normal"></td>
+          <td class="cell-normal" style="background:#FFF3E0;"></td>
+          <td class="cell-normal" style="background:#FFF3E0;">補償費</td>
+          <td class="cell-input" data-cell="E32" data-formula="">F62</td>
+          <td class="cell-normal">-</td>
+          <td class="cell-calc" data-cell="G32" data-formula="">C03-F62</td>
+          <td class="cell-input" data-cell="H32" data-formula="">工事種別による</td>
+          <td class="cell-calc" data-cell="I32" data-formula="" style="color:#2E7D32; font-weight:700;">TRUE</td>
+          <td class="cell-normal" data-cell="J32" data-formula="">森組実績あり（図2-2任意項目）</td>
+        </tr>
+        <tr>
+          <td class="row-num">33</td>
+          <td class="cell-normal"></td>
+          <td class="cell-normal"></td>
+          <td class="cell-normal" style="background:#FFF3E0;"></td>
+          <td class="cell-normal" style="background:#FFF3E0;">設計費</td>
+          <td class="cell-input" data-cell="E33" data-formula="">F63</td>
+          <td class="cell-normal">-</td>
+          <td class="cell-calc" data-cell="G33" data-formula="">C03-F63</td>
+          <td class="cell-input" data-cell="H33" data-formula="">森組方針による</td>
+          <td class="cell-calc" data-cell="I33" data-formula="" style="color:#E53935; font-weight:700;">FALSE</td>
+          <td class="cell-normal" data-cell="J33" data-formula="">設計施工一体の場合のみ計上（図2-2任意項目）</td>
+        </tr>
+        <tr>
+          <td class="row-num">34</td>
+          <td class="cell-normal"></td>
+          <td class="cell-normal"></td>
+          <td class="cell-normal" style="background:#FFF3E0;"></td>
+          <td class="cell-normal" style="background:#FFF3E0;">交際費</td>
+          <td class="cell-input" data-cell="E34" data-formula="">F64</td>
+          <td class="cell-normal">-</td>
+          <td class="cell-calc" data-cell="G34" data-formula="">C03-F64</td>
+          <td class="cell-input" data-cell="H34" data-formula="">工事種別による</td>
+          <td class="cell-calc" data-cell="I34" data-formula="" style="color:#2E7D32; font-weight:700;">TRUE</td>
+          <td class="cell-normal" data-cell="J34" data-formula="">森組実績あり（図2-2任意項目）</td>
+        </tr>
+        <tr>
+          <td class="row-num">35</td>
+          <td class="cell-normal"></td>
+          <td class="cell-normal"></td>
+          <td class="cell-normal" style="background:#FFF3E0;"></td>
+          <td class="cell-normal" style="background:#FFF3E0;">保証料</td>
+          <td class="cell-input" data-cell="E35" data-formula="">F65</td>
+          <td class="cell-normal">-</td>
+          <td class="cell-calc" data-cell="G35" data-formula="">C03-F65</td>
+          <td class="cell-input" data-cell="H35" data-formula="">常時使用</td>
+          <td class="cell-calc" data-cell="I35" data-formula="" style="color:#2E7D32; font-weight:700;">TRUE</td>
+          <td class="cell-normal" data-cell="J35" data-formula=""></td>
+        </tr>
+        <tr>
+          <td class="row-num">36</td>
+          <td class="cell-normal"></td>
+          <td class="cell-normal"></td>
+          <td class="cell-normal" style="background:#FFF3E0;"></td>
+          <td class="cell-normal" style="background:#FFF3E0;">会議費・諸会費</td>
+          <td class="cell-input" data-cell="E36" data-formula="">F66</td>
+          <td class="cell-normal">-</td>
+          <td class="cell-calc" data-cell="G36" data-formula="">C03-F66</td>
+          <td class="cell-input" data-cell="H36" data-formula="">常時使用</td>
+          <td class="cell-calc" data-cell="I36" data-formula="" style="color:#2E7D32; font-weight:700;">TRUE</td>
+          <td class="cell-normal" data-cell="J36" data-formula=""></td>
+        </tr>
+        <tr>
+          <td class="row-num">37</td>
+          <td class="cell-normal"></td>
+          <td class="cell-normal"></td>
+          <td class="cell-normal" style="background:#FFF3E0;"></td>
+          <td class="cell-normal" style="background:#FFF3E0;">雑費</td>
+          <td class="cell-input" data-cell="E37" data-formula="">F67</td>
+          <td class="cell-normal">-</td>
+          <td class="cell-calc" data-cell="G37" data-formula="">C03-F67</td>
+          <td class="cell-input" data-cell="H37" data-formula="">常時使用</td>
+          <td class="cell-calc" data-cell="I37" data-formula="" style="color:#2E7D32; font-weight:700;">TRUE</td>
+          <td class="cell-normal" data-cell="J37" data-formula=""></td>
+        </tr>
+        <!-- セパレータ -->
+        <tr>
+          <td class="row-num">38</td>
+          <td colspan="10" style="background:#E0E0E0; font-weight:700; padding:4px 8px; font-size:12px;">現場管理費（F51-F67）: 図2-2準拠17項目</td>
+        </tr>
+        <!-- 注記行 -->
+        <tr>
+          <td class="row-num">39</td>
+          <td colspan="10" style="background:#FFF9C4; padding:6px 8px; font-size:12px;">
+            ※ このシートはGASのバリデーション用マスタです。支払明細入力のドロップダウン連動に使用されます。
+            I列（アクティブ）がFALSEの費目はドロップダウンに表示されません。直接編集する場合はGASの再デプロイが必要です。
+          </td>
+        </tr>
+        <tr><td class="row-num">29</td><td class="cell-normal"></td><td class="cell-normal"></td><td class="cell-normal"></td><td class="cell-normal"></td><td class="cell-normal"></td><td class="cell-normal"></td><td class="cell-normal"></td><td class="cell-normal"></td><td class="cell-normal"></td><td class="cell-normal"></td></tr>
+        <tr><td class="row-num">30</td><td class="cell-normal"></td><td class="cell-normal"></td><td class="cell-normal"></td><td class="cell-normal"></td><td class="cell-normal"></td><td class="cell-normal"></td><td class="cell-normal"></td><td class="cell-normal"></td><td class="cell-normal"></td><td class="cell-normal"></td></tr>
+      </tbody>
+    </table>
+  </div>
+
+  <!-- Tab 6: 全社損益（経営診断） (was Tab 4) -->
+  <div id="tab6" class="tab-content" style="display:none;">
+    <table class="sheet-table">
+      <thead>
+        <tr>
+          <th class="corner-header"></th>
+          <th class="col-header col-wide">A</th>
+          <th class="col-header col-amount" style="min-width:140px;">B</th>
+          <th class="col-header col-amount" style="min-width:140px;">C</th>
+          <th class="col-header col-amount" style="min-width:140px;">D</th>
+          <th class="col-header col-narrow">E</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td class="row-num">1</td>
+          <td class="cell-header">指標</td>
+          <td class="cell-header">前年度(R6)</td>
+          <td class="cell-header">今年度(R7)</td>
+          <td class="cell-header">増減</td>
+          <td class="cell-header">増減率</td>
+        </tr>
+        <tr>
+          <td class="row-num">2</td>
+          <td class="cell-input" data-cell="A2" data-formula="">売上高</td>
+          <td class="cell-input col-amount" data-cell="B2" data-formula="">897,875,404</td>
+          <td class="cell-input col-amount" data-cell="C2" data-formula="">1,146,788,122</td>
+          <td class="cell-calc col-amount text-blue-pos" data-cell="D2" data-formula="=C2-B2">+248,912,718</td>
+          <td class="cell-calc" data-cell="E2" data-formula="=D2/B2*100">+27.7%</td>
+        </tr>
+        <tr>
+          <td class="row-num">3</td>
+          <td class="cell-input" data-cell="A3" data-formula="">売上原価</td>
+          <td class="cell-input col-amount" data-cell="B3" data-formula="">821,895,183</td>
+          <td class="cell-input col-amount" data-cell="C3" data-formula="">1,069,500,425</td>
+          <td class="cell-calc col-amount text-red" data-cell="D3" data-formula="=C3-B3">+247,605,242</td>
+          <td class="cell-calc" data-cell="E3" data-formula="=D3/B3*100">+30.1%</td>
+        </tr>
+        <tr>
+          <td class="row-num">4</td>
+          <td class="cell-input" data-cell="A4" data-formula="">粗利</td>
+          <td class="cell-input col-amount" data-cell="B4" data-formula="">75,980,221</td>
+          <td class="cell-input col-amount" data-cell="C4" data-formula="">77,287,697</td>
+          <td class="cell-calc col-amount text-blue-pos" data-cell="D4" data-formula="=C4-B4">+1,307,476</td>
+          <td class="cell-calc" data-cell="E4" data-formula="=D4/B4*100">+1.7%</td>
+        </tr>
+        <tr>
+          <td class="row-num">5</td>
+          <td class="cell-input" data-cell="A5" data-formula="">粗利率</td>
+          <td class="cell-input" data-cell="B5" data-formula="" style="text-align:right;">8.4%</td>
+          <td class="cell-input" data-cell="C5" data-formula="" style="text-align:right;">6.7%</td>
+          <td class="cell-calc text-red" data-cell="D5" data-formula="=C5-B5" style="text-align:right;">-1.7pt</td>
+          <td class="cell-calc" data-cell="E5" data-formula="">-</td>
+        </tr>
+        <tr>
+          <td class="row-num">6</td>
+          <td class="cell-input" data-cell="A6" data-formula="">販管費</td>
+          <td class="cell-input col-amount" data-cell="B6" data-formula="">95,347,353</td>
+          <td class="cell-input col-amount" data-cell="C6" data-formula="">98,141,201</td>
+          <td class="cell-calc col-amount text-red" data-cell="D6" data-formula="=C6-B6">+2,793,848</td>
+          <td class="cell-calc" data-cell="E6" data-formula="=D6/B6*100">+2.9%</td>
+        </tr>
+        <tr>
+          <td class="row-num">7</td>
+          <td class="cell-input" data-cell="A7" data-formula="">営業利益</td>
+          <td class="cell-input col-amount" data-cell="B7" data-formula="">-19,367,132</td>
+          <td class="cell-input col-amount" data-cell="C7" data-formula="">-20,853,504</td>
+          <td class="cell-calc col-amount text-red" data-cell="D7" data-formula="=C7-B7">-1,486,372</td>
+          <td class="cell-calc" data-cell="E7" data-formula="=D7/ABS(B7)*100">-7.7%</td>
+        </tr>
+        <tr>
+          <td class="row-num">8</td>
+          <td class="cell-input" data-cell="A8" data-formula="">営業利益率</td>
+          <td class="cell-input" data-cell="B8" data-formula="" style="text-align:right;">-2.1%</td>
+          <td class="cell-input" data-cell="C8" data-formula="" style="text-align:right;">-1.8%</td>
+          <td class="cell-calc text-blue-pos" data-cell="D8" data-formula="=C8-B8" style="text-align:right;">+0.3pt</td>
+          <td class="cell-calc" data-cell="E8" data-formula="">-</td>
+        </tr>
+        <!-- Empty rows -->
+        <tr><td class="row-num">9</td><td class="cell-normal"></td><td class="cell-normal"></td><td class="cell-normal"></td><td class="cell-normal"></td><td class="cell-normal"></td></tr>
+        <tr><td class="row-num">10</td><td class="cell-normal"></td><td class="cell-normal"></td><td class="cell-normal"></td><td class="cell-normal"></td><td class="cell-normal"></td></tr>
+        <tr><td class="row-num">11</td><td class="cell-normal"></td><td class="cell-normal"></td><td class="cell-normal"></td><td class="cell-normal"></td><td class="cell-normal"></td></tr>
+        <tr><td class="row-num">12</td><td class="cell-normal"></td><td class="cell-normal"></td><td class="cell-normal"></td><td class="cell-normal"></td><td class="cell-normal"></td></tr>
+        <tr><td class="row-num">13</td><td class="cell-normal"></td><td class="cell-normal"></td><td class="cell-normal"></td><td class="cell-normal"></td><td class="cell-normal"></td></tr>
+        <tr><td class="row-num">14</td><td class="cell-normal"></td><td class="cell-normal"></td><td class="cell-normal"></td><td class="cell-normal"></td><td class="cell-normal"></td></tr>
+        <tr><td class="row-num">15</td><td class="cell-normal"></td><td class="cell-normal"></td><td class="cell-normal"></td><td class="cell-normal"></td><td class="cell-normal"></td></tr>
+        <tr><td class="row-num">16</td><td class="cell-normal"></td><td class="cell-normal"></td><td class="cell-normal"></td><td class="cell-normal"></td><td class="cell-normal"></td></tr>
+        <tr><td class="row-num">17</td><td class="cell-normal"></td><td class="cell-normal"></td><td class="cell-normal"></td><td class="cell-normal"></td><td class="cell-normal"></td></tr>
+        <tr><td class="row-num">18</td><td class="cell-normal"></td><td class="cell-normal"></td><td class="cell-normal"></td><td class="cell-normal"></td><td class="cell-normal"></td></tr>
+        <tr><td class="row-num">19</td><td class="cell-normal"></td><td class="cell-normal"></td><td class="cell-normal"></td><td class="cell-normal"></td><td class="cell-normal"></td></tr>
+        <tr><td class="row-num">20</td><td class="cell-normal"></td><td class="cell-normal"></td><td class="cell-normal"></td><td class="cell-normal"></td><td class="cell-normal"></td></tr>
+      </tbody>
+    </table>
+  </div>
+
+  <!-- Tab 7: 工事別比較（経営診断） (was Tab 5) -->
+  <div id="tab7" class="tab-content" style="display:none;">
+    <table class="sheet-table">
+      <thead>
+        <tr>
+          <th class="corner-header"></th>
+          <th class="col-header col-medium">A</th>
+          <th class="col-header col-wide">B</th>
+          <th class="col-header col-amount" style="min-width:130px;">C</th>
+          <th class="col-header col-amount" style="min-width:130px;">D</th>
+          <th class="col-header col-narrow">E</th>
+          <th class="col-header col-narrow">F</th>
+          <th class="col-header col-narrow">G</th>
+          <th class="col-header col-narrow">H</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td class="row-num">1</td>
+          <td class="cell-header">所長</td>
+          <td class="cell-header">工事名</td>
+          <td class="cell-header">契約額</td>
+          <td class="cell-header">累計支出</td>
+          <td class="cell-header">粗利率</td>
+          <td class="cell-header">予算消化率</td>
+          <td class="cell-header">外注費率</td>
+          <td class="cell-header">材料費率</td>
+        </tr>
+        <tr>
+          <td class="row-num">2</td>
+          <td class="cell-input" data-cell="A2" data-formula="">池田豊</td>
+          <td class="cell-input" data-cell="B2" data-formula="">野尻川除石</td>
+          <td class="cell-input col-amount" data-cell="C2" data-formula="">76,600,000</td>
+          <td class="cell-input col-amount" data-cell="D2" data-formula="">57,000,250</td>
+          <td class="cell-input" data-cell="E2" data-formula="=(C2-D2)/C2*100" style="text-align:right;">25.6%</td>
+          <td class="cell-input" data-cell="F2" data-formula="" style="text-align:right;">74.4%</td>
+          <td class="cell-input" data-cell="G2" data-formula="" style="text-align:right;">99.6%</td>
+          <td class="cell-input" data-cell="H2" data-formula="" style="text-align:right;">0.0%</td>
+        </tr>
+        <tr>
+          <td class="row-num">3</td>
+          <td class="cell-input" data-cell="A3" data-formula="">中村竜一</td>
+          <td class="cell-input" data-cell="B3" data-formula="">境川2-1</td>
+          <td class="cell-input col-amount" data-cell="C3" data-formula="">31,296,970</td>
+          <td class="cell-input col-amount" data-cell="D3" data-formula="">22,252,990</td>
+          <td class="cell-input" data-cell="E3" data-formula="=(C3-D3)/C3*100" style="text-align:right;">28.9%</td>
+          <td class="cell-input" data-cell="F3" data-formula="" style="text-align:right;">71.1%</td>
+          <td class="cell-input" data-cell="G3" data-formula="" style="text-align:right;">58.3%</td>
+          <td class="cell-input" data-cell="H3" data-formula="" style="text-align:right;">34.5%</td>
+        </tr>
+        <tr>
+          <td class="row-num">4</td>
+          <td class="cell-input" data-cell="A4" data-formula="">上村和弘</td>
+          <td class="cell-input" data-cell="B4" data-formula="">海潟漁港</td>
+          <td class="cell-input col-amount" data-cell="C4" data-formula="">43,000,000</td>
+          <td class="cell-input col-amount" data-cell="D4" data-formula="">36,981,290</td>
+          <td class="cell-input bg-red-alert" data-cell="E4" data-formula="=(C4-D4)/C4*100" style="text-align:right;">14.0%</td>
+          <td class="cell-input" data-cell="F4" data-formula="" style="text-align:right;">86.0%</td>
+          <td class="cell-input" data-cell="G4" data-formula="" style="text-align:right;">37.5%</td>
+          <td class="cell-input" data-cell="H4" data-formula="" style="text-align:right;">30.3%</td>
+        </tr>
+        <tr>
+          <td class="row-num">5</td>
+          <td class="cell-input" data-cell="A5" data-formula="">中原輝竜</td>
+          <td class="cell-input" data-cell="B5" data-formula="">持木川</td>
+          <td class="cell-input col-amount" data-cell="C5" data-formula="">160,380,000</td>
+          <td class="cell-input col-amount" data-cell="D5" data-formula="">135,718,122</td>
+          <td class="cell-input" data-cell="E5" data-formula="=(C5-D5)/C5*100" style="text-align:right;">15.4%</td>
+          <td class="cell-input" data-cell="F5" data-formula="" style="text-align:right;">84.6%</td>
+          <td class="cell-input" data-cell="G5" data-formula="" style="text-align:right;">61.9%</td>
+          <td class="cell-input" data-cell="H5" data-formula="" style="text-align:right;">37.9%</td>
+        </tr>
+        <!-- Empty rows -->
+        <tr><td class="row-num">6</td><td class="cell-normal"></td><td class="cell-normal"></td><td class="cell-normal"></td><td class="cell-normal"></td><td class="cell-normal"></td><td class="cell-normal"></td><td class="cell-normal"></td><td class="cell-normal"></td></tr>
+        <tr><td class="row-num">7</td><td class="cell-normal"></td><td class="cell-normal"></td><td class="cell-normal"></td><td class="cell-normal"></td><td class="cell-normal"></td><td class="cell-normal"></td><td class="cell-normal"></td><td class="cell-normal"></td></tr>
+        <tr><td class="row-num">8</td><td class="cell-normal"></td><td class="cell-normal"></td><td class="cell-normal"></td><td class="cell-normal"></td><td class="cell-normal"></td><td class="cell-normal"></td><td class="cell-normal"></td><td class="cell-normal"></td></tr>
+        <tr><td class="row-num">9</td><td class="cell-normal"></td><td class="cell-normal"></td><td class="cell-normal"></td><td class="cell-normal"></td><td class="cell-normal"></td><td class="cell-normal"></td><td class="cell-normal"></td><td class="cell-normal"></td></tr>
+        <tr><td class="row-num">10</td><td class="cell-normal"></td><td class="cell-normal"></td><td class="cell-normal"></td><td class="cell-normal"></td><td class="cell-normal"></td><td class="cell-normal"></td><td class="cell-normal"></td><td class="cell-normal"></td></tr>
+        <tr><td class="row-num">11</td><td class="cell-normal"></td><td class="cell-normal"></td><td class="cell-normal"></td><td class="cell-normal"></td><td class="cell-normal"></td><td class="cell-normal"></td><td class="cell-normal"></td><td class="cell-normal"></td></tr>
+        <tr><td class="row-num">12</td><td class="cell-normal"></td><td class="cell-normal"></td><td class="cell-normal"></td><td class="cell-normal"></td><td class="cell-normal"></td><td class="cell-normal"></td><td class="cell-normal"></td><td class="cell-normal"></td></tr>
+        <tr><td class="row-num">13</td><td class="cell-normal"></td><td class="cell-normal"></td><td class="cell-normal"></td><td class="cell-normal"></td><td class="cell-normal"></td><td class="cell-normal"></td><td class="cell-normal"></td><td class="cell-normal"></td></tr>
+        <tr><td class="row-num">14</td><td class="cell-normal"></td><td class="cell-normal"></td><td class="cell-normal"></td><td class="cell-normal"></td><td class="cell-normal"></td><td class="cell-normal"></td><td class="cell-normal"></td><td class="cell-normal"></td></tr>
+        <tr><td class="row-num">15</td><td class="cell-normal"></td><td class="cell-normal"></td><td class="cell-normal"></td><td class="cell-normal"></td><td class="cell-normal"></td><td class="cell-normal"></td><td class="cell-normal"></td><td class="cell-normal"></td></tr>
+        <tr><td class="row-num">16</td><td class="cell-normal"></td><td class="cell-normal"></td><td class="cell-normal"></td><td class="cell-normal"></td><td class="cell-normal"></td><td class="cell-normal"></td><td class="cell-normal"></td><td class="cell-normal"></td></tr>
+        <tr><td class="row-num">17</td><td class="cell-normal"></td><td class="cell-normal"></td><td class="cell-normal"></td><td class="cell-normal"></td><td class="cell-normal"></td><td class="cell-normal"></td><td class="cell-normal"></td><td class="cell-normal"></td></tr>
+        <tr><td class="row-num">18</td><td class="cell-normal"></td><td class="cell-normal"></td><td class="cell-normal"></td><td class="cell-normal"></td><td class="cell-normal"></td><td class="cell-normal"></td><td class="cell-normal"></td><td class="cell-normal"></td></tr>
+        <tr><td class="row-num">19</td><td class="cell-normal"></td><td class="cell-normal"></td><td class="cell-normal"></td><td class="cell-normal"></td><td class="cell-normal"></td><td class="cell-normal"></td><td class="cell-normal"></td><td class="cell-normal"></td></tr>
+        <tr><td class="row-num">20</td><td class="cell-normal"></td><td class="cell-normal"></td><td class="cell-normal"></td><td class="cell-normal"></td><td class="cell-normal"></td><td class="cell-normal"></td><td class="cell-normal"></td><td class="cell-normal"></td></tr>
+      </tbody>
+    </table>
+  </div>
+
+  <!-- Tab 8: 月別配分（_実行予算_月別） -->
+  <div id="tab8" class="tab-content" style="display:none;">
+    <!-- 工期: 2025-09〜2026-03（7ヶ月）。GASが工期月数分の行を動的生成 -->
+    <table class="sheet-table">
+      <thead>
+        <tr>
+          <th class="corner-header"></th>
+          <th class="col-header col-wide">A</th>
+          <th class="col-header col-narrow">B</th>
+          <th class="col-header col-amount">C</th>
+          <th class="col-header col-amount">D</th>
+          <th class="col-header col-amount">E</th>
+          <th class="col-header col-amount">F</th>
+          <th class="col-header col-amount">G</th>
+          <th class="col-header col-medium">H</th>
+          <th class="col-header col-medium">I</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td class="row-num">1</td>
+          <td class="cell-header">予算箱ID</td>
+          <td class="cell-header">年月</td>
+          <td class="cell-header">計画配分額(PV月次)</td>
+          <td class="cell-header">計画進捗率(%)</td>
+          <td class="cell-header">PV累計</td>
+          <td class="cell-header">EV</td>
+          <td class="cell-header">AC累計</td>
+          <td class="cell-header">SPI</td>
+          <td class="cell-header">CPI</td>
+        </tr>
+        <tr>
+          <td class="row-num">2</td>
+          <td class="cell-input" data-cell="A2" data-formula="">C01-W04-K0401-E14</td>
+          <td class="cell-input" data-cell="B2" data-formula="">2025-09</td>
+          <td class="cell-input col-amount" data-cell="C2" data-formula="">3,500,000</td>
+          <td class="cell-input" data-cell="D2" data-formula="">10</td>
+          <td class="cell-calc col-amount" data-cell="E2" data-formula="=C2">3,500,000</td>
+          <td class="cell-calc col-amount" data-cell="F2" data-formula="=D2/100*[官積算額]">2,800,000</td>
+          <td class="cell-calc col-amount" data-cell="G2" data-formula="">2,654,000</td>
+          <td class="cell-calc" data-cell="H2" data-formula="=F2/E2" style="text-align:right;">0.80</td>
+          <td class="cell-calc" data-cell="I2" data-formula="=F2/G2" style="text-align:right;">1.05</td>
+        </tr>
+        <tr>
+          <td class="row-num">3</td>
+          <td class="cell-input" data-cell="A3" data-formula="">C01-W04-K0401-E14</td>
+          <td class="cell-input" data-cell="B3" data-formula="">2025-10</td>
+          <td class="cell-input col-amount" data-cell="C3" data-formula="">5,000,000</td>
+          <td class="cell-input" data-cell="D3" data-formula="">25</td>
+          <td class="cell-calc col-amount" data-cell="E3" data-formula="=E2+C3">8,500,000</td>
+          <td class="cell-calc col-amount" data-cell="F3" data-formula="=D3/100*[官積算額]">7,000,000</td>
+          <td class="cell-calc col-amount" data-cell="G3" data-formula="">7,970,667</td>
+          <td class="cell-calc" data-cell="H3" data-formula="=F3/E3" style="text-align:right;">0.82</td>
+          <td class="cell-calc" data-cell="I3" data-formula="=F3/G3" style="text-align:right;">0.88</td>
+        </tr>
+        <tr>
+          <td class="row-num">4</td>
+          <td class="cell-input" data-cell="A4" data-formula="">C01-W04-K0401-E14</td>
+          <td class="cell-input" data-cell="B4" data-formula="">2025-11</td>
+          <td class="cell-input col-amount" data-cell="C4" data-formula="">6,000,000</td>
+          <td class="cell-input" data-cell="D4" data-formula="">45</td>
+          <td class="cell-calc col-amount" data-cell="E4" data-formula="=E3+C4">14,500,000</td>
+          <td class="cell-calc col-amount" data-cell="F4" data-formula="=D4/100*[官積算額]">12,600,000</td>
+          <td class="cell-calc col-amount" data-cell="G4" data-formula="">13,121,351</td>
+          <td class="cell-calc" data-cell="H4" data-formula="=F4/E4" style="text-align:right;">0.87</td>
+          <td class="cell-calc" data-cell="I4" data-formula="=F4/G4" style="text-align:right;">0.96</td>
+        </tr>
+        <tr>
+          <td class="row-num">5</td>
+          <td class="cell-input" data-cell="A5" data-formula="">C01-W04-K0401-E14</td>
+          <td class="cell-input" data-cell="B5" data-formula="">2025-12</td>
+          <td class="cell-input col-amount" data-cell="C5" data-formula="">7,000,000</td>
+          <td class="cell-input" data-cell="D5" data-formula="">65</td>
+          <td class="cell-calc col-amount" data-cell="E5" data-formula="=E4+C5">21,500,000</td>
+          <td class="cell-calc col-amount" data-cell="F5" data-formula="">18,200,000</td>
+          <td class="cell-calc col-amount" data-cell="G5" data-formula="">23,723,018</td>
+          <td class="cell-calc" data-cell="H5" data-formula="=F5/E5" style="text-align:right;">0.85</td>
+          <td class="cell-calc" data-cell="I5" data-formula="=F5/G5" style="text-align:right;">0.77</td>
+        </tr>
+        <tr>
+          <td class="row-num">6</td>
+          <td class="cell-input" data-cell="A6" data-formula="">C01-W04-K0401-E14</td>
+          <td class="cell-input" data-cell="B6" data-formula="">2026-01</td>
+          <td class="cell-input col-amount" data-cell="C6" data-formula="">6,000,000</td>
+          <td class="cell-input" data-cell="D6" data-formula="">80</td>
+          <td class="cell-calc col-amount" data-cell="E6" data-formula="=E5+C6">27,500,000</td>
+          <td class="cell-calc col-amount" data-cell="F6" data-formula=""></td>
+          <td class="cell-calc col-amount" data-cell="G6" data-formula=""></td>
+          <td class="cell-calc" data-cell="H6" data-formula="" style="text-align:right;color:#aaa;">-</td>
+          <td class="cell-calc" data-cell="I6" data-formula="" style="text-align:right;color:#aaa;">-</td>
+        </tr>
+        <tr>
+          <td class="row-num">7</td>
+          <td class="cell-input" data-cell="A7" data-formula="">C01-W04-K0401-E14</td>
+          <td class="cell-input" data-cell="B7" data-formula="">2026-02</td>
+          <td class="cell-input col-amount" data-cell="C7" data-formula="">4,000,000</td>
+          <td class="cell-input" data-cell="D7" data-formula="">95</td>
+          <td class="cell-calc col-amount" data-cell="E7" data-formula="=E6+C7">31,500,000</td>
+          <td class="cell-calc col-amount" data-cell="F7" data-formula=""></td>
+          <td class="cell-calc col-amount" data-cell="G7" data-formula=""></td>
+          <td class="cell-calc" data-cell="H7" data-formula="" style="text-align:right;color:#aaa;">-</td>
+          <td class="cell-calc" data-cell="I7" data-formula="" style="text-align:right;color:#aaa;">-</td>
+        </tr>
+        <tr>
+          <td class="row-num">8</td>
+          <td class="cell-input" data-cell="A8" data-formula="">C01-W04-K0401-E14</td>
+          <td class="cell-input" data-cell="B8" data-formula="">2026-03</td>
+          <td class="cell-input col-amount" data-cell="C8" data-formula="">2,500,000</td>
+          <td class="cell-input" data-cell="D8" data-formula="">100</td>
+          <td class="cell-calc col-amount" data-cell="E8" data-formula="=E7+C8">34,000,000</td>
+          <td class="cell-calc col-amount" data-cell="F8" data-formula=""></td>
+          <td class="cell-calc col-amount" data-cell="G8" data-formula=""></td>
+          <td class="cell-calc" data-cell="H8" data-formula="" style="text-align:right;color:#aaa;">-</td>
+          <td class="cell-calc" data-cell="I8" data-formula="" style="text-align:right;color:#aaa;">-</td>
+        </tr>
+        <tr><td class="row-num">9</td><td class="cell-normal" colspan="8" style="font-size:11px;color:#70757a;padding:4px 8px;">※ 上記は例示（予算箱ID: C01-W04-K0401-E14 護岸工事>外注費）。実際は全予算箱×工期月数分の行が生成される。SPI/CPIが0.9未満の場合、セルが赤表示される。</td></tr>
+      </tbody>
+    </table>
+  </div>
+
+  <!-- Tab 9: EVM集計（_C_EVM集計） -->
+  <div id="tab9" class="tab-content" style="display:none;">
+    <!-- EVM指標のダッシュボード。GASのmonthlyEVMCalculation()が月次自動更新 -->
+    <table class="sheet-table">
+      <thead>
+        <tr>
+          <th class="corner-header"></th>
+          <th class="col-header col-narrow">A</th>
+          <th class="col-header col-amount">B</th>
+          <th class="col-header col-amount">C</th>
+          <th class="col-header col-amount">D</th>
+          <th class="col-header col-amount">E</th>
+          <th class="col-header col-medium">F</th>
+          <th class="col-header col-medium">G</th>
+          <th class="col-header col-amount">H</th>
+          <th class="col-header col-amount">I</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td class="row-num">1</td>
+          <td class="cell-header">年月</td>
+          <td class="cell-header">BAC</td>
+          <td class="cell-header">PV累計</td>
+          <td class="cell-header">EV</td>
+          <td class="cell-header">AC累計</td>
+          <td class="cell-header">SPI</td>
+          <td class="cell-header">CPI</td>
+          <td class="cell-header">EAC</td>
+          <td class="cell-header">VAC</td>
+        </tr>
+        <tr>
+          <td class="row-num">2</td>
+          <td class="cell-calc" data-cell="A2" data-formula="">2025-09</td>
+          <td class="cell-calc col-amount" data-cell="B2" data-formula="">280,000,000</td>
+          <td class="cell-calc col-amount" data-cell="C2" data-formula="">21,000,000</td>
+          <td class="cell-calc col-amount" data-cell="D2" data-formula="">18,000,000</td>
+          <td class="cell-calc col-amount" data-cell="E2" data-formula="">15,654,000</td>
+          <td class="cell-calc" data-cell="F2" data-formula="=D2/C2" style="text-align:right;background:#FFF9C4;">0.86</td>
+          <td class="cell-calc" data-cell="G2" data-formula="=D2/E2" style="text-align:right;background:#C8E6C9;">1.15</td>
+          <td class="cell-calc col-amount" data-cell="H2" data-formula="=B2/G2">243,478,261</td>
+          <td class="cell-calc col-amount" data-cell="I2" data-formula="=B2-H2" style="color:#0f9d58;">+36,521,739</td>
+        </tr>
+        <tr>
+          <td class="row-num">3</td>
+          <td class="cell-calc" data-cell="A3" data-formula="">2025-10</td>
+          <td class="cell-calc col-amount" data-cell="B3" data-formula="">280,000,000</td>
+          <td class="cell-calc col-amount" data-cell="C3" data-formula="">56,000,000</td>
+          <td class="cell-calc col-amount" data-cell="D3" data-formula="">46,200,000</td>
+          <td class="cell-calc col-amount" data-cell="E3" data-formula="">51,624,667</td>
+          <td class="cell-calc" data-cell="F3" data-formula="=D3/C3" style="text-align:right;background:#FFF9C4;">0.82</td>
+          <td class="cell-calc" data-cell="G3" data-formula="=D3/E3" style="text-align:right;background:#FFF9C4;">0.89</td>
+          <td class="cell-calc col-amount" data-cell="H3" data-formula="=B3/G3">314,606,742</td>
+          <td class="cell-calc col-amount" data-cell="I3" data-formula="=B3-H3" style="color:#c62828;">-34,606,742</td>
+        </tr>
+        <tr>
+          <td class="row-num">4</td>
+          <td class="cell-calc" data-cell="A4" data-formula="">2025-11</td>
+          <td class="cell-calc col-amount" data-cell="B4" data-formula="">280,000,000</td>
+          <td class="cell-calc col-amount" data-cell="C4" data-formula="">98,000,000</td>
+          <td class="cell-calc col-amount" data-cell="D4" data-formula="">78,400,000</td>
+          <td class="cell-calc col-amount" data-cell="E4" data-formula="">107,345,684</td>
+          <td class="cell-calc" data-cell="F4" data-formula="=D4/C4" style="text-align:right;background:#FFCDD2;">0.80</td>
+          <td class="cell-calc" data-cell="G4" data-formula="=D4/E4" style="text-align:right;background:#FFCDD2;">0.73</td>
+          <td class="cell-calc col-amount" data-cell="H4" data-formula="=B4/G4">383,561,644</td>
+          <td class="cell-calc col-amount" data-cell="I4" data-formula="=B4-H4" style="color:#c62828;">-103,561,644</td>
+        </tr>
+        <tr>
+          <td class="row-num">5</td>
+          <td class="cell-calc" data-cell="A5" data-formula="">2025-12</td>
+          <td class="cell-calc col-amount" data-cell="B5" data-formula="">280,000,000</td>
+          <td class="cell-calc col-amount" data-cell="C5" data-formula="">143,500,000</td>
+          <td class="cell-calc col-amount" data-cell="D5" data-formula="">112,000,000</td>
+          <td class="cell-calc col-amount" data-cell="E5" data-formula="">131,068,702</td>
+          <td class="cell-calc" data-cell="F5" data-formula="=D5/C5" style="text-align:right;background:#FFCDD2;">0.78</td>
+          <td class="cell-calc" data-cell="G5" data-formula="=D5/E5" style="text-align:right;background:#FFF9C4;">0.85</td>
+          <td class="cell-calc col-amount" data-cell="H5" data-formula="=B5/G5">329,411,765</td>
+          <td class="cell-calc col-amount" data-cell="I5" data-formula="=B5-H5" style="color:#c62828;">-49,411,765</td>
+        </tr>
+        <tr>
+          <td class="row-num">6</td>
+          <td colspan="9" style="padding:12px;background:#f8f9fa;">
+            <div style="font-size:12px;font-weight:700;margin-bottom:8px;color:#202124;">EVM曲線グラフ（2025-09〜2025-12 実績）</div>
+            <svg width="560" height="140" style="border:1px solid #e0e0e0;background:#fff;display:block;">
+              <!-- Y軸ラベル -->
+              <text x="6" y="14" font-size="9" fill="#70757a">150M</text>
+              <text x="6" y="49" font-size="9" fill="#70757a">100M</text>
+              <text x="6" y="84" font-size="9" fill="#70757a">50M</text>
+              <text x="6" y="119" font-size="9" fill="#70757a">0</text>
+              <!-- グリッド線 -->
+              <line x1="40" y1="10" x2="540" y2="10" stroke="#e0e0e0" stroke-width="0.5"/>
+              <line x1="40" y1="45" x2="540" y2="45" stroke="#e0e0e0" stroke-width="0.5"/>
+              <line x1="40" y1="80" x2="540" y2="80" stroke="#e0e0e0" stroke-width="0.5"/>
+              <line x1="40" y1="115" x2="540" y2="115" stroke="#e0e0e0" stroke-width="0.5"/>
+              <!-- PV曲線（青） -->
+              <polyline points="40,115 160,89 280,49 400,20 520,10" stroke="#1565C0" stroke-width="2" fill="none" stroke-dasharray="5,3"/>
+              <!-- EV曲線（緑） -->
+              <polyline points="40,115 160,96 280,57 400,31" stroke="#0f9d58" stroke-width="2" fill="none"/>
+              <!-- AC曲線（赤） -->
+              <polyline points="40,115 160,90 280,50 400,23" stroke="#c62828" stroke-width="2" fill="none"/>
+              <!-- 凡例 -->
+              <line x1="50" y1="130" x2="70" y2="130" stroke="#1565C0" stroke-width="2" stroke-dasharray="5,3"/>
+              <text x="75" y="133" font-size="9" fill="#202124">PV（計画）</text>
+              <line x1="160" y1="130" x2="180" y2="130" stroke="#0f9d58" stroke-width="2"/>
+              <text x="185" y="133" font-size="9" fill="#202124">EV（出来高）</text>
+              <line x1="290" y1="130" x2="310" y2="130" stroke="#c62828" stroke-width="2"/>
+              <text x="315" y="133" font-size="9" fill="#202124">AC（実コスト）</text>
+              <!-- X軸ラベル -->
+              <text x="38" y="128" font-size="9" fill="#70757a">9月</text>
+              <text x="158" y="128" font-size="9" fill="#70757a">10月</text>
+              <text x="278" y="128" font-size="9" fill="#70757a">11月</text>
+              <text x="398" y="128" font-size="9" fill="#70757a">12月</text>
+            </svg>
+            <div style="margin-top:8px;font-size:11px;color:#70757a;">
+              凡例: SPI色 — 緑(1.0以上) / 黄(0.9〜1.0) / 赤(0.9未満) &nbsp;|&nbsp; EAC = BAC / CPI &nbsp;|&nbsp; VAC = BAC - EAC
+            </div>
+          </td>
+        </tr>
+        <tr><td class="row-num">7</td><td class="cell-normal" colspan="8" style="font-size:11px;color:#70757a;padding:4px 8px;">※ SPI/CPIが0.9未満の場合は赤アラート。毎月1日8:00にGASが自動集計。管理者にメール通知あり。</td></tr>
+      </tbody>
+    </table>
+  </div>
+
+</div>
+
+<!-- UX-01: 入力環境の注記 -->
+<div style="background:#F5F5F5; padding:8px 12px; margin:8px 0; border-left:3px solid #9E9E9E; font-size:12px; color:#666;">本システムの入力操作はPC/タブレットを前提としています。ダッシュボード（Google Sites）のみスマートフォン対応（閲覧専用）です。</div>
+
+<!-- Tab bar -->
+<div class="tab-bar">
+  <div class="tab-btn tab-green active" data-tab="tab1" data-file="project" onclick="switchTab('tab1', this)">支払明細入力</div>
+  <div class="tab-btn tab-green" data-tab="tab2" data-file="project" onclick="switchTab('tab2', this)">予算設定</div>
+  <div class="tab-btn tab-green" data-tab="tab8" data-file="project" onclick="switchTab('tab8', this)">月別配分</div>
+  <div class="tab-btn tab-green" data-tab="tab9" data-file="project" onclick="switchTab('tab9', this)">EVM集計</div>
+  <div class="tab-btn tab-green" data-tab="tab3" data-file="project" onclick="switchTab('tab3', this)">月次調整</div>
+  <div class="tab-btn tab-green" data-tab="tab4" data-file="project" onclick="switchTab('tab4', this)">経営者DB</div>
+  <div class="tab-btn tab-green" data-tab="tab5" data-file="project" onclick="switchTab('tab5', this)">現場代理人DB</div>
+  <div class="tab-btn" style="color:#757575;" data-tab="tab10" data-file="project" onclick="switchTab('tab10', this)">_Mマスタ</div>
+  <div class="tab-separator"></div>
+  <div class="tab-btn tab-blue" data-tab="tab6" data-file="company" onclick="switchTab('tab6', this)">全社損益</div>
+  <div class="tab-btn tab-blue" data-tab="tab7" data-file="company" onclick="switchTab('tab7', this)">工事別比較</div>
+  <div class="tab-add" title="シートを追加">+</div>
+</div>
+
+<script>
+  // Tab switching
+  function switchTab(tabId, btnEl) {
+    // Hide all tab content
+    var contents = document.querySelectorAll('.tab-content');
+    for (var i = 0; i < contents.length; i++) {
+      contents[i].style.display = 'none';
+    }
+    // Deactivate all tab buttons
+    var btns = document.querySelectorAll('.tab-btn');
+    for (var i = 0; i < btns.length; i++) {
+      btns[i].classList.remove('active');
+    }
+    // Show selected tab
+    document.getElementById(tabId).style.display = 'block';
+    btnEl.classList.add('active');
+
+    // Update file name based on file group
+    var fileGroup = btnEl.getAttribute('data-file');
+    var fileNameEl = document.getElementById('fileName');
+    if (fileGroup === 'company') {
+      fileNameEl.textContent = '森組_全社経営診断';
+    } else {
+      fileNameEl.textContent = '森組_海潟漁港R7-1工区_工事管理';
+    }
+
+    // Update sheets icon color based on file group
+    var sheetsIcon = document.querySelector('.sheets-icon');
+    if (fileGroup === 'company') {
+      sheetsIcon.style.background = '#1565C0';
+    } else {
+      sheetsIcon.style.background = '#0f9d58';
+    }
+
+    // Clear selection
+    clearSelection();
+    // Reset formula bar
+    document.getElementById('cellAddress').textContent = 'A1';
+    document.getElementById('formulaInput').value = '';
+  }
+
+  // SITE-03: Budget mode switching
+  function switchBudgetMode(mode) {
+    var simple = document.getElementById('budgetSimple');
+    var detail = document.getElementById('budgetDetail');
+    if (mode === 'simple') {
+      simple.style.display = 'block';
+      detail.style.display = 'none';
+    } else {
+      simple.style.display = 'none';
+      detail.style.display = 'block';
+    }
+  }
+
+  // Cell selection
+  function clearSelection() {
+    var selected = document.querySelectorAll('.cell-selected');
+    for (var i = 0; i < selected.length; i++) {
+      selected[i].classList.remove('cell-selected');
+    }
+  }
+
+  document.addEventListener('click', function(e) {
+    var cell = e.target;
+    // Check if clicked element is a data cell
+    if (cell.hasAttribute('data-cell')) {
+      clearSelection();
+      cell.classList.add('cell-selected');
+
+      var cellAddr = cell.getAttribute('data-cell');
+      var formula = cell.getAttribute('data-formula');
+
+      document.getElementById('cellAddress').textContent = cellAddr;
+      document.getElementById('formulaInput').value = formula || cell.textContent;
+    }
+  });
+</script>
+
+</body>
+</html>
