@@ -16,3 +16,7 @@ Thumbs.db
 # Temporary
 *.tmp
 *.bak
+
+# Environment variables
+.env
+.env.*

@@ -17,7 +17,7 @@
 
 | スキル | 用途 | 場所 |
 |--------|------|------|
-| **dify-dsl-generator** | Dify DSL YAML自動生成（520行） | `.claude/skills/dify-dsl-generator/` |
+| **dify-dsl-generator** | Dify DSL YAML自動生成（530行） | `.claude/skills/dify-dsl-generator/` |
 | **gas-webapp-generator** | スプレッドシート連携用GAS生成 | `.claude/skills/gas-webapp-generator/` |
 | **refresh-dify-token** | Difyトークン更新 | `.claude/skills/refresh-dify-token/` |
 
