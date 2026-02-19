@@ -34,12 +34,9 @@ Dify_project/
 │       ├── dify-dsl-generator/  # DSL生成スキル（520行）
 │       ├── gas-webapp-generator/ # GAS生成スキル
 │       └── refresh-dify-token/  # トークン更新
-├── .github/
-│   └── workflows/
-│       └── export_dify_workflows.yml  # 週次自動バックアップ
 ├── dsl/
 │   ├── templates/               # 38テンプレート（重複解消済み）
-│   ├── exported/                # バックアップDSL（GitHub Actions生成）
+│   ├── exported/                # エクスポートDSL（手動管理）
 │   └── generated/
 │       ├── data_analysis_chatbot.yml
 │       └── manga/               # マンガDSL（10ファイル）
@@ -134,33 +131,15 @@ structured_output_enabled: false     # 必須（Qiita推奨）
 
 ---
 
-## GitHub Actions: コンテキスト拡充 + バックアップ
+## DSLエクスポート（手動運用）
 
-GitHub Actionsで毎週日曜5:00（JST）にDify Cloudからワークフローを自動エクスポート。
+必要時に `scripts/export_dify_workflows.py` を実行し、Dify Cloudの最新ワークフローを取得。
+エクスポートしたDSLはClaude Codeのコンテキスト拡充に使用する。
 
-### 目的（2つ）
-
-| 目的 | 説明 |
-|------|------|
-| **コンテキスト拡充** | エクスポートDSLをClaude Codeの学習材料として蓄積 |
-| **バージョン管理** | GUI変更をGitで追跡し、復元可能に |
-
-### なぜコンテキスト拡充が重要か
-
-```
-エクスポートDSL = 「動作確認済み」の実例
-     ↓
-Claude Codeが「それっぽい推測」ではなく
-「実際に動いたパターン」に基づいてDSL生成
-     ↓
-一発成功率の向上
-```
-
-参考: https://qiita.com/yuto-ida-stb/items/a06cab875174b0295cec
-
-### 設定済みシークレット
-- `DIFY_CONSOLE_TOKEN` - Difyコンソールトークン
-- `DIFY_REFRESH_TOKEN` - リフレッシュトークン
+### 実行手順
+1. `/refresh-dify-token` でトークン取得（30日有効）
+2. `python scripts/export_dify_workflows.py` を実行
+3. `dsl/exported/` に保存される
 
 ### エクスポート先
 ```

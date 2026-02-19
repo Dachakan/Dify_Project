@@ -1,7 +1,7 @@
 # Dify Refresh Token Skill
 
 Dify Cloudのリフレッシュトークンを取得・更新するスキル。
-GitHub ActionsでDSLエクスポートを自動化するために必要。
+DSLエクスポートスクリプトの実行に必要。
 
 ## 使用方法
 
@@ -40,14 +40,14 @@ curl -v -X POST "https://cloud.dify.ai/console/api/email-code-login/validity" \
   2>&1 | grep -i "set-cookie.*refresh_token"
 ```
 
-### Step 4: GitHub Secrets設定案内
+### Step 4: 環境変数設定案内
 
-取得したrefresh_tokenをGitHub Secretsに設定するよう案内:
-- Secret名: `DIFY_REFRESH_TOKEN`
+取得したrefresh_tokenを環境変数として設定するよう案内:
+- 変数名: `DIFY_REFRESH_TOKEN`
 - 有効期限: 30日
 
 ## 注意事項
 
 - 認証コードは5分以内に入力が必要
 - リフレッシュトークンは30日間有効
-- GitHub Actionsが失敗したら、このスキルでトークンを更新
+- トークンが失効したら（30日）、このスキルで更新

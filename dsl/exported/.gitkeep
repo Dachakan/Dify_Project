@@ -1,2 +1,2 @@
 # このディレクトリはDify WorkflowのDSLエクスポート先です
-# GitHub Actionsによって自動的にファイルが追加されます
+# scripts/export_dify_workflows.py で手動エクスポートしたファイルを管理
