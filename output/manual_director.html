@@ -1,0 +1,604 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>所長向け操作マニュアル -- 工事予算管理システム</title>
+  <style>
+    /* 基本スタイル */
+    * { box-sizing: border-box; }
+    body {
+      font-family: 'Yu Gothic', 'Hiragino Sans', 'Meiryo', sans-serif;
+      max-width: 800px;
+      margin: 0 auto;
+      padding: 20px;
+      color: #333;
+      line-height: 1.8;
+      font-size: 15px;
+    }
+    h1, h2, h3 { margin-top: 1.5em; }
+    h2 { border-bottom: 2px solid #1a237e; padding-bottom: 6px; color: #1a237e; }
+    h3 { color: #283593; }
+
+    /* ヘッダー */
+    .header {
+      background: #1a237e;
+      color: white;
+      padding: 24px 28px;
+      border-radius: 8px;
+      margin-bottom: 30px;
+    }
+    .header h1 { margin: 0 0 6px 0; font-size: 1.6em; color: white; border: none; }
+    .header p { margin: 0; font-size: 0.95em; opacity: 0.9; }
+
+    /* 目次 */
+    .toc {
+      background: #fafafa;
+      padding: 20px 20px 20px 24px;
+      border-radius: 8px;
+      margin-bottom: 30px;
+      border: 1px solid #e0e0e0;
+    }
+    .toc h2 { border-bottom: none; margin-top: 0; font-size: 1.1em; }
+    .toc ol { padding-left: 20px; }
+    .toc li { margin: 6px 0; }
+    .toc a { text-decoration: none; color: #1565C0; }
+    .toc a:hover { text-decoration: underline; }
+
+    /* ステップ */
+    .step {
+      background: #f8f9fa;
+      border-left: 4px solid #4CAF50;
+      padding: 14px 16px;
+      margin: 12px 0;
+      border-radius: 0 8px 8px 0;
+    }
+    .step-number {
+      display: inline-block;
+      font-weight: bold;
+      color: white;
+      background: #4CAF50;
+      border-radius: 50%;
+      width: 28px;
+      height: 28px;
+      text-align: center;
+      line-height: 28px;
+      font-size: 0.9em;
+      margin-right: 8px;
+    }
+
+    /* 入力欄ハイライト */
+    .input-cell {
+      background: #E8F5E9;
+      padding: 2px 6px;
+      border-radius: 3px;
+      font-weight: bold;
+      border: 1px solid #A5D6A7;
+    }
+    .auto-cell {
+      background: #EEEEEE;
+      padding: 2px 6px;
+      border-radius: 3px;
+      border: 1px solid #BDBDBD;
+    }
+
+    /* 注意ボックス */
+    .warning {
+      background: #FFF3E0;
+      border-left: 4px solid #FF9800;
+      padding: 14px 16px;
+      margin: 14px 0;
+      border-radius: 0 8px 8px 0;
+    }
+    .warning-title { font-weight: bold; color: #E65100; margin-bottom: 4px; }
+
+    /* ヒントボックス */
+    .hint {
+      background: #E3F2FD;
+      border-left: 4px solid #2196F3;
+      padding: 14px 16px;
+      margin: 14px 0;
+      border-radius: 0 8px 8px 0;
+    }
+    .hint-title { font-weight: bold; color: #0D47A1; margin-bottom: 4px; }
+
+    /* テーブル */
+    table { border-collapse: collapse; width: 100%; margin: 15px 0; font-size: 0.93em; }
+    th { background: #f5f5f5; font-weight: bold; }
+    th, td { border: 1px solid #ddd; padding: 8px 12px; text-align: left; }
+
+    /* 信号 */
+    .signal-blue { color: #2E7D32; font-weight: bold; }
+    .signal-yellow { color: #E65100; font-weight: bold; }
+    .signal-red { color: #C62828; font-weight: bold; }
+
+    /* 図プレースホルダー */
+    .fig-placeholder {
+      background: #FAFAFA;
+      border: 2px dashed #BDBDBD;
+      padding: 24px;
+      margin: 16px 0;
+      text-align: center;
+      color: #757575;
+      border-radius: 8px;
+      font-size: 0.95em;
+    }
+
+    /* 色凡例 */
+    .legend {
+      display: flex;
+      gap: 20px;
+      flex-wrap: wrap;
+      margin: 10px 0;
+    }
+    .legend-item {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+    }
+    .legend-box {
+      width: 20px;
+      height: 20px;
+      border-radius: 3px;
+      border: 1px solid #ccc;
+    }
+
+    /* FAQ */
+    .faq-table td:first-child { width: 40%; }
+
+    /* フッター */
+    .footer {
+      margin-top: 40px;
+      padding-top: 16px;
+      border-top: 1px solid #ddd;
+      font-size: 0.85em;
+      color: #757575;
+    }
+
+    /* 印刷対応 */
+    @media print {
+      body { max-width: 100%; padding: 10px; font-size: 12px; }
+      .header { -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+      .step, .warning, .hint { break-inside: avoid; }
+      .no-print { display: none; }
+      h2 { break-after: avoid; }
+      table { font-size: 11px; }
+      a { color: #333; text-decoration: none; }
+    }
+  </style>
+</head>
+<body>
+
+<div class="header">
+  <h1>所長向け 操作マニュアル</h1>
+  <p>工事予算管理システム -- (株)森組</p>
+  <p>対象工事: 海潟漁港海岸海岸保全施設整備連携工事(R7-1工区)</p>
+</div>
+
+<!-- 目次 -->
+<div class="toc">
+  <h2>目次</h2>
+  <ol>
+    <li><a href="#sec1">はじめに</a></li>
+    <li><a href="#sec2">スプレッドシートの開き方</a></li>
+    <li><a href="#sec3">支払明細の入力手順（メイン操作）</a></li>
+    <li><a href="#sec4">便利機能: 前行コピー</a></li>
+    <li><a href="#sec5">月次集計の実行（月末に1回）</a></li>
+    <li><a href="#sec6">予算の確認（月末に1回）</a></li>
+    <li><a href="#sec7">出来高率の入力（月末に1回）</a></li>
+    <li><a href="#sec8">困った時は</a></li>
+  </ol>
+</div>
+
+<!-- 第1章 -->
+<h2 id="sec1">1. はじめに</h2>
+
+<p>このシステムは、海潟漁港R7-1工区の<strong>工事予算管理</strong>を効率化するためのものです。</p>
+
+<h3>このシステムで何ができるか</h3>
+<ul>
+  <li><strong>月報の自動化</strong> -- 支払いデータを入力するだけで、月次集計・費目別集計が自動で作られます</li>
+  <li><strong>予算の見える化</strong> -- 各費目の使い具合が信号（青/黄/赤）で一目でわかります</li>
+  <li><strong>二重入力の解消</strong> -- これまでの工事月報と支払い内訳の二重入力が不要になります</li>
+</ul>
+
+<div class="hint">
+  <div class="hint-title">[ポイント]</div>
+  入力するのは<strong>「支払明細入力」シートだけ</strong>です。他のシートは自動で計算されます。<br>
+  支払いが発生した時だけ入力すればOKです。
+</div>
+
+<!-- 第2章 -->
+<h2 id="sec2">2. スプレッドシートの開き方</h2>
+
+<div class="step">
+  <span class="step-number">1</span>
+  共有されたURLをクリックしてスプレッドシートを開きます。ブラウザのブックマークに登録しておくと便利です。
+</div>
+
+<div class="fig-placeholder">[図: スプレッドシートを開いた直後の画面]</div>
+
+<h3>シートの一覧と役割</h3>
+
+<p>画面下部のタブに9つのシートが並んでいます。</p>
+
+<table>
+  <tr><th>シート名</th><th>役割</th><th>操作</th></tr>
+  <tr><td><strong>支払明細入力</strong></td><td>支払データの入力画面</td><td>入力する</td></tr>
+  <tr><td>_実行予算テーブル</td><td>予算の箱を定義</td><td>見るだけ</td></tr>
+  <tr><td>_実行予算_月別</td><td>月別の予算配分</td><td>見るだけ</td></tr>
+  <tr><td>支払明細</td><td>入力済み明細の転記先</td><td>見るだけ</td></tr>
+  <tr><td>_C_予算健康度</td><td>予算の使い具合と信号</td><td>見るだけ</td></tr>
+  <tr><td>_C_月次集計</td><td>月次の集計結果</td><td>見るだけ</td></tr>
+  <tr><td>_C_費目別集計</td><td>費目別の集計結果</td><td>見るだけ</td></tr>
+  <tr><td>_月次調整</td><td>出来高率の入力</td><td>月1回入力</td></tr>
+  <tr><td>_M取引先</td><td>取引先マスタ</td><td>見るだけ</td></tr>
+</table>
+
+<h3>色の見方</h3>
+
+<div class="legend">
+  <div class="legend-item">
+    <div class="legend-box" style="background: #E8F5E9;"></div>
+    <span>緑色のセル = あなたが入力する欄</span>
+  </div>
+  <div class="legend-item">
+    <div class="legend-box" style="background: #EEEEEE;"></div>
+    <span>灰色のセル = 自動で計算される欄</span>
+  </div>
+  <div class="legend-item">
+    <div class="legend-box" style="background: #E3F2FD;"></div>
+    <span>青色のセル = 事務員が入力する欄</span>
+  </div>
+</div>
+
+<!-- 第3章 -->
+<h2 id="sec3">3. 支払明細の入力手順（メイン操作）</h2>
+
+<p>支払いが発生したら、以下の手順で入力します。</p>
+
+<h3>入力する列の一覧（18列）</h3>
+
+<table>
+  <tr><th>列</th><th>項目名</th><th>入力方法</th><th>区分</th></tr>
+  <tr><td>A</td><td>No.</td><td>自動で番号が入ります</td><td><span class="auto-cell">自動</span></td></tr>
+  <tr><td>B</td><td>カテゴリ</td><td>ドロップダウンから選択</td><td><span class="input-cell">所長入力</span></td></tr>
+  <tr><td>C</td><td>工事種別</td><td>自動で絞り込まれたドロップダウンから選択</td><td><span class="input-cell">所長入力</span></td></tr>
+  <tr><td>D</td><td>工種</td><td>自動で絞り込まれたドロップダウンから選択</td><td><span class="input-cell">所長入力</span></td></tr>
+  <tr><td>E</td><td>費目</td><td>自動で絞り込まれたドロップダウンから選択</td><td><span class="input-cell">所長入力</span></td></tr>
+  <tr><td>F</td><td>支払先</td><td>ドロップダウンから選択</td><td><span class="input-cell">所長入力</span></td></tr>
+  <tr><td>G</td><td>年月</td><td>YYYY-MM形式で入力（例: 2026-01）</td><td><span class="input-cell">所長入力</span></td></tr>
+  <tr><td>H</td><td>数量</td><td>数値を入力</td><td><span class="input-cell">所長入力</span></td></tr>
+  <tr><td>I</td><td>単位</td><td>式、m3、人工 など</td><td><span class="input-cell">所長入力</span></td></tr>
+  <tr><td>J</td><td>単価</td><td>数値を入力</td><td><span class="input-cell">所長入力</span></td></tr>
+  <tr><td>K</td><td>金額</td><td>数量x単価で自動計算 / または直接入力</td><td><span class="input-cell">所長入力</span></td></tr>
+  <tr><td>L</td><td>相殺額</td><td>事務員が入力</td><td style="background:#E3F2FD;">事務員</td></tr>
+  <tr><td>M</td><td>相殺先</td><td>事務員が入力</td><td style="background:#E3F2FD;">事務員</td></tr>
+  <tr><td>N</td><td>課税区分</td><td>自動</td><td><span class="auto-cell">自動</span></td></tr>
+  <tr><td>O</td><td>消費税</td><td>金額の10%が自動計算</td><td><span class="auto-cell">自動</span></td></tr>
+  <tr><td>P</td><td>税込合計</td><td>金額+消費税が自動計算</td><td><span class="auto-cell">自動</span></td></tr>
+  <tr><td>Q</td><td>予算箱ID</td><td>自動で紐付けされます</td><td><span class="auto-cell">自動</span></td></tr>
+  <tr><td>R</td><td>備考</td><td>必要に応じて記入</td><td><span class="input-cell">所長入力</span></td></tr>
+</table>
+
+<h3>入力手順</h3>
+
+<div class="step">
+  <span class="step-number">1</span>
+  画面下部のタブから<strong>「支払明細入力」</strong>シートを開きます。
+</div>
+
+<div class="step">
+  <span class="step-number">2</span>
+  最終行の<strong>次の空行</strong>に移動します。（キーボードの Ctrl + End で最終行に移動できます）
+</div>
+
+<div class="step">
+  <span class="step-number">3</span>
+  <strong>B列「カテゴリ」</strong>のセルをクリックし、ドロップダウンから選びます。<br>
+  選択肢: 直接工事費 / 共通仮設費 / 現場管理費
+</div>
+
+<div class="fig-placeholder">[図: B列のドロップダウンでカテゴリを選択している画面]</div>
+
+<div class="step">
+  <span class="step-number">4</span>
+  <strong>C列「工事種別」</strong>→<strong>D列「工種」</strong>→<strong>E列「費目」</strong>を順番に選びます。<br>
+  上の項目を選ぶと、下の項目の選択肢が自動で絞り込まれます。
+</div>
+
+<div class="hint">
+  <div class="hint-title">[ポイント: 自動絞り込みの仕組み]</div>
+  例えば「直接工事費」→「護岸工」→「護岸工」と選ぶと、E列の費目は「外注費」だけが表示されます。<br>
+  工種によって入力できる費目が自動的に制限されるため、間違った組み合わせで入力してしまうことがありません。
+</div>
+
+<div class="fig-placeholder">[図: カスケードドロップダウンの4段階絞り込みの様子]</div>
+
+<div class="step">
+  <span class="step-number">5</span>
+  <strong>F列「支払先」</strong>のセルをクリックし、ドロップダウンから業者名を選びます。<br>
+  例: 川越建設、(有)濱畑水道、桜島生コンクリート など
+</div>
+
+<div class="step">
+  <span class="step-number">6</span>
+  <strong>G列「年月」</strong>に支払いの対象月を入力します。<br>
+  形式: <strong>YYYY-MM</strong>（例: 2026-01、2026-02）
+</div>
+
+<div class="warning">
+  <div class="warning-title">[注意]</div>
+  年月は必ず半角で「YYYY-MM」形式で入力してください。<br>
+  「2026/01」「R8-1」「1月」などの形式では正しく集計されません。
+</div>
+
+<div class="step">
+  <span class="step-number">7</span>
+  <strong>H列「数量」</strong>、<strong>I列「単位」</strong>、<strong>J列「単価」</strong>を入力します。
+</div>
+
+<div class="step">
+  <span class="step-number">8</span>
+  <strong>K列「金額」</strong>を確認します。<br>
+  数量と単価が入っている場合、金額は自動計算されます。<br>
+  一式金額の場合は、K列に直接金額を入力することもできます。
+</div>
+
+<div class="step">
+  <span class="step-number">9</span>
+  右側の灰色の列（N列～R列）が<strong>自動で埋まる</strong>ことを確認します。<br>
+  消費税（O列）、税込合計（P列）、予算箱ID（Q列）が自動で入ります。
+</div>
+
+<p><strong>これで1件の入力完了です。</strong></p>
+
+<h3>入力例（実際のデータ）</h3>
+
+<table>
+  <tr><th>列</th><th>入力値</th></tr>
+  <tr><td>B: カテゴリ</td><td>直接工事費</td></tr>
+  <tr><td>C: 工事種別</td><td>護岸工</td></tr>
+  <tr><td>D: 工種</td><td>護岸工</td></tr>
+  <tr><td>E: 費目</td><td>外注費</td></tr>
+  <tr><td>F: 支払先</td><td>川越建設</td></tr>
+  <tr><td>G: 年月</td><td>2025-10</td></tr>
+  <tr><td>H: 数量</td><td>1</td></tr>
+  <tr><td>I: 単位</td><td>式</td></tr>
+  <tr><td>J: 単価</td><td>5316667</td></tr>
+  <tr><td>K: 金額</td><td>5,316,667（自動計算）</td></tr>
+</table>
+
+<div class="fig-placeholder">[図: 1行入力が完了した状態の支払明細入力シート]</div>
+
+<div class="warning">
+  <div class="warning-title">[よくある間違い]</div>
+  <ul>
+    <li>金額にカンマを入れてしまう → 数値のみ入力してください（カンマは表示設定で自動的に付きます）</li>
+    <li>B列のカテゴリを選ばずにC列以降を入力する → 必ずB列から順番に選んでください</li>
+    <li>年月を「10月」と入力する → 「2025-10」形式で入力してください</li>
+  </ul>
+</div>
+
+
+<!-- 第4章 -->
+<h2 id="sec4">4. 便利機能: 前行コピー</h2>
+
+<p>同じ業者への支払いが続く場合に便利な機能です。</p>
+
+<div class="step">
+  <span class="step-number">1</span>
+  コピー元にしたい行のどこかのセルを選択します。
+</div>
+
+<div class="step">
+  <span class="step-number">2</span>
+  画面上部のメニューから<strong>「工事管理」→「前行コピー」</strong>をクリックします。
+</div>
+
+<div class="step">
+  <span class="step-number">3</span>
+  次の行に同じ内容がコピーされます。<strong>金額だけを変更</strong>すれば完了です。
+</div>
+
+<div class="fig-placeholder">[図: メニュー「工事管理」→「前行コピー」の操作画面]</div>
+
+<div class="hint">
+  <div class="hint-title">[ポイント]</div>
+  川越建設への外注費を毎月入力する場合、前月の行をコピーして金額だけ変えると入力が速くなります。
+</div>
+
+
+<!-- 第5章 -->
+<h2 id="sec5">5. 月次集計の実行（月末に1回）</h2>
+
+<p>月末にその月の支払いを全て入力し終えたら、集計を実行します。</p>
+
+<div class="step">
+  <span class="step-number">1</span>
+  画面上部のメニューから<strong>「工事管理」→「月次集計を実行」</strong>をクリックします。
+</div>
+
+<div class="step">
+  <span class="step-number">2</span>
+  処理が始まります。<strong>約3秒</strong>で完了します。画面上部に「完了しました」と表示されます。
+</div>
+
+<div class="step">
+  <span class="step-number">3</span>
+  結果を確認する場合は、以下のシートを開きます。
+  <ul>
+    <li><strong>_C_月次集計</strong> -- 月ごとの集計結果</li>
+    <li><strong>_C_費目別集計</strong> -- 費目別の予算と実績の対比</li>
+  </ul>
+</div>
+
+<div class="fig-placeholder">[図: 「工事管理」→「月次集計を実行」をクリックする画面]</div>
+
+<div class="fig-placeholder">[図: _C_月次集計シートの集計結果の画面]</div>
+
+<div class="warning">
+  <div class="warning-title">[注意]</div>
+  集計を実行する前に、当月分の入力が全て完了していることを確認してください。<br>
+  後から追加入力した場合は、もう一度「月次集計を実行」をクリックすれば上書きされます。
+</div>
+
+
+<!-- 第6章 -->
+<h2 id="sec6">6. 予算の確認（月末に1回）</h2>
+
+<p>予算の使い具合を確認し、問題がないかチェックします。</p>
+
+<div class="step">
+  <span class="step-number">1</span>
+  画面上部のメニューから<strong>「工事管理」→「予算健康度を更新」</strong>をクリックします。
+</div>
+
+<div class="step">
+  <span class="step-number">2</span>
+  <strong>_C_予算健康度</strong>シートを開き、各費目の信号を確認します。
+</div>
+
+<h3>信号の見方</h3>
+
+<table>
+  <tr><th>信号</th><th>意味</th><th>対応</th></tr>
+  <tr>
+    <td><span class="signal-blue">青</span></td>
+    <td>順調 -- 予算の使い具合が工事の進み具合と同じか少ない</td>
+    <td>対応不要。このまま続けてください</td>
+  </tr>
+  <tr>
+    <td><span class="signal-yellow">黄</span></td>
+    <td>注意 -- 予算の使い具合が工事の進み具合より少し多い</td>
+    <td>今後の支出を意識してください</td>
+  </tr>
+  <tr>
+    <td><span class="signal-red">赤</span></td>
+    <td>超過の可能性 -- 予算の使い具合が工事の進み具合よりかなり多い</td>
+    <td>原因を確認し、対策を検討してください</td>
+  </tr>
+</table>
+
+<div class="fig-placeholder">[図: _C_予算健康度シートの信号表示画面]</div>
+
+<h3>確認のポイント（海潟漁港R7-1の例）</h3>
+
+<table>
+  <tr><th>費目</th><th>予算額</th><th>消化率</th><th>信号</th></tr>
+  <tr><td>コンクリート工/外注費</td><td>7,228,000円</td><td>72.0%</td><td><span class="signal-blue">青</span></td></tr>
+  <tr><td>従業員給料手当</td><td>3,100,000円</td><td>56.5%</td><td><span class="signal-blue">青</span></td></tr>
+  <tr><td>安全対策費</td><td>65,000円</td><td>113.0%</td><td><span class="signal-red">赤</span></td></tr>
+  <tr><td>地代家賃</td><td>131,910円</td><td>113.7%</td><td><span class="signal-red">赤</span></td></tr>
+  <tr><td>法定福利費</td><td>690,039円</td><td>126.2%</td><td><span class="signal-red">赤</span></td></tr>
+</table>
+
+<div class="hint">
+  <div class="hint-title">[ポイント: 消化率とは]</div>
+  <strong>消化率 = 累計の支払額 / 実行予算額</strong>です。<br>
+  100%を超えていると、その費目は予算オーバーしていることを意味します。<br>
+  ただし、安全対策費のように金額が小さい費目（65,000円）は、少額の超過でもすぐに100%を超えるため、金額の大きさも合わせて判断してください。
+</div>
+
+
+<!-- 第7章 -->
+<h2 id="sec7">7. 出来高率の入力（月末に1回）</h2>
+
+<p>工事全体の進み具合（出来高率）を月1回入力します。この値が予算の信号判定に使われます。</p>
+
+<div class="step">
+  <span class="step-number">1</span>
+  画面下部のタブから<strong>「_月次調整」</strong>シートを開きます。
+</div>
+
+<div class="step">
+  <span class="step-number">2</span>
+  当月の行の<strong>「出来高率」</strong>欄に、工事全体の進捗率を数値で入力します。
+</div>
+
+<div class="step">
+  <span class="step-number">3</span>
+  入力したら、第6章の手順で「予算健康度を更新」を実行してください。
+</div>
+
+<h3>出来高率の入力例</h3>
+
+<table>
+  <tr><th>年月</th><th>出来高率</th><th>考え方</th></tr>
+  <tr><td>2025-10</td><td>25</td><td>工事が4分の1終わった</td></tr>
+  <tr><td>2025-11</td><td>40</td><td>工事が4割終わった</td></tr>
+  <tr><td>2025-12</td><td>55</td><td>工事が半分を少し超えた</td></tr>
+</table>
+
+<div class="warning">
+  <div class="warning-title">[注意]</div>
+  出来高率は<strong>%の数値だけ</strong>を入力してください。<br>
+  「50%」ではなく「50」と入力します。
+</div>
+
+<div class="hint">
+  <div class="hint-title">[ポイント]</div>
+  出来高率は、発注者への出来高報告書の数字をそのまま入力すればOKです。<br>
+  もし正確な数字がわからない場合は、おおよその目安で構いません。
+</div>
+
+
+<!-- 第8章 -->
+<h2 id="sec8">8. 困った時は</h2>
+
+<h3>よくあるトラブルと対処法</h3>
+
+<table class="faq-table">
+  <tr><th>困った状況</th><th>原因と対処</th></tr>
+  <tr>
+    <td>C列以降のドロップダウンに選択肢が出ない</td>
+    <td>B列「カテゴリ」を先に選んでください。カテゴリが空のままだと、以降の選択肢は表示されません。</td>
+  </tr>
+  <tr>
+    <td>F列のドロップダウンに業者名がない</td>
+    <td>_M取引先シートに業者が登録されていない可能性があります。管理者に連絡してください。</td>
+  </tr>
+  <tr>
+    <td>K列の金額が自動計算されない</td>
+    <td>H列（数量）またはJ列（単価）が空か、数値以外が入力されています。半角数字で入力してください。<br>一式金額の場合は、K列に直接金額を入力してください。</td>
+  </tr>
+  <tr>
+    <td>「工事管理」メニューが表示されない</td>
+    <td>スプレッドシートを開き直してください。初回表示に数秒かかることがあります。それでも表示されない場合は管理者に連絡してください。</td>
+  </tr>
+  <tr>
+    <td>月次集計の結果がおかしい</td>
+    <td>G列（年月）の形式を確認してください。「YYYY-MM」以外の形式だと集計対象外になります。</td>
+  </tr>
+  <tr>
+    <td>予算健康度が更新されない</td>
+    <td>「月次集計を実行」を先に行い、その後「予算健康度を更新」をクリックしてください。集計データがないと健康度は計算されません。</td>
+  </tr>
+  <tr>
+    <td>消費税の金額がおかしい</td>
+    <td>K列の金額を確認してください。消費税はK列の金額の10%が自動計算されます。K列が空の場合は消費税も0になります。</td>
+  </tr>
+  <tr>
+    <td>間違って入力した行を削除したい</td>
+    <td>行全体を選択し、右クリックから「行を削除」を選んでください。削除後は「月次集計を実行」で集計をやり直してください。</td>
+  </tr>
+</table>
+
+<h3>問い合わせ先</h3>
+
+<table>
+  <tr><th>内容</th><th>連絡先</th></tr>
+  <tr><td>操作方法がわからない場合</td><td>システム管理担当者</td></tr>
+  <tr><td>業者の追加・変更が必要な場合</td><td>システム管理担当者</td></tr>
+  <tr><td>予算の数値に疑問がある場合</td><td>本社 工事管理部</td></tr>
+</table>
+
+<!-- フッター -->
+<div class="footer">
+  <p>工事予算管理システム 所長向け操作マニュアル v1.0<br>
+  作成日: 2026年2月20日<br>
+  対象: (株)森組 海潟漁港海岸海岸保全施設整備連携工事(R7-1工区)</p>
+</div>
+
+</body>
+</html>

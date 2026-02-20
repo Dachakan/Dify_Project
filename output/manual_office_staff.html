@@ -1,0 +1,470 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>事務員向け操作マニュアル -- 工事予算管理システム</title>
+  <style>
+    /* 基本スタイル */
+    * { box-sizing: border-box; }
+    body {
+      font-family: 'Yu Gothic', 'Hiragino Sans', 'Meiryo', sans-serif;
+      max-width: 800px;
+      margin: 0 auto;
+      padding: 20px;
+      color: #333;
+      line-height: 1.8;
+      font-size: 15px;
+    }
+    h1, h2, h3 { margin-top: 1.5em; }
+    h2 { border-bottom: 2px solid #1565C0; padding-bottom: 6px; color: #1565C0; }
+    h3 { color: #1976D2; }
+
+    /* ヘッダー */
+    .header {
+      background: #1565C0;
+      color: white;
+      padding: 24px 28px;
+      border-radius: 8px;
+      margin-bottom: 30px;
+    }
+    .header h1 { margin: 0 0 6px 0; font-size: 1.6em; color: white; border: none; }
+    .header p { margin: 0; font-size: 0.95em; opacity: 0.9; }
+
+    /* 目次 */
+    .toc {
+      background: #fafafa;
+      padding: 20px 20px 20px 24px;
+      border-radius: 8px;
+      margin-bottom: 30px;
+      border: 1px solid #e0e0e0;
+    }
+    .toc h2 { border-bottom: none; margin-top: 0; font-size: 1.1em; }
+    .toc ol { padding-left: 20px; }
+    .toc li { margin: 6px 0; }
+    .toc a { text-decoration: none; color: #1565C0; }
+    .toc a:hover { text-decoration: underline; }
+
+    /* ステップ */
+    .step {
+      background: #f8f9fa;
+      border-left: 4px solid #4CAF50;
+      padding: 14px 16px;
+      margin: 12px 0;
+      border-radius: 0 8px 8px 0;
+    }
+    .step-number {
+      display: inline-block;
+      font-weight: bold;
+      color: white;
+      background: #4CAF50;
+      border-radius: 50%;
+      width: 28px;
+      height: 28px;
+      text-align: center;
+      line-height: 28px;
+      font-size: 0.9em;
+      margin-right: 8px;
+    }
+
+    /* 入力欄ハイライト */
+    .input-cell {
+      background: #E8F5E9;
+      padding: 2px 6px;
+      border-radius: 3px;
+      font-weight: bold;
+      border: 1px solid #A5D6A7;
+    }
+    .auto-cell {
+      background: #EEEEEE;
+      padding: 2px 6px;
+      border-radius: 3px;
+      border: 1px solid #BDBDBD;
+    }
+    .office-cell {
+      background: #E3F2FD;
+      padding: 2px 6px;
+      border-radius: 3px;
+      font-weight: bold;
+      border: 1px solid #90CAF9;
+    }
+
+    /* 注意ボックス */
+    .warning {
+      background: #FFF3E0;
+      border-left: 4px solid #FF9800;
+      padding: 14px 16px;
+      margin: 14px 0;
+      border-radius: 0 8px 8px 0;
+    }
+    .warning-title { font-weight: bold; color: #E65100; margin-bottom: 4px; }
+
+    /* ヒントボックス */
+    .hint {
+      background: #E3F2FD;
+      border-left: 4px solid #2196F3;
+      padding: 14px 16px;
+      margin: 14px 0;
+      border-radius: 0 8px 8px 0;
+    }
+    .hint-title { font-weight: bold; color: #0D47A1; margin-bottom: 4px; }
+
+    /* テーブル */
+    table { border-collapse: collapse; width: 100%; margin: 15px 0; font-size: 0.93em; }
+    th { background: #f5f5f5; font-weight: bold; }
+    th, td { border: 1px solid #ddd; padding: 8px 12px; text-align: left; }
+
+    /* 相殺フロー図 */
+    .flow-diagram {
+      background: #FAFAFA;
+      border: 1px solid #E0E0E0;
+      border-radius: 8px;
+      padding: 20px;
+      margin: 16px 0;
+      font-family: 'Courier New', monospace;
+      font-size: 0.9em;
+      line-height: 1.6;
+      white-space: pre;
+      overflow-x: auto;
+    }
+
+    /* 図プレースホルダー */
+    .fig-placeholder {
+      background: #FAFAFA;
+      border: 2px dashed #BDBDBD;
+      padding: 24px;
+      margin: 16px 0;
+      text-align: center;
+      color: #757575;
+      border-radius: 8px;
+      font-size: 0.95em;
+    }
+
+    /* 色凡例 */
+    .legend {
+      display: flex;
+      gap: 20px;
+      flex-wrap: wrap;
+      margin: 10px 0;
+    }
+    .legend-item {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+    }
+    .legend-box {
+      width: 20px;
+      height: 20px;
+      border-radius: 3px;
+      border: 1px solid #ccc;
+    }
+
+    /* フッター */
+    .footer {
+      margin-top: 40px;
+      padding-top: 16px;
+      border-top: 1px solid #ddd;
+      font-size: 0.85em;
+      color: #757575;
+    }
+
+    /* 印刷対応 */
+    @media print {
+      body { max-width: 100%; padding: 10px; font-size: 12px; }
+      .header { -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+      .step, .warning, .hint { break-inside: avoid; }
+      .no-print { display: none; }
+      h2 { break-after: avoid; }
+      table { font-size: 11px; }
+      a { color: #333; text-decoration: none; }
+    }
+  </style>
+</head>
+<body>
+
+<div class="header">
+  <h1>事務員向け 操作マニュアル</h1>
+  <p>工事予算管理システム -- (株)森組</p>
+  <p>対象工事: 海潟漁港海岸海岸保全施設整備連携工事(R7-1工区)</p>
+</div>
+
+<!-- 目次 -->
+<div class="toc">
+  <h2>目次</h2>
+  <ol>
+    <li><a href="#sec1">はじめに</a></li>
+    <li><a href="#sec2">相殺処理とは</a></li>
+    <li><a href="#sec3">相殺額の入力手順</a></li>
+    <li><a href="#sec4">相殺の確認方法</a></li>
+    <li><a href="#sec5">月次の確認作業（月末に所長と一緒に）</a></li>
+    <li><a href="#sec6">困った時は</a></li>
+  </ol>
+</div>
+
+<!-- 第1章 -->
+<h2 id="sec1">1. はじめに</h2>
+
+<h3>事務員の役割</h3>
+
+<p>このシステムでの事務員の役割は、<strong>相殺額と相殺先の入力</strong>です。</p>
+
+<ul>
+  <li>入力するのは<strong>支払明細入力シートのL列とM列だけ</strong>です</li>
+  <li>所長が支払データ（A列～K列）を入力した後に、相殺情報を追記する流れです</li>
+  <li>操作は月に1～2回程度です</li>
+</ul>
+
+<h3>色の見方</h3>
+
+<div class="legend">
+  <div class="legend-item">
+    <div class="legend-box" style="background: #E8F5E9;"></div>
+    <span>緑色 = 所長が入力する欄</span>
+  </div>
+  <div class="legend-item">
+    <div class="legend-box" style="background: #E3F2FD;"></div>
+    <span>青色 = 事務員が入力する欄（L列・M列）</span>
+  </div>
+  <div class="legend-item">
+    <div class="legend-box" style="background: #EEEEEE;"></div>
+    <span>灰色 = 自動で計算される欄</span>
+  </div>
+</div>
+
+<div class="fig-placeholder">[図: 支払明細入力シートの全体画面（L列・M列にマーキング）]</div>
+
+
+<!-- 第2章 -->
+<h2 id="sec2">2. 相殺処理とは</h2>
+
+<p>「相殺」とは、ある業者への支払い金額から、その業者が手配した下請け業者の分を差し引く処理です。</p>
+
+<h3>相殺の仕組み（図解）</h3>
+
+<div class="flow-diagram">
+  発注者 (森組)
+    |
+    | 外注費として支払い
+    v
+  元請業者 (川越建設)
+    |
+    | 材料を手配
+    v
+  材料業者 (桜島生コンクリート)
+
+------------------------------------------------------
+
+  川越建設への支払い    5,316,667円（外注費）
+  - 桜島生コンの相殺   2,993,670円（材料費を差し引く）
+  ─────────────────────
+  川越建設への実際の支払  2,322,997円</div>
+
+<p>川越建設が手配した桜島生コンクリートの材料費を、川越建設への支払いから差し引きます。<br>
+こうすることで、森組から桜島生コンクリートへの直接支払いが不要になります。</p>
+
+<h3>海潟漁港R7-1の相殺実績</h3>
+
+<table>
+  <tr><th>相殺元の業者</th><th>相殺先（差し引かれる業者）</th><th>10月</th><th>11月</th><th>合計</th></tr>
+  <tr><td>桜島生コンクリート</td><td>川越建設</td><td>2,993,670円</td><td>1,986,480円</td><td>4,980,150円</td></tr>
+  <tr><td>菱和コンクリート</td><td>川越建設</td><td>1,000,000円</td><td>690,200円</td><td>1,690,200円</td></tr>
+  <tr><td>(株)コマロック</td><td>川越建設</td><td>90,000円</td><td>--</td><td>90,000円</td></tr>
+  <tr><td>鹿児島仮設</td><td>川越建設</td><td>35,468円</td><td>35,468円</td><td>70,936円</td></tr>
+  <tr><td><strong>合計</strong></td><td></td><td><strong>4,119,138円</strong></td><td><strong>2,712,148円</strong></td><td><strong>6,831,286円</strong></td></tr>
+</table>
+
+<div class="hint">
+  <div class="hint-title">[ポイント]</div>
+  12月度は相殺がありませんでした。相殺がない月は、L列・M列の入力は不要です。
+</div>
+
+
+<!-- 第3章 -->
+<h2 id="sec3">3. 相殺額の入力手順</h2>
+
+<div class="step">
+  <span class="step-number">1</span>
+  画面下部のタブから<strong>「支払明細入力」</strong>シートを開きます。
+</div>
+
+<div class="step">
+  <span class="step-number">2</span>
+  所長が入力済みの行を確認します。<br>
+  <strong>A列～K列が埋まっている行</strong>が、所長の入力済みデータです。<br>
+  相殺が必要な行（業者名と費目）を特定します。
+</div>
+
+<div class="fig-placeholder">[図: 所長が入力済みの行を確認している画面]</div>
+
+<div class="step">
+  <span class="step-number">3</span>
+  相殺が必要な行の<strong>L列「相殺額」</strong>に金額を入力します。<br>
+  数値のみ入力してください（カンマは不要です）。
+</div>
+
+<div class="step">
+  <span class="step-number">4</span>
+  同じ行の<strong>M列「相殺先」</strong>のドロップダウンから、相殺先の業者名を選択します。
+</div>
+
+<div class="step">
+  <span class="step-number">5</span>
+  入力内容を確認します。
+</div>
+
+<p><strong>これで相殺入力は完了です。</strong></p>
+
+<h3>入力例（10月度 -- 桜島生コンクリートの相殺）</h3>
+
+<p>桜島生コンクリートの材料費2,993,670円を、川越建設の外注費から相殺する場合:</p>
+
+<table>
+  <tr><th>列</th><th>内容</th><th>入力値</th></tr>
+  <tr><td>A～K列</td><td>所長入力済み（桜島生コンクリートの材料費行）</td><td>（入力済みの状態）</td></tr>
+  <tr><td><span class="office-cell">L列: 相殺額</span></td><td>相殺する金額</td><td><strong>2993670</strong></td></tr>
+  <tr><td><span class="office-cell">M列: 相殺先</span></td><td>相殺先業者名</td><td><strong>川越建設</strong>（ドロップダウンから選択）</td></tr>
+</table>
+
+<div class="fig-placeholder">[図: L列に相殺額、M列に相殺先を入力した状態]</div>
+
+<div class="warning">
+  <div class="warning-title">[注意]</div>
+  <ul>
+    <li>金額にカンマを入れないでください。「2993670」のように数値のみで入力します</li>
+    <li>M列は必ずドロップダウンから選んでください。手入力すると業者名の表記揺れが起きます</li>
+    <li>所長の入力行（A～K列）は変更しないでください</li>
+  </ul>
+</div>
+
+
+<!-- 第4章 -->
+<h2 id="sec4">4. 相殺の確認方法</h2>
+
+<p>入力した相殺が正しく反映されているか確認します。</p>
+
+<div class="step">
+  <span class="step-number">1</span>
+  所長に<strong>「月次集計を実行」</strong>を依頼します。<br>
+  （メニュー「工事管理」→「月次集計を実行」）
+</div>
+
+<div class="step">
+  <span class="step-number">2</span>
+  画面下部のタブから<strong>「_C_費目別集計」</strong>シートを開きます。
+</div>
+
+<div class="step">
+  <span class="step-number">3</span>
+  相殺前の金額と相殺後の金額の差が、入力した相殺額と一致していることを確認します。
+</div>
+
+<div class="fig-placeholder">[図: _C_費目別集計シートで相殺反映を確認している画面]</div>
+
+<h3>照合チェック（10月度の例）</h3>
+
+<table>
+  <tr><th>項目</th><th>金額</th></tr>
+  <tr><td>10月度 支払計（税抜）</td><td>10,933,337円</td></tr>
+  <tr><td>10月度 相殺計</td><td>4,119,138円</td></tr>
+  <tr><td>差引後の支払額</td><td>6,814,199円</td></tr>
+</table>
+
+<div class="hint">
+  <div class="hint-title">[ポイント]</div>
+  相殺額の合計が既存のExcel月報と一致していれば問題ありません。<br>
+  不一致がある場合は、L列の入力金額を再確認してください。
+</div>
+
+
+<!-- 第5章 -->
+<h2 id="sec5">5. 月次の確認作業（月末に所長と一緒に）</h2>
+
+<p>月末に所長と一緒に、集計結果とExcel月報の照合を行います。</p>
+
+<div class="step">
+  <span class="step-number">1</span>
+  所長が「月次集計を実行」を完了していることを確認します。
+</div>
+
+<div class="step">
+  <span class="step-number">2</span>
+  <strong>_C_費目別集計</strong>シートを開き、以下の数値をExcel月報と照合します。
+  <ul>
+    <li>各費目の支払額</li>
+    <li>相殺額の合計</li>
+    <li>月度合計金額</li>
+  </ul>
+</div>
+
+<div class="step">
+  <span class="step-number">3</span>
+  全ての数値が一致していれば、月次確認完了です。
+</div>
+
+<h3>照合用チェックポイント</h3>
+
+<table>
+  <tr><th>月度</th><th>支払計（税抜）</th><th>相殺計</th></tr>
+  <tr><td>10月</td><td>10,933,337円</td><td>4,119,138円</td></tr>
+  <tr><td>11月</td><td>8,458,604円</td><td>2,712,148円</td></tr>
+  <tr><td>12月</td><td>4,332,077円</td><td>0円</td></tr>
+</table>
+
+<div class="warning">
+  <div class="warning-title">[注意]</div>
+  数値が不一致の場合は、以下を確認してください。
+  <ul>
+    <li>L列（相殺額）の入力漏れがないか</li>
+    <li>M列（相殺先）の選択が正しいか</li>
+    <li>所長の入力データ（K列の金額）がExcel月報と一致しているか</li>
+  </ul>
+</div>
+
+
+<!-- 第6章 -->
+<h2 id="sec6">6. 困った時は</h2>
+
+<h3>よくあるトラブルと対処法</h3>
+
+<table>
+  <tr><th>困った状況</th><th>原因と対処</th></tr>
+  <tr>
+    <td>M列のドロップダウンに相殺先の業者名がない</td>
+    <td>_M取引先シートに業者が登録されていない可能性があります。システム管理担当者に連絡して業者の追加を依頼してください。</td>
+  </tr>
+  <tr>
+    <td>相殺額を間違えて入力した</td>
+    <td>L列のセルをクリックして、正しい金額に書き換えてください。その後、所長に「月次集計を実行」を依頼すれば、集計結果に反映されます。</td>
+  </tr>
+  <tr>
+    <td>どの行に相殺を入力すればいいかわからない</td>
+    <td>F列（支払先）の業者名を確認して、相殺元の業者の行に入力します。例: 桜島生コンクリートの行のL列に相殺額、M列に「川越建設」を入力します。</td>
+  </tr>
+  <tr>
+    <td>所長の入力行を誤って変更してしまった</td>
+    <td>すぐにCtrl+Z（元に戻す）で復元してください。復元できない場合は所長に確認してください。</td>
+  </tr>
+  <tr>
+    <td>費目別集計の相殺額が合わない</td>
+    <td>支払明細入力シートのL列を上から順に確認し、入力漏れや金額の誤りがないかチェックしてください。</td>
+  </tr>
+</table>
+
+<h3>問い合わせ先</h3>
+
+<table>
+  <tr><th>内容</th><th>連絡先</th></tr>
+  <tr><td>操作方法がわからない場合</td><td>システム管理担当者</td></tr>
+  <tr><td>相殺の金額がわからない場合</td><td>現場所長</td></tr>
+  <tr><td>業者の追加・変更が必要な場合</td><td>システム管理担当者</td></tr>
+</table>
+
+<!-- フッター -->
+<div class="footer">
+  <p>工事予算管理システム 事務員向け操作マニュアル v1.0<br>
+  作成日: 2026年2月20日<br>
+  対象: (株)森組 海潟漁港海岸海岸保全施設整備連携工事(R7-1工区)</p>
+</div>
+
+</body>
+</html>
