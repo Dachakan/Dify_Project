@@ -34,14 +34,14 @@
 
 **診断結果**: 設計完成度 **90%** / 実装完成度 **80%**
 
-Phase A実装により、入力層・マスタ層・計算層・出力層の4層構成が動作可能な状態になった。GAS 7ファイル（合計約145KB）で以下が実装済み:
-- template.gs（850行）: テンプレート自動生成（available_elements対応、2段階入力、18列）
-- validation_extended.gs（370行）: カスケードDD、数量列制御、予算箱ID解決
-- aggregation.gs（400行）: スナップショット方式の月次集計・費目別集計
-- budget_health.gs（450行）: 消化率/出来高率/過不足見込み/信号判定
-- api.gs（520行）: Web App API（5モード: health/master/summary/project/aggregate）
-- config.gs（220行）: シート保護、メニュー、定数、前行コピー、入力期限
-- hub.gs（400行）: 本社管理台帳（複数現場横断、予算健康度未対応）
+Phase A実装により、入力層・マスタ層・計算層・出力層の4層構成が動作可能な状態になった。GAS 7ファイル（約157KB、4,471行）で以下が実装済み:
+- template.gs（1,125行）: テンプレート自動生成（available_elements対応、2段階入力、18列）
+- validation_extended.gs（466行）: カスケードDD、数量列制御、予算箱ID解決
+- aggregation.gs（539行）: スナップショット方式の月次集計・費目別集計
+- budget_health.gs（617行）: 消化率/出来高率/過不足見込み/信号判定
+- api.gs（717行）: Web App API（5モード: health/master/summary/project/aggregate）
+- config.gs（434行）: シート保護、メニュー、定数、前行コピー、入力期限
+- hub.gs（573行）: 本社管理台帳（複数現場横断、予算健康度連携）
 
 残り20%は実スプレッドシートへのデプロイとE2Eテストでの動作確認。
 
@@ -311,17 +311,17 @@ hub.gs（400行）が存在し、複数現場の横断管理の骨格はある�
 
 ### Phase A: 現場単体の完成（実装完了）
 
-GAS 7ファイル（約145KB）で「1現場の予実管理」を実装済み。
+GAS 7ファイル（約157KB、4,471行）で「1現場の予実管理」を実装済み。
 
 | タスク | ファイル | 内容 | 状態 |
 |--------|---------|------|------|
-| A-1 | template.gs（850行） | シート自動生成（available_elements対応、2段階入力、18列） | 実装済み |
-| A-2 | aggregation.gs（400行） | スナップショット方式の月次集計・費目別集計 | 実装済み |
-| A-3 | budget_health.gs（450行） | 消化率/出来高率/過不足見込み/信号判定 | 実装済み |
-| A-4 | validation_extended.gs（370行） | カスケードDD、数量列制御、予算箱ID解決 | 実装済み |
-| A-5 | api.gs（520行） | Web App API（5モード: health/master/summary/project/aggregate） | 実装済み |
-| A-6 | config.gs（220行） | シート保護、メニュー、定数、前行コピー、入力期限 | 実装済み |
-| A-7 | hub.gs（400行） | 本社管理台帳（複数現場横断） | 実装済み（予算健康度連携未対応） |
+| A-1 | template.gs（1,125行） | シート自動生成（available_elements対応、2段階入力、18列） | 実装済み |
+| A-2 | aggregation.gs（539行） | スナップショット方式の月次集計・費目別集計 | 実装済み |
+| A-3 | budget_health.gs（617行） | 消化率/出来高率/過不足見込み/信号判定 | 実装済み |
+| A-4 | validation_extended.gs（466行） | カスケードDD、数量列制御、予算箱ID解決 | 実装済み |
+| A-5 | api.gs（717行） | Web App API（5モード: health/master/summary/project/aggregate） | 実装済み |
+| A-6 | config.gs（434行） | シート保護、メニュー、定数、前行コピー、入力期限 | 実装済み |
+| A-7 | hub.gs（573行） | 本社管理台帳（複数現場横断、予算健康度連携） | 実装済み |
 
 **次のステップ**: テストスプレッドシートへのデプロイとE2Eテスト（PoC構築）
 

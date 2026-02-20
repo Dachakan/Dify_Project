@@ -3223,15 +3223,15 @@ template.gsの`initProjectTemplate()`で自動生成されるシート一覧:
 
 | スクリプトファイル | サイズ | 行数 | 役割 |
 |-----------------|-------|------|------|
-| config.gs | 10KB | 220 | シート保護/メニュー/定数/前行コピー/入力期限通知 |
-| template.gs | 36KB | 850 | テンプレート自動生成（available_elements対応/2段階入力/18列） |
-| validation_extended.gs | 17KB | 370 | カスケードDD（4段連鎖）/数量列制御/予算箱ID自動解決 |
-| aggregation.gs | 18KB | 400 | スナップショット方式の月次集計/費目別集計/相殺処理 |
-| budget_health.gs | 20KB | 450 | 消化率/出来高率/過不足見込み/信号判定（予実管理の中核） |
-| api.gs | 24KB | 520 | Web App API（5モード: health/master/summary/project/aggregate） |
-| hub.gs | 18KB | 400 | 本社管理台帳（複数現場横断、予算健康度連携は未対応） |
+| config.gs | 14KB | 434 | シート保護/メニュー/定数/前行コピー/入力期限通知 |
+| template.gs | 39KB | 1,125 | テンプレート自動生成（available_elements対応/2段階入力/18列） |
+| validation_extended.gs | 17KB | 466 | カスケードDD（4段連鎖）/数量列制御/予算箱ID自動解決 |
+| aggregation.gs | 18KB | 539 | スナップショット方式の月次集計/費目別集計/相殺処理 |
+| budget_health.gs | 20KB | 617 | 消化率/出来高率/過不足見込み/信号判定（予実管理の中核） |
+| api.gs | 29KB | 717 | Web App API（5モード: health/master/summary/project/aggregate） |
+| hub.gs | 18KB | 573 | 本社管理台帳（複数現場横断、予算健康度連携） |
 
-**合計**: 約145KB、約3,210行
+**合計**: 約157KB、4,471行（107関数）
 
 **budget_health.gs の処理ステップ**:
 
@@ -3254,6 +3254,6 @@ template.gsの`initProjectTemplate()`で自動生成されるシート一覧:
 |--------|--------|------|
 | 設計書（本付録） | output/system_design_proposal.md | マスタ体系・予実管理設計・テーブル定義の完全版 |
 | マスタ初期値CSV | output/master_items_initial.csv | 工種35項目+費目26項目+費用要素5項目+工事種別12項目 |
-| GAS実装（7ファイル） | gas_templates/ | 全7ファイル約145KB（Phase A実装完了） |
+| GAS実装（7ファイル） | gas_templates/ | 全7ファイル約157KB、4,471行（Phase A実装完了） |
 | Sitesモックアップ | output/mockup_sites.html | ダッシュボード7ページ |
 | Sheetsモックアップ | output/mockup_sheets.html | スプレッドシート入力画面 |
