@@ -29,6 +29,9 @@
 function setupDemoSites() {
   Logger.log('=== デモSS作成開始 ===');
 
+  var p001Id = createDemoSite_P001_();
+  Logger.log('P001 境川河川改修 SS ID: ' + p001Id);
+
   var p002Id = createDemoSite_P002_();
   Logger.log('P002 持木川中流部 SS ID: ' + p002Id);
 
@@ -37,11 +40,56 @@ function setupDemoSites() {
 
   Logger.log('---');
   Logger.log('_M工事台帳 への転記内容:');
-  Logger.log('P001 J列: 1EO9ZSIEk4EyiJk8ttkbsm4FBP2RHBeY_9psVa1e_teI  (海潟漁港PoC 既存)');
+  Logger.log('P001 J列: ' + p001Id);
   Logger.log('P002 J列: ' + p002Id);
   Logger.log('P003 J列: ' + p003Id);
-  Logger.log('P004 J列: （空欄のまま）');
+  Logger.log('P004 J列: （P004は既存SS IDを使用）');
   Logger.log('=== デモSS作成完了 ===');
+}
+
+/**
+ * P001 境川河川改修 デモSS作成（正常ステータス）
+ * 消化率70%、出来高率70%、gap=0pt → 正常
+ * @returns {string} 作成したスプレッドシートのID
+ */
+function createDemoSite_P001_() {
+  var ss = SpreadsheetApp.create('森組_境川河川改修_デモ');
+  var sheet = ss.getSheets()[0];
+  sheet.setName('_C_予算健康度');
+
+  // ヘッダー行
+  var headers = [
+    'year_month', 'bac', 'pv', 'ac',
+    'consumption_rate', 'progress_rate', 'gap',
+    'shortage', 'signal', 'last_updated'
+  ];
+  sheet.getRange(1, 1, 1, headers.length).setValues([headers]);
+
+  // BAC: 185,000,000円
+  var bac = 185000000;
+  var now = new Date();
+
+  // 3ヶ月分データ（進行中: 2025-10〜2025-12、全て「正常」）
+  var data = [
+    // 2025-10: 正常（消化率30%、出来高率30%、gap=0pt）
+    ['2025-10', bac, 55500000, 55500000, 30.0, 30.0, 0.0, 129500000, '正常', now],
+    // 2025-11: 正常（消化率50%、出来高率50%、gap=0pt）
+    ['2025-11', bac, 92500000, 92500000, 50.0, 50.0, 0.0, 92500000, '正常', now],
+    // 2025-12: 正常（消化率70%、出来高率70%、gap=0pt）
+    ['2025-12', bac, 129500000, 129500000, 70.0, 70.0, 0.0, 55500000, '正常', now]
+  ];
+  sheet.getRange(2, 1, data.length, headers.length).setValues(data);
+
+  // 信号列（I列）に背景色を付与（全て正常: 緑）
+  sheet.getRange(2, 9).setBackground('#C8E6C9'); // 2025-10 正常: 緑
+  sheet.getRange(3, 9).setBackground('#C8E6C9'); // 2025-11 正常: 緑
+  sheet.getRange(4, 9).setBackground('#C8E6C9'); // 2025-12 正常: 緑
+
+  // 列幅を整形
+  sheet.autoResizeColumns(1, headers.length);
+
+  Logger.log('P001 SS 作成完了: ' + ss.getName() + ' (id=' + ss.getId() + ')');
+  return ss.getId();
 }
 
 /**
