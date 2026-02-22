@@ -1,13 +1,12 @@
 /**
  * setup_demo_sites.gs
- * P002（持木川中流部）・P003（野尻川除石）のデモ用スプレッドシートを作成する
+ * P001〜P003 のデモ用スプレッドシートを指定フォルダに作成する
  *
  * 使用手順:
  *   1. GASエディタにこのファイルを貼り付ける（hub.gs とは別のスタンドアロンGASプロジェクトでも可）
  *   2. 「setupDemoSites」関数を実行する
  *   3. 実行ログ（Ctrl+Enter）に出力されたSS IDを確認する
- *   4. hub.gs がバインドされた「森組_工事管理台帳」の _M工事台帳 シートを開く
- *   5. P002行とP003行のJ列（spreadsheet_id）に出力されたSS IDを転記する
+ *   4. setup_hub_registry.gs の updateSiteId() で _M工事台帳 の SS ID を更新する
  *
  * 列定義（_C_予算健康度 シート）:
  *   A: year_month      - 年月（YYYY-MM形式）
@@ -22,12 +21,27 @@
  *   J: last_updated    - 最終更新日時
  */
 
+// デモSS作成先フォルダID
+// https://drive.google.com/drive/u/0/folders/1DqzwP4yDTtezgZmjyooYNuEEDVBbf4F5
+var DEMO_FOLDER_ID = '1DqzwP4yDTtezgZmjyooYNuEEDVBbf4F5';
+
+/**
+ * 作成したSSを指定フォルダに移動するユーティリティ
+ * @param {string} ssId - 移動対象のスプレッドシートID
+ */
+function moveToDemoFolder_(ssId) {
+  var file = DriveApp.getFileById(ssId);
+  var folder = DriveApp.getFolderById(DEMO_FOLDER_ID);
+  file.moveTo(folder);
+}
+
 /**
  * メイン実行関数
  * GASエディタの「実行」ボタンでこの関数を選択して実行する
  */
 function setupDemoSites() {
   Logger.log('=== デモSS作成開始 ===');
+  Logger.log('作成先フォルダ: ' + DEMO_FOLDER_ID);
 
   var p001Id = createDemoSite_P001_();
   Logger.log('P001 境川河川改修 SS ID: ' + p001Id);
@@ -39,11 +53,10 @@ function setupDemoSites() {
   Logger.log('P003 野尻川除石 SS ID: ' + p003Id);
 
   Logger.log('---');
-  Logger.log('_M工事台帳 への転記内容:');
-  Logger.log('P001 J列: ' + p001Id);
-  Logger.log('P002 J列: ' + p002Id);
-  Logger.log('P003 J列: ' + p003Id);
-  Logger.log('P004 J列: （P004は既存SS IDを使用）');
+  Logger.log('_M工事台帳 への転記用:');
+  Logger.log("updateSiteId('P001', '" + p001Id + "');");
+  Logger.log("updateSiteId('P002', '" + p002Id + "');");
+  Logger.log("updateSiteId('P003', '" + p003Id + "');");
   Logger.log('=== デモSS作成完了 ===');
 }
 
@@ -88,6 +101,7 @@ function createDemoSite_P001_() {
   // 列幅を整形
   sheet.autoResizeColumns(1, headers.length);
 
+  moveToDemoFolder_(ss.getId());
   Logger.log('P001 SS 作成完了: ' + ss.getName() + ' (id=' + ss.getId() + ')');
   return ss.getId();
 }
@@ -133,6 +147,7 @@ function createDemoSite_P002_() {
   // 列幅を整形
   sheet.autoResizeColumns(1, headers.length);
 
+  moveToDemoFolder_(ss.getId());
   Logger.log('P002 SS 作成完了: ' + ss.getName() + ' (id=' + ss.getId() + ')');
   return ss.getId();
 }
@@ -178,6 +193,7 @@ function createDemoSite_P003_() {
   // 列幅を整形
   sheet.autoResizeColumns(1, headers.length);
 
+  moveToDemoFolder_(ss.getId());
   Logger.log('P003 SS 作成完了: ' + ss.getName() + ' (id=' + ss.getId() + ')');
   return ss.getId();
 }
