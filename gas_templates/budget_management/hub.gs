@@ -10,6 +10,7 @@
  *   ?mode=cross_summary → 全工事の予実サマリ横断（month指定可）
  *   ?mode=cross_health  → 全工事の予算健康度横断（month指定可）
  *   ?mode=project_detail → 特定工事の詳細（project_id, month指定）
+ *   ?mode=dashboard      → 本社横断ダッシュボードHTML画面（HtmlService）
  *
  * デプロイ手順:
  *   1. 「森組_工事管理台帳」スプレッドシートにバインドしたGASプロジェクトを作成
@@ -45,6 +46,11 @@ function doGet(e) {
     var targetMonth = (e && e.parameter && e.parameter.month) ? e.parameter.month : getCurrentYearMonth_();
     var projectId = (e && e.parameter && e.parameter.project_id) ? e.parameter.project_id : null;
 
+    // mode=dashboard → 本社横断ダッシュボードHTML画面
+    if (mode === 'dashboard') {
+      return buildHubDashboardHtml_(targetMonth);
+    }
+
     var data;
     switch (mode) {
       case 'projects_all':
@@ -63,7 +69,7 @@ function doGet(e) {
         data = getProjectDetail_(projectId, targetMonth);
         break;
       default:
-        throw new Error('未知のモード: ' + mode + ' (projects_all / cross_summary / cross_health / project_detail のいずれかを指定)');
+        throw new Error('未知のモード: ' + mode + ' (projects_all / cross_summary / cross_health / project_detail / dashboard のいずれかを指定)');
     }
 
     return ContentService
@@ -550,6 +556,162 @@ function sumPaymentUpTo_(data, upToMonth) {
 }
 
 /* ============================================================
+ * mode=dashboard: 本社横断ダッシュボードHTML画面
+ * ============================================================ */
+
+/**
+ * 本社横断ダッシュボードのHTMLを生成する
+ * @param {string} yearMonth - 対象年月（YYYY-MM形式）
+ * @returns {HtmlOutput} ダッシュボードHTML
+ */
+function buildHubDashboardHtml_(yearMonth) {
+  // 全工事の予算健康度を取得
+  var crossHealth = getCrossHealth_(yearMonth);
+  var projects = crossHealth.projects || [];
+
+  // 金額フォーマット関数
+  var fmtYen = function(v) {
+    if (v === 0) return '0';
+    var abs = Math.abs(v);
+    if (abs >= 100000000) return (v / 100000000).toFixed(1) + '億';
+    if (abs >= 10000) return Math.round(v / 10000).toLocaleString() + '万';
+    return v.toLocaleString();
+  };
+
+  // HTMLエスケープ
+  var esc = function(str) {
+    if (!str) return '';
+    return String(str)
+      .replace(/&/g, '&amp;')
+      .replace(/</g, '&lt;')
+      .replace(/>/g, '&gt;')
+      .replace(/"/g, '&quot;')
+      .replace(/'/g, '&#39;');
+  };
+
+  // 信号別カウント
+  var dangerCount = 0, warningCount = 0, normalCount = 0;
+  for (var c = 0; c < projects.length; c++) {
+    if (projects[c].signal === '超過') dangerCount++;
+    else if (projects[c].signal === '注意') warningCount++;
+    else normalCount++;
+  }
+
+  // 工事行HTMLを生成
+  var rowsHtml = '';
+  for (var i = 0; i < projects.length; i++) {
+    var p = projects[i];
+    var rowBg = '';
+    var signalHtml = '';
+
+    if (p.signal === '超過') {
+      rowBg = 'background-color: #FFEBEE;';
+      signalHtml = '<span style="display:inline-block;padding:2px 10px;border-radius:4px;background:#E53935;color:#fff;font-weight:700;font-size:12px;">超過</span>';
+    } else if (p.signal === '注意') {
+      rowBg = 'background-color: #FFFDE7;';
+      signalHtml = '<span style="display:inline-block;padding:2px 10px;border-radius:4px;background:#FDD835;color:#333;font-weight:700;font-size:12px;">注意</span>';
+    } else {
+      signalHtml = '<span style="display:inline-block;padding:2px 10px;border-radius:4px;background:#2E7D32;color:#fff;font-weight:700;font-size:12px;">正常</span>';
+    }
+
+    // 消化率バー
+    var barWidth = Math.min(p.consumption_rate || 0, 100);
+    var barColor = (p.consumption_rate || 0) > 100 ? '#E53935' :
+                   (p.consumption_rate || 0) > 80 ? '#FDD835' : '#1565C0';
+
+    rowsHtml +=
+      '<tr style="border-bottom:1px solid #E0E0E0;' + rowBg + '">' +
+      '  <td style="padding:12px 16px;font-weight:600;">' + esc(p.project_name) + '</td>' +
+      '  <td style="padding:12px 8px;font-size:13px;">' + esc(p.manager_name) + '</td>' +
+      '  <td style="padding:12px 8px;text-align:right;font-size:13px;">' + fmtYen(p.contract_amount || 0) + '</td>' +
+      '  <td style="padding:12px 8px;text-align:center;">' + signalHtml + '</td>' +
+      '  <td style="padding:12px 8px;">' +
+      '    <div style="display:flex;align-items:center;gap:8px;">' +
+      '      <div style="flex:1;height:18px;background:#E8EAF0;border-radius:9px;overflow:hidden;">' +
+      '        <div style="width:' + barWidth + '%;height:100%;background:' + barColor + ';border-radius:9px;"></div>' +
+      '      </div>' +
+      '      <span style="font-size:12px;font-weight:600;width:45px;text-align:right;">' + (p.consumption_rate || 0) + '%</span>' +
+      '    </div>' +
+      '  </td>' +
+      '  <td style="padding:12px 8px;text-align:right;font-size:13px;">' + (p.progress_rate || 0) + '%</td>' +
+      '  <td style="padding:12px 8px;text-align:right;font-size:13px;color:' + ((p.shortage || 0) < 0 ? '#E53935' : '#2E7D32') + ';font-weight:600;">' + fmtYen(p.shortage || 0) + '</td>' +
+      '</tr>';
+  }
+
+  var html = '<!DOCTYPE html>' +
+    '<html lang="ja">' +
+    '<head>' +
+    '<meta charset="UTF-8">' +
+    '<meta name="viewport" content="width=device-width, initial-scale=1.0">' +
+    '<title>森組 本社管理台帳 横断ダッシュボード</title>' +
+    '<style>' +
+    '  * { margin: 0; padding: 0; box-sizing: border-box; }' +
+    '  body { font-family: "Segoe UI", "Hiragino Kaku Gothic ProN", "Meiryo", sans-serif; background: #F5F7FA; color: #333; }' +
+    '  .header { background: #0D47A1; color: #fff; padding: 20px 32px; }' +
+    '  .header h1 { font-size: 18px; font-weight: 700; }' +
+    '  .header p { font-size: 12px; color: #90CAF9; margin-top: 4px; }' +
+    '  .container { max-width: 1200px; margin: 0 auto; padding: 24px 16px; }' +
+    '  .summary-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 16px; margin-bottom: 32px; }' +
+    '  .summary-card { background: #fff; border-radius: 8px; padding: 20px; box-shadow: 0 2px 8px rgba(0,0,0,0.06); text-align: center; }' +
+    '  .summary-card .count { font-size: 36px; font-weight: 700; }' +
+    '  .summary-card .label { font-size: 12px; color: #888; margin-top: 4px; }' +
+    '  .table-section { background: #fff; border-radius: 8px; box-shadow: 0 2px 8px rgba(0,0,0,0.06); overflow: hidden; }' +
+    '  .table-section h2 { font-size: 15px; font-weight: 600; padding: 16px 20px; border-bottom: 1px solid #E0E0E0; }' +
+    '  table { width: 100%; border-collapse: collapse; }' +
+    '  th { background: #F5F7FA; padding: 10px 16px; font-size: 11px; color: #666; text-align: left; font-weight: 600; border-bottom: 2px solid #E0E0E0; }' +
+    '  .footer { text-align: center; padding: 16px; font-size: 11px; color: #999; }' +
+    '  @media (max-width: 768px) { .summary-grid { grid-template-columns: 1fr; } table { font-size: 12px; } }' +
+    '</style>' +
+    '</head>' +
+    '<body>' +
+    '<div class="header">' +
+    '  <h1>森組 本社管理台帳 横断ダッシュボード</h1>' +
+    '  <p>全工事の予算健康度を一覧表示</p>' +
+    '</div>' +
+    '<div class="container">' +
+    '  <div style="margin-bottom:16px;font-size:13px;color:#555;">対象月: ' + esc(yearMonth) + '　|　工事数: ' + projects.length + '件</div>' +
+    '  <div class="summary-grid">' +
+    '    <div class="summary-card">' +
+    '      <div class="count" style="color:#E53935;">' + dangerCount + '</div>' +
+    '      <div class="label">超過（要対策）</div>' +
+    '    </div>' +
+    '    <div class="summary-card">' +
+    '      <div class="count" style="color:#F9A825;">' + warningCount + '</div>' +
+    '      <div class="label">注意（監視）</div>' +
+    '    </div>' +
+    '    <div class="summary-card">' +
+    '      <div class="count" style="color:#2E7D32;">' + normalCount + '</div>' +
+    '      <div class="label">正常</div>' +
+    '    </div>' +
+    '  </div>' +
+    '  <div class="table-section">' +
+    '    <h2>工事別 予算健康度</h2>' +
+    '    <table>' +
+    '      <thead>' +
+    '        <tr>' +
+    '          <th>工事名</th>' +
+    '          <th>所長</th>' +
+    '          <th style="text-align:right;">契約額</th>' +
+    '          <th style="text-align:center;">信号</th>' +
+    '          <th>消化率</th>' +
+    '          <th style="text-align:right;">出来高率</th>' +
+    '          <th style="text-align:right;">過不足</th>' +
+    '        </tr>' +
+    '      </thead>' +
+    '      <tbody>' + rowsHtml + '</tbody>' +
+    '    </table>' +
+    '  </div>' +
+    '</div>' +
+    '<div class="footer">更新: ' + new Date().toLocaleString('ja-JP') + '</div>' +
+    '</body>' +
+    '</html>';
+
+  return HtmlService.createHtmlOutput(html)
+    .setTitle('森組 本社管理台帳 横断ダッシュボード')
+    .setXFrameOptionsMode(HtmlService.XFrameOptionsMode.ALLOWALL);
+}
+
+/* ============================================================
  * テスト用関数
  * ============================================================ */
 
@@ -562,12 +724,13 @@ function testDoGet() {
     { mode: 'projects_all' },
     { mode: 'cross_summary', month: '2025-12' },
     { mode: 'cross_health', month: '2025-12' },
-    { mode: 'project_detail', project_id: 'P001', month: '2025-12' }
+    { mode: 'project_detail', project_id: 'P001', month: '2025-12' },
+    { mode: 'dashboard', month: '2025-12' }
   ];
 
   testCases.forEach(function(params) {
     var result = doGet({ parameter: params });
     Logger.log('=== mode=' + params.mode + ' ===');
-    Logger.log(result.getContent());
+    Logger.log(typeof result.getContent === 'function' ? result.getContent() : '(HtmlOutput)');
   });
 }

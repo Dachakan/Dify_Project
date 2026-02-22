@@ -19,6 +19,7 @@
  *   ?mode=project  → 工事メタデータ（工事名・所長名・契約額等）
  *   ?mode=aggregate → 月次集計データ
  *   ?mode=evm      → 後方互換（mode=healthにリダイレクト）
+ *   ?mode=dashboard → HTMLダッシュボード画面（HtmlService）
  *
  * デプロイ手順:
  *   1. Google Apps Script エディタで新規プロジェクト作成
@@ -58,6 +59,12 @@ function doGet(e) {
       mode = 'health';
     }
 
+    // mode=dashboard → HTMLダッシュボード画面（認証不要）
+    if (mode === 'dashboard') {
+      var yearMonth = (e && e.parameter && e.parameter.year_month) ? e.parameter.year_month : getCurrentYearMonth_();
+      return buildSiteDashboardHtml_(yearMonth);
+    }
+
     // APIキー認証（masterモードはキーなしでアクセス可能）
     if (mode !== 'master') {
       var authResult = validateApiKey_(e);
@@ -93,7 +100,7 @@ function doGet(e) {
         data = getAggregateData_(targetMonth);
         break;
       default:
-        throw new Error('未知のモード: ' + mode + ' (health / master / summary / project / aggregate のいずれかを指定)');
+        throw new Error('未知のモード: ' + mode + ' (health / master / summary / project / aggregate / dashboard のいずれかを指定)');
     }
 
     // SEC-02: 匿名化処理（Dify Cloud送信時の機密データ保護）
@@ -697,7 +704,7 @@ function sumPaymentUpTo_(data, upToMonth) {
  * doGet のローカルテスト用関数
  */
 function testDoGet() {
-  var modes = ['health', 'master', 'summary', 'project', 'aggregate'];
+  var modes = ['health', 'master', 'summary', 'project', 'aggregate', 'dashboard'];
   modes.forEach(function(mode) {
     var result = doGet({ parameter: { mode: mode, month: '2025-12' } });
     Logger.log('=== mode=' + mode + ' ===');
@@ -714,4 +721,223 @@ function generateApiKey() {
   Logger.log('APIキーを生成しました: ' + key);
   Logger.log('Dify環境変数に設定してください: GAS_API_KEY=' + key);
   return key;
+}
+
+/* ============================================================
+ * mode=dashboard: 現場ダッシュボードHTML画面
+ * ============================================================ */
+
+/**
+ * 現場予実管理ダッシュボードのHTMLを生成する
+ * @param {string} yearMonth - 対象年月（YYYY-MM形式）
+ * @returns {HtmlOutput} ダッシュボードHTML
+ */
+function buildSiteDashboardHtml_(yearMonth) {
+  // データ取得
+  var project = getProjectData_();
+  var health = getHealthData_(yearMonth);
+
+  // 費目別集計データ取得（aggregation.gs）
+  var categories = {};
+  try {
+    categories = getMonthlyAggregation(yearMonth);
+  } catch (err) {
+    Logger.log('費目別集計取得エラー: ' + err.message);
+  }
+
+  // 金額フォーマット関数
+  var fmtYen = function(v) {
+    if (v === 0) return '0';
+    var abs = Math.abs(v);
+    if (abs >= 100000000) return (v / 100000000).toFixed(1) + '億';
+    if (abs >= 10000) return Math.round(v / 10000).toLocaleString() + '万';
+    return v.toLocaleString();
+  };
+
+  // 信号の表示用データ
+  var signalColor, signalBg, signalBorder, signalLabel;
+  if (health.signal === '超過') {
+    signalColor = '#fff'; signalBg = '#E53935'; signalBorder = '#B71C1C'; signalLabel = '超過';
+  } else if (health.signal === '注意') {
+    signalColor = '#333'; signalBg = '#FDD835'; signalBorder = '#F9A825'; signalLabel = '注意';
+  } else {
+    signalColor = '#fff'; signalBg = '#2E7D32'; signalBorder = '#1B5E20'; signalLabel = '正常';
+  }
+
+  // 消化率バーの色
+  var consumptionBarColor = health.consumption_rate > 100 ? '#E53935' :
+                            health.consumption_rate > 80 ? '#FDD835' : '#1565C0';
+
+  // 出来高率バーの色
+  var progressBarColor = '#2E7D32';
+
+  // アクション提案
+  var actionText = health.action_hint || '';
+
+  var html = '<!DOCTYPE html>' +
+    '<html lang="ja">' +
+    '<head>' +
+    '<meta charset="UTF-8">' +
+    '<meta name="viewport" content="width=device-width, initial-scale=1.0">' +
+    '<title>工事現場 予実管理ダッシュボード</title>' +
+    '<style>' +
+    '  * { margin: 0; padding: 0; box-sizing: border-box; }' +
+    '  body { font-family: "Segoe UI", "Hiragino Kaku Gothic ProN", "Meiryo", sans-serif; background: #F5F7FA; color: #333; }' +
+    '  .header { background: #0D47A1; color: #fff; padding: 20px 32px; }' +
+    '  .header h1 { font-size: 18px; font-weight: 700; }' +
+    '  .header p { font-size: 12px; color: #90CAF9; margin-top: 4px; }' +
+    '  .container { max-width: 960px; margin: 0 auto; padding: 24px 16px; }' +
+    '  .meta-bar { display: flex; flex-wrap: wrap; gap: 16px; margin-bottom: 24px; font-size: 13px; color: #555; }' +
+    '  .meta-bar span { background: #fff; padding: 6px 14px; border-radius: 6px; box-shadow: 0 1px 4px rgba(0,0,0,0.06); }' +
+    '  .signal-section { text-align: center; margin-bottom: 32px; }' +
+    '  .signal-circle { width: 80px; height: 80px; border-radius: 50%; display: inline-flex; align-items: center; justify-content: center; font-weight: 700; font-size: 18px; border: 4px solid; }' +
+    '  .signal-hint { font-size: 13px; margin-top: 8px; color: #555; }' +
+    '  .kpi-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 16px; margin-bottom: 32px; }' +
+    '  .kpi-card { background: #fff; border-radius: 8px; padding: 20px; box-shadow: 0 2px 8px rgba(0,0,0,0.06); }' +
+    '  .kpi-card .label { font-size: 11px; color: #888; margin-bottom: 4px; }' +
+    '  .kpi-card .value { font-size: 24px; font-weight: 700; }' +
+    '  .kpi-card .sub { font-size: 11px; color: #888; margin-top: 4px; }' +
+    '  .bar-section { background: #fff; border-radius: 8px; padding: 24px; box-shadow: 0 2px 8px rgba(0,0,0,0.06); margin-bottom: 24px; }' +
+    '  .bar-section h3 { font-size: 14px; font-weight: 600; margin-bottom: 16px; color: #333; }' +
+    '  .bar-row { display: flex; align-items: center; margin-bottom: 12px; }' +
+    '  .bar-label { width: 80px; font-size: 12px; color: #555; flex-shrink: 0; }' +
+    '  .bar-track { flex: 1; height: 24px; background: #E8EAF0; border-radius: 12px; overflow: hidden; position: relative; }' +
+    '  .bar-fill { height: 100%; border-radius: 12px; transition: width 0.5s ease; }' +
+    '  .bar-value { width: 60px; text-align: right; font-size: 13px; font-weight: 600; flex-shrink: 0; margin-left: 8px; }' +
+    '  .table-section { background: #fff; border-radius: 8px; box-shadow: 0 2px 8px rgba(0,0,0,0.06); overflow: hidden; margin-bottom: 24px; }' +
+    '  .table-section h3 { font-size: 14px; font-weight: 600; padding: 16px 20px 12px; color: #333; }' +
+    '  .table-section table { width: 100%; border-collapse: collapse; }' +
+    '  .table-section th { background: #F5F7FA; padding: 8px 16px; font-size: 11px; color: #666; text-align: left; font-weight: 600; border-bottom: 2px solid #E0E0E0; }' +
+    '  .table-section td { padding: 10px 16px; font-size: 13px; border-bottom: 1px solid #F0F0F0; }' +
+    '  .table-section tr:last-child td { border-bottom: none; font-weight: 700; background: #FAFAFA; }' +
+    '  .table-section .num { text-align: right; font-variant-numeric: tabular-nums; }' +
+    '  .footer { text-align: center; padding: 16px; font-size: 11px; color: #999; }' +
+    '  @media (max-width: 600px) { .kpi-grid { grid-template-columns: 1fr; } .header { padding: 16px; } }' +
+    '</style>' +
+    '</head>' +
+    '<body>' +
+    '<div class="header">' +
+    '  <h1>工事現場 予実管理ダッシュボード</h1>' +
+    '  <p>' + escapeHtml_(project.project_name) + '</p>' +
+    '</div>' +
+    '<div class="container">' +
+    '  <div class="meta-bar">' +
+    '    <span>対象月: ' + escapeHtml_(yearMonth) + '</span>' +
+    '    <span>所長: ' + escapeHtml_(project.manager_name) + '</span>' +
+    '    <span>契約額: ' + fmtYen(project.contract_amount) + '円</span>' +
+    '  </div>' +
+    '  <div class="signal-section">' +
+    '    <div class="signal-circle" style="color:' + signalColor + ';background:' + signalBg + ';border-color:' + signalBorder + ';">' + signalLabel + '</div>' +
+    '    <div class="signal-hint">' + escapeHtml_(actionText) + '</div>' +
+    '  </div>' +
+    '  <div class="kpi-grid">' +
+    '    <div class="kpi-card">' +
+    '      <div class="label">予算額（BAC）</div>' +
+    '      <div class="value">' + fmtYen(health.bac) + '</div>' +
+    '      <div class="sub">円</div>' +
+    '    </div>' +
+    '    <div class="kpi-card">' +
+    '      <div class="label">実績支出（AC）</div>' +
+    '      <div class="value">' + fmtYen(health.ac) + '</div>' +
+    '      <div class="sub">円</div>' +
+    '    </div>' +
+    '    <div class="kpi-card">' +
+    '      <div class="label">過不足見込み</div>' +
+    '      <div class="value" style="color:' + (health.shortage < 0 ? '#E53935' : '#2E7D32') + ';">' + fmtYen(health.shortage) + '</div>' +
+    '      <div class="sub">円（正=余裕 / 負=不足）</div>' +
+    '    </div>' +
+    '    <div class="kpi-card">' +
+    '      <div class="label">利益影響</div>' +
+    '      <div class="value">' + escapeHtml_(String(health.profit_impact_pt)) + '</div>' +
+    '      <div class="sub">ポイント</div>' +
+    '    </div>' +
+    '  </div>' +
+    '  <div class="bar-section">' +
+    '    <h3>消化率 vs 出来高率</h3>' +
+    '    <div class="bar-row">' +
+    '      <div class="bar-label">消化率</div>' +
+    '      <div class="bar-track"><div class="bar-fill" style="width:' + Math.min(health.consumption_rate, 100) + '%;background:' + consumptionBarColor + ';"></div></div>' +
+    '      <div class="bar-value">' + health.consumption_rate + '%</div>' +
+    '    </div>' +
+    '    <div class="bar-row">' +
+    '      <div class="bar-label">出来高率</div>' +
+    '      <div class="bar-track"><div class="bar-fill" style="width:' + Math.min(health.progress_rate, 100) + '%;background:' + progressBarColor + ';"></div></div>' +
+    '      <div class="bar-value">' + health.progress_rate + '%</div>' +
+    '    </div>' +
+    '  </div>' +
+    '  <div class="table-section">' +
+    '    <h3>費目別支出（' + escapeHtml_(yearMonth) + '）</h3>' +
+    '    <table>' +
+    '      <thead><tr>' +
+    '        <th>カテゴリ</th>' +
+    '        <th class="num">予算額</th>' +
+    '        <th class="num">当月支出</th>' +
+    '        <th class="num">累計支出</th>' +
+    '        <th class="num">残高</th>' +
+    '        <th class="num">消化率</th>' +
+    '      </tr></thead>' +
+    '      <tbody>' +
+    buildCategoryRow_('C01', '直接工事費', categories, fmtYen) +
+    buildCategoryRow_('C02', '共通仮設費', categories, fmtYen) +
+    buildCategoryRow_('C03', '現場管理費', categories, fmtYen) +
+    buildCategoryRow_('ALL', '合計', categories, fmtYen) +
+    '      </tbody>' +
+    '    </table>' +
+    '  </div>' +
+    '  <div class="kpi-grid">' +
+    '    <div class="kpi-card">' +
+    '      <div class="label">実行予算残高</div>' +
+    '      <div class="value" style="color:' + ((health.bac - health.ac) < 0 ? '#E53935' : '#1565C0') + ';">' + fmtYen(health.bac - health.ac) + '</div>' +
+    '      <div class="sub">円（予算額 - 実績支出）</div>' +
+    '    </div>' +
+    '    <div class="kpi-card">' +
+    '      <div class="label">計画支出（PV）</div>' +
+    '      <div class="value">' + fmtYen(health.pv || 0) + '</div>' +
+    '      <div class="sub">円</div>' +
+    '    </div>' +
+    '  </div>' +
+    '</div>' +
+    '<div class="footer">更新: ' + new Date().toLocaleString('ja-JP') + '</div>' +
+    '</body>' +
+    '</html>';
+
+  return HtmlService.createHtmlOutput(html)
+    .setTitle('工事現場 予実管理ダッシュボード')
+    .setXFrameOptionsMode(HtmlService.XFrameOptionsMode.ALLOWALL);
+}
+
+/**
+ * 費目カテゴリ行のHTMLを生成する
+ * @param {string} catId - カテゴリID（C01/C02/C03/ALL）
+ * @param {string} catName - カテゴリ表示名
+ * @param {Object} categories - getMonthlyAggregation()の返値
+ * @param {Function} fmtYen - 金額フォーマット関数
+ * @returns {string} テーブル行HTML
+ */
+function buildCategoryRow_(catId, catName, categories, fmtYen) {
+  var cat = categories[catId] || { budget: 0, spent: 0, cumulative: 0, remaining: 0, rate: 0 };
+  var remainColor = cat.remaining < 0 ? '#E53935' : '#333';
+  return '<tr>' +
+    '<td>' + catName + '</td>' +
+    '<td class="num">' + fmtYen(cat.budget) + '</td>' +
+    '<td class="num">' + fmtYen(cat.spent) + '</td>' +
+    '<td class="num">' + fmtYen(cat.cumulative) + '</td>' +
+    '<td class="num" style="color:' + remainColor + ';">' + fmtYen(cat.remaining) + '</td>' +
+    '<td class="num">' + cat.rate + '%</td>' +
+    '</tr>';
+}
+
+/**
+ * HTML特殊文字をエスケープする
+ * @param {string} str - エスケープ対象文字列
+ * @returns {string} エスケープ済み文字列
+ */
+function escapeHtml_(str) {
+  if (!str) return '';
+  return String(str)
+    .replace(/&/g, '&amp;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;')
+    .replace(/"/g, '&quot;')
+    .replace(/'/g, '&#39;');
 }
