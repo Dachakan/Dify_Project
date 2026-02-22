@@ -755,6 +755,8 @@ function createMonthlyAdjSheet_(ss, months) {
   }
 
   if (rows.length > 0) {
+    // A列をテキスト形式に設定（'2025-10'が日付型に自動変換されるのを防ぐ）
+    sheet.getRange(2, 1, rows.length, 1).setNumberFormat('@');
     sheet.getRange(2, 1, rows.length, headers.length).setValues(rows);
   }
 

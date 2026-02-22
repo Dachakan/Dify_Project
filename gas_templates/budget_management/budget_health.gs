@@ -262,7 +262,11 @@ function getProgressRate_(ss, yearMonth) {
 
     if (adjYmIdx >= 0 && adjRateIdx >= 0) {
       for (var i = 1; i < adjData.length; i++) {
-        var ym = String(adjData[i][adjYmIdx]).substring(0, 7);
+        // 日付型に自動変換されている場合はformatDateで文字列化する
+        var rawYm = adjData[i][adjYmIdx];
+        var ym = (rawYm instanceof Date)
+          ? Utilities.formatDate(rawYm, Session.getScriptTimeZone(), 'yyyy-MM')
+          : String(rawYm).substring(0, 7);
         if (ym === yearMonth) {
           var rate = parseFloat(adjData[i][adjRateIdx]);
           if (!isNaN(rate) && rate > 0) return rate;
