@@ -309,7 +309,7 @@
 
       <!-- 工事一覧カード（6工事） -->
       <h3 class="text-base font-bold text-gray-800 mb-4">工事一覧</h3>
-      <div class="site-cards-grid">
+      <div class="site-cards-grid" id="site-cards-grid">
         <!-- 進行中: 海潟漁港R7-1 -->
         <div style="background:white; border-radius:8px; padding:16px; box-shadow:0 2px 4px rgba(0,0,0,0.1); border-left:4px solid #FDD835; cursor:pointer;" onclick="showPage('page1', document.querySelector('.nav-item[data-page=&quot;page1&quot;]'))">
           <div style="font-weight:bold; font-size:15px; color:#333;">海潟漁港R7-1</div>
@@ -498,7 +498,7 @@
             <p class="text-sm text-gray-500 mt-1">現場代理人: 上村和弘 | (株)森組</p>
           </div>
           <div class="flex items-center gap-3">
-            <select class="border border-gray-300 rounded-md px-3 py-2 text-sm bg-white" onchange="alert('工事切替は今後実装予定です')">
+            <select class="border border-gray-300 rounded-md px-3 py-2 text-sm bg-white" onchange="switchProject(this.value)">
               <option selected>海潟漁港R7-1（上村）</option>
               <option>野尻川除石（池田）</option>
               <option>持木川中流部（中原）</option>
@@ -516,9 +516,9 @@
       <!-- UX-02: 大型信号表示 -->
       <div class="flex items-center gap-5 mb-6 bg-white border border-gray-200 rounded-lg p-4">
         <div class="flex items-center gap-3">
-          <div class="signal-large signal-yellow">!</div>
+          <div id="site-signal" class="signal-large signal-yellow">!</div>
           <div>
-            <p class="text-lg font-bold text-gray-800">全体ステータス: 注意</p>
+            <p id="site-status-text" class="text-lg font-bold text-gray-800">全体ステータス: 注意</p>
             <p class="text-xs text-gray-500">予算超過 3件 / 消化済 2件 / 監視 1件</p>
           </div>
         </div>
@@ -533,22 +533,22 @@
       <div id="kpi-executive" class="grid grid-cols-2 lg:grid-cols-4 gap-4 mb-8">
         <div class="kpi-card bg-white border border-gray-200 p-5">
           <p class="text-xs text-gray-500 mb-1">工事益率</p>
-          <p class="text-3xl font-bold text-[#1565C0]">58.9%</p>
+          <p id="kpi-profit-rate" class="text-3xl font-bold text-[#1565C0]">58.9%</p>
         </div>
         <div class="kpi-card bg-white border border-gray-200 p-5">
           <p class="text-xs text-gray-500 mb-1">純工事益率</p>
-          <p class="text-3xl font-bold text-[#1565C0]">45.9%</p>
+          <p id="kpi-net-profit-rate" class="text-3xl font-bold text-[#1565C0]">45.9%</p>
         </div>
         <div class="kpi-card bg-white border border-gray-200 p-5">
           <p class="text-xs text-gray-500 mb-1">予算消化率</p>
-          <p class="text-3xl font-bold text-[#1565C0]">47.5%</p>
+          <p id="kpi-consumption-rate" class="text-3xl font-bold text-[#1565C0]">47.5%</p>
           <div class="w-full bg-gray-200 rounded-full h-2 mt-2">
-            <div class="bg-[#1565C0] h-2 rounded-full" style="width:47.5%"></div>
+            <div id="kpi-consumption-bar" class="bg-[#1565C0] h-2 rounded-full" style="width:47.5%"></div>
           </div>
         </div>
         <div class="kpi-card bg-white border border-gray-200 p-5" style="background: linear-gradient(135deg, #E3F2FD 0%, #fff 100%);">
           <p class="text-xs text-gray-500 mb-1">予測残額</p>
-          <p class="text-3xl font-bold text-[#1565C0]">+1,507<span class="text-base font-normal text-gray-500 ml-1">千円</span></p>
+          <p id="kpi-forecast-amount" class="text-3xl font-bold text-[#1565C0]">+1,507<span class="text-base font-normal text-gray-500 ml-1">千円</span></p>
           <p class="text-xs text-[#2E7D32] mt-1 font-semibold">正常 &#x25CF; 黒字見込み</p>
         </div>
       </div>
@@ -601,7 +601,7 @@
                 <th class="text-center py-2 px-3 text-gray-500 font-medium">ステータス</th>
               </tr>
             </thead>
-            <tbody>
+            <tbody id="alerts-tbody">
               <tr class="bg-red-50 alert-row alert-over">
                 <td class="py-2 px-3 font-medium text-gray-600">海潟漁港R7-1</td>
                 <td class="py-2 px-3 font-medium">法定福利費（現52）</td>
@@ -670,7 +670,7 @@
             <p class="text-xs text-gray-400 mb-1">海潟漁港海岸保全施設整備連携工事(R7-1工区) | 現場代理人: 上村和弘</p>
             <h2 class="text-xl md:text-2xl font-bold text-gray-900 mb-0">経営分析（予算 vs 実績）</h2>
           </div>
-          <select class="border border-gray-300 rounded-md px-3 py-2 text-sm bg-white" onchange="alert('工事切替は今後実装予定です')">
+          <select class="border border-gray-300 rounded-md px-3 py-2 text-sm bg-white" onchange="switchProject(this.value)">
             <option selected>海潟漁港R7-1（上村）</option>
             <option>野尻川除石（池田）</option>
             <option>持木川中流部（中原）</option>
@@ -871,7 +871,7 @@
             <p class="text-xs text-gray-400 mb-1">海潟漁港海岸保全施設整備連携工事(R7-1工区) | 現場代理人: 上村和弘</p>
             <h2 class="text-xl md:text-2xl font-bold text-gray-900 mb-0">現場管理</h2>
           </div>
-          <select class="border border-gray-300 rounded-md px-3 py-2 text-sm bg-white" onchange="alert('工事切替は今後実装予定です')">
+          <select class="border border-gray-300 rounded-md px-3 py-2 text-sm bg-white" onchange="switchProject(this.value)">
             <option selected>海潟漁港R7-1（上村）</option>
             <option>野尻川除石（池田）</option>
             <option>持木川中流部（中原）</option>
@@ -1023,7 +1023,7 @@
             <h2 class="text-xl md:text-2xl font-bold text-gray-900 mb-0">粗利を守る -- 予算ヘルスチェック</h2>
             <p class="text-sm text-gray-500 mt-1">2025年12月時点</p>
           </div>
-          <select class="border border-gray-300 rounded-md px-3 py-2 text-sm bg-white" onchange="alert('工事切替は今後実装予定です')">
+          <select class="border border-gray-300 rounded-md px-3 py-2 text-sm bg-white" onchange="switchProject(this.value)">
             <option selected>海潟漁港R7-1（上村）</option>
             <option>野尻川除石（池田）</option>
             <option>持木川中流部（中原）</option>
@@ -1301,7 +1301,7 @@
             <p class="text-xs text-gray-400 mb-1">海潟漁港海岸保全施設整備連携工事(R7-1工区) | 現場代理人: 上村和弘</p>
             <h2 class="text-xl md:text-2xl font-bold text-gray-900 mb-0">AIチャット</h2>
           </div>
-          <select class="border border-gray-300 rounded-md px-3 py-2 text-sm bg-white" onchange="alert('工事切替は今後実装予定です')">
+          <select class="border border-gray-300 rounded-md px-3 py-2 text-sm bg-white" onchange="switchProject(this.value)">
             <option selected>海潟漁港R7-1（上村）</option>
             <option>野尻川除石（池田）</option>
             <option>持木川中流部（中原）</option>
@@ -1651,6 +1651,284 @@
 </div>
 
 <script>
+/* ===================================================================
+ * Phase G: GAS API連携
+ * hub.gs から全工事の予実データを取得し、ダッシュボードをリアルデータで更新する
+ * フェイルセーフ: fetchエラー時は既存のハードコード値をそのまま表示する
+ * =================================================================== */
+
+const GAS_HUB_URL = 'https://script.google.com/macros/s/AKfycbygy0ZX_cTbzxMgB8D-reGtIsGkQelzf_3M1iKgZM-rkPLPss2g_d4VpG0W9frGE-xs/exec';
+const GAS_API_URL = 'https://script.google.com/macros/s/AKfycbyMhtCFlRxe6T_qtAzKbllaq99uHdvgHfqwyKmJs_6vgs5wlNWXxRkSZESMw6SW2fRYcg/exec';
+const DEMO_MONTH  = '2025-12';
+
+// プロジェクトデータキャッシュ: { project_id: healthオブジェクト }
+var _allProjectsData = {};
+
+/** GAS応答の文字列をHTMLエスケープする（XSS対策） */
+function _esc(str) {
+  return String(str)
+    .replace(/&/g, '&amp;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;')
+    .replace(/"/g, '&quot;')
+    .replace(/'/g, '&#39;');
+}
+
+/**
+ * ダッシュボード初期化
+ * DOMContentLoaded 時に呼び出す。hub.gs から全工事の予実データを取得してpage0/page1を更新する
+ */
+async function initDashboard() {
+  try {
+    var resp = await fetch(GAS_HUB_URL + '?mode=cross_health&month=' + DEMO_MONTH);
+    if (!resp.ok) throw new Error('HTTP ' + resp.status);
+    var data = await resp.json();
+    if (!data.success) throw new Error(data.error || 'cross_health APIエラー');
+
+    var projects = data.projects || [];
+    projects.forEach(function(p) { _allProjectsData[p.project_id] = p; });
+
+    renderProjectCards(projects);
+    renderAlertsTable(projects);
+
+    if (_allProjectsData['P001']) {
+      updateSiteKpi(_allProjectsData['P001']);
+    }
+  } catch (e) {
+    console.log('initDashboard エラー（ハードコード値で表示継続）: ' + e.message);
+  }
+}
+
+/**
+ * page0 の工事カードをリアルデータで動的生成
+ * @param {Array} projects - hub.gs cross_health から取得した工事配列
+ */
+function renderProjectCards(projects) {
+  var grid = document.getElementById('site-cards-grid');
+  if (!grid) return;
+
+  var active = projects.filter(function(p) {
+    return p.status !== '完了' && p.consumption_rate != null && p.consumption_rate > 0;
+  });
+  if (active.length === 0) return;
+
+  var fragment = document.createDocumentFragment();
+  active.forEach(function(p) {
+    var sig = p.signal || '';
+    var borderColor = sig === '超過' ? '#E53935' : sig === '注意' ? '#FDD835' : '#2E7D32';
+    var cr  = p.consumption_rate != null ? parseFloat(p.consumption_rate).toFixed(1) : '---';
+    var bac = parseFloat(p.bac || 0);
+    var ac  = parseFloat(p.ac  || 0);
+    var profitPct = bac > 0 ? ((bac - ac) / bac * 100).toFixed(1) : '---';
+
+    var card = document.createElement('div');
+    card.style.cssText = 'background:white;border-radius:8px;padding:16px;box-shadow:0 2px 4px rgba(0,0,0,0.1);border-left:4px solid ' + borderColor + ';cursor:pointer;';
+    card.addEventListener('click', (function(pid) { return function() { switchProject(pid); }; })(p.project_id));
+
+    var titleDiv = document.createElement('div');
+    titleDiv.style.cssText = 'font-weight:bold;font-size:15px;color:#333;';
+    titleDiv.textContent = p.project_name || p.project_id;
+    card.appendChild(titleDiv);
+
+    var mgrDiv = document.createElement('div');
+    mgrDiv.style.cssText = 'color:#666;font-size:12px;margin-top:2px;';
+    mgrDiv.textContent = (p.manager || '') + ' | 進行中';
+    card.appendChild(mgrDiv);
+
+    var bacDiv = document.createElement('div');
+    bacDiv.style.cssText = 'color:#888;font-size:11px;margin-top:4px;';
+    bacDiv.textContent = '請負額: ' + (bac > 0 ? bac.toLocaleString() : '---') + '円';
+    card.appendChild(bacDiv);
+
+    var metricsDiv = document.createElement('div');
+    metricsDiv.style.cssText = 'margin-top:10px;display:flex;justify-content:space-between;align-items:flex-end;';
+
+    function makeMetric(label, value) {
+      var d = document.createElement('div');
+      d.style.textAlign = 'center';
+      var lbl = document.createElement('div');
+      lbl.style.cssText = 'font-size:11px;color:#888;';
+      lbl.textContent = label;
+      var val = document.createElement('div');
+      val.style.cssText = 'font-weight:bold;font-size:16px;color:#1565C0;';
+      val.textContent = value;
+      d.appendChild(lbl);
+      d.appendChild(val);
+      return d;
+    }
+
+    var sigSpan = document.createElement('span');
+    sigSpan.className = sig === '超過' ? 'status-label status-over' : sig === '注意' ? 'status-label status-warn' : 'status-label status-normal';
+    sigSpan.textContent = sig === '超過' ? '超過' : sig === '注意' ? '注意' : '正常';
+    var sigWrap = document.createElement('div');
+    sigWrap.style.textAlign = 'center';
+    var sigLbl = document.createElement('div');
+    sigLbl.style.cssText = 'font-size:11px;color:#888;';
+    sigLbl.textContent = '信号';
+    sigWrap.appendChild(sigLbl);
+    sigWrap.appendChild(sigSpan);
+
+    metricsDiv.appendChild(makeMetric('工事益率', profitPct + '%'));
+    metricsDiv.appendChild(makeMetric('消化率', cr + '%'));
+    metricsDiv.appendChild(sigWrap);
+    card.appendChild(metricsDiv);
+    fragment.appendChild(card);
+  });
+  grid.innerHTML = '';
+  grid.appendChild(fragment);
+}
+
+/**
+ * page0 の全現場アラートテーブルをリアルデータで更新
+ * @param {Array} projects - hub.gs cross_health から取得した工事配列
+ */
+function renderAlertsTable(projects) {
+  var tbody = document.getElementById('alerts-tbody');
+  if (!tbody) return;
+
+  var alerts = projects.filter(function(p) {
+    return p.signal && p.signal !== '正常' && p.signal !== '';
+  });
+  if (alerts.length === 0) return;
+
+  var fragment = document.createDocumentFragment();
+  alerts.forEach(function(p) {
+    var isOver = p.signal === '超過';
+    var tr = document.createElement('tr');
+    tr.className = isOver ? 'bg-red-50 alert-row alert-over' : 'bg-yellow-50 alert-row alert-warn';
+
+    var cr = p.consumption_rate != null ? parseFloat(p.consumption_rate).toFixed(1) : '---';
+
+    var td1 = document.createElement('td');
+    td1.className = 'py-2 px-3 font-medium text-gray-600';
+    td1.textContent = p.project_name || p.project_id;
+
+    var td2 = document.createElement('td');
+    td2.className = 'py-2 px-3 font-medium';
+    td2.textContent = '予算消化率';
+
+    var td3 = document.createElement('td');
+    td3.className = 'py-2 px-3 text-right font-bold';
+    td3.style.color = isOver ? '#E53935' : '#EF6C00';
+    td3.textContent = cr + '%';
+
+    var sigSpan = document.createElement('span');
+    sigSpan.className = isOver ? 'status-label status-over' : 'status-label status-warn';
+    sigSpan.textContent = isOver ? '超過' : '注意';
+    var td4 = document.createElement('td');
+    td4.className = 'py-2 px-3 text-center';
+    td4.appendChild(sigSpan);
+
+    tr.appendChild(td1);
+    tr.appendChild(td2);
+    tr.appendChild(td3);
+    tr.appendChild(td4);
+    fragment.appendChild(tr);
+  });
+  tbody.innerHTML = '';
+  tbody.appendChild(fragment);
+}
+
+/**
+ * page1 の KPIカード・信号をリアルデータで更新
+ * @param {Object} p - 1工事分の health オブジェクト
+ */
+function updateSiteKpi(p) {
+  if (!p) return;
+  var cr  = parseFloat(p.consumption_rate || 0);
+  var bac = parseFloat(p.bac || 0);
+  var ac  = parseFloat(p.ac  || 0);
+  var sh  = parseFloat(p.shortage || 0);
+  var sig = p.signal || '';
+  var profitPct    = bac > 0 ? ((bac - ac) / bac * 100).toFixed(1) : '---';
+  var netProfitPct = bac > 0 ? ((bac - ac) / bac * 100 - 5).toFixed(1) : '---';
+
+  var el;
+  el = document.getElementById('kpi-profit-rate');
+  if (el) el.textContent = profitPct + '%';
+
+  el = document.getElementById('kpi-net-profit-rate');
+  if (el) el.textContent = netProfitPct + '%';
+
+  el = document.getElementById('kpi-consumption-rate');
+  if (el) el.textContent = cr.toFixed(1) + '%';
+
+  el = document.getElementById('kpi-consumption-bar');
+  if (el) el.style.width = Math.min(cr, 100) + '%';
+
+  el = document.getElementById('kpi-forecast-amount');
+  if (el) {
+    el.textContent = '';
+    var shK  = Math.round(sh / 1000);
+    var sign = shK >= 0 ? '+' : '';
+    var amtText = document.createTextNode(sign + shK.toLocaleString());
+    var unitSpan = document.createElement('span');
+    unitSpan.className = 'text-base font-normal text-gray-500 ml-1';
+    unitSpan.textContent = '千円';
+    el.appendChild(amtText);
+    el.appendChild(unitSpan);
+  }
+
+  var sigEl = document.getElementById('site-signal');
+  if (sigEl) {
+    sigEl.className = 'signal-large';
+    if (sig === '超過')      { sigEl.classList.add('signal-red');    sigEl.textContent = '!'; }
+    else if (sig === '注意') { sigEl.classList.add('signal-yellow'); sigEl.textContent = '!'; }
+    else                     { sigEl.classList.add('signal-green');  sigEl.textContent = 'OK'; }
+  }
+
+  var stEl = document.getElementById('site-status-text');
+  if (stEl) stEl.textContent = '全体ステータス: ' + (sig || '---');
+}
+
+/**
+ * page1 のKPIを指定工事IDのデータで更新する
+ * キャッシュ優先。キャッシュになければ hub から再取得
+ * @param {string} projectId - 工事ID（例: 'P001'）
+ */
+function loadSiteData(projectId) {
+  var cached = _allProjectsData[projectId];
+  if (cached) {
+    updateSiteKpi(cached);
+    return;
+  }
+  fetch(GAS_HUB_URL + '?mode=cross_health&month=' + DEMO_MONTH)
+    .then(function(r) { return r.json(); })
+    .then(function(data) {
+      if (data.success && data.projects) {
+        data.projects.forEach(function(p) { _allProjectsData[p.project_id] = p; });
+        if (_allProjectsData[projectId]) updateSiteKpi(_allProjectsData[projectId]);
+      }
+    })
+    .catch(function(e) { console.log('loadSiteData 再取得エラー: ' + e.message); });
+}
+
+/**
+ * 工事切替ドロップダウンのハンドラ
+ * @param {string} projectId - 工事IDまたは工事名テキスト
+ */
+function switchProject(projectId) {
+  if (!projectId) return;
+
+  var page1 = document.getElementById('page1');
+  if (page1 && !page1.classList.contains('active')) {
+    var navItem = document.querySelector('.nav-item[data-page="page1"]');
+    showPage('page1', navItem);
+  }
+
+  loadSiteData(projectId);
+
+  document.querySelectorAll('select').forEach(function(sel) {
+    for (var i = 0; i < sel.options.length; i++) {
+      var opt = sel.options[i];
+      if (opt.value === projectId || opt.text.indexOf(projectId) >= 0) {
+        sel.selectedIndex = i;
+        break;
+      }
+    }
+  });
+}
+
 // ===== View Toggle =====
 let currentView = 'executive'; // 'executive' or 'manager'
 
@@ -2351,7 +2629,9 @@ function toggleHighContrast() {
 
 // ===== Initialize on load =====
 document.addEventListener('DOMContentLoaded', function() {
-  // page1にはグラフがなくなったため、初期化不要
+  // page1にはグラフがなくなったため、Chart.js初期化不要
+  // Phase G: GAS APIからリアルデータを取得
+  initDashboard();
 });
 </script>
 </body>
