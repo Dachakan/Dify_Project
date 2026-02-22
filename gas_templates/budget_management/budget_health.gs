@@ -27,7 +27,7 @@
 // シート名定数
 var BH_SHEET_BUDGET         = '_実行予算テーブル';
 var BH_SHEET_BUDGET_MONTHLY = '_実行予算_月別';
-var BH_SHEET_PAYMENT        = '支払明細';
+var BH_SHEET_PAYMENT        = '支払明細入力';
 var BH_SHEET_HEALTH         = '_C_予算健康度';
 var BH_SHEET_MONTHLY_ADJ    = '_月次調整';
 
@@ -226,8 +226,8 @@ function calculateActualCost_(ss, yearMonth) {
 
   var data = sheet.getDataRange().getValues();
   var headers = data[0];
-  var ymIdx  = headers.indexOf('year_month');
-  var amtIdx = headers.indexOf('amount');
+  var ymIdx  = headers.indexOf('支払年月');
+  var amtIdx = headers.indexOf('支払金額');
 
   if (ymIdx < 0 || amtIdx < 0) return 0;
 

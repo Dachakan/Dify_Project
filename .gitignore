@@ -20,3 +20,10 @@ Thumbs.db
 # Environment variables
 .env
 .env.*
+
+# Claude Code local settings & worktrees
+.claude/settings.local.json
+.claude/worktrees/
+
+# GAS project credentials (contains scriptId)
+.clasp.json

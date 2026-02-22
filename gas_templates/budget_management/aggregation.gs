@@ -27,7 +27,7 @@
  */
 
 // シート名定数
-var AGG_SHEET_PAYMENT     = '支払明細';
+var AGG_SHEET_PAYMENT     = '支払明細入力';
 var AGG_SHEET_BUDGET      = '_実行予算テーブル';
 var AGG_SHEET_MONTHLY     = '_C_月次集計';
 var AGG_SHEET_DETAIL      = '_C_費目別集計';
@@ -128,21 +128,23 @@ function getBudgetTotals_(ss, budgetSheet) {
  * @returns {Object} { 'YYYY-MM': { 'C01': amount, ... } }
  */
 function aggregatePayments_(data, headers) {
-  var ymIdx  = headers.indexOf('year_month');
-  var catIdx = headers.indexOf('category_id');
-  var amtIdx = headers.indexOf('amount');
-  var offIdx = headers.indexOf('offset');
+  var ymIdx  = headers.indexOf('支払年月');
+  var catIdx = headers.indexOf('カテゴリ');
+  var amtIdx = headers.indexOf('支払金額');
+  var offIdx = headers.indexOf('相殺額');
 
   if (ymIdx < 0 || amtIdx < 0) {
-    Logger.log('支払明細に必須列（year_month, amount）が不足');
+    Logger.log('支払明細に必須列（支払年月, 支払金額）が不足');
     return {};
   }
 
+  var catMap_ = {'直接工事費': 'C01', '共通仮設費': 'C02', '現場管理費': 'C03'};
   var result = {};
 
   for (var i = 1; i < data.length; i++) {
     var ym  = String(data[i][ymIdx]).substring(0, 7);
-    var cat = catIdx >= 0 ? String(data[i][catIdx]) : 'UNKNOWN';
+    var catRaw = catIdx >= 0 ? String(data[i][catIdx]) : 'UNKNOWN';
+    var cat = catMap_[catRaw] || catRaw;
     var amt = parseFloat(data[i][amtIdx]) || 0;
     var offset = offIdx >= 0 ? (parseFloat(data[i][offIdx]) || 0) : 0;
 
@@ -173,11 +175,11 @@ function aggregatePayments_(data, headers) {
  * @returns {Object} { 'YYYY-MM': estimatedAmount }
  */
 function calculatePendingOffsets_(data, headers) {
-  var ymIdx     = headers.indexOf('year_month');
-  var offIdx    = headers.indexOf('offset');
-  var offVIdx   = headers.indexOf('offset_vendor');
-  var amtIdx    = headers.indexOf('amount');
-  var catIdx    = headers.indexOf('category_id');
+  var ymIdx     = headers.indexOf('支払年月');
+  var offIdx    = headers.indexOf('相殺額');
+  var offVIdx   = headers.indexOf('相殺先');
+  var amtIdx    = headers.indexOf('支払金額');
+  var catIdx    = headers.indexOf('カテゴリ');
 
   if (ymIdx < 0 || amtIdx < 0) return {};
 
@@ -189,7 +191,9 @@ function calculatePendingOffsets_(data, headers) {
 
     var offset = offIdx >= 0 ? (parseFloat(data[i][offIdx]) || 0) : 0;
     var offsetVendor = offVIdx >= 0 ? String(data[i][offVIdx]).trim() : '';
-    var cat = catIdx >= 0 ? String(data[i][catIdx]) : '';
+    var catRaw2 = catIdx >= 0 ? String(data[i][catIdx]) : '';
+    var catMap2_ = {'直接工事費': 'C01', '共通仮設費': 'C02', '現場管理費': 'C03'};
+    var cat = catMap2_[catRaw2] || catRaw2;
 
     // 相殺額が0で、直接工事費以外（共通仮設費・現場管理費は相殺が多い）
     // かつ金額が一定以上の場合、相殺未確定の可能性がある
@@ -338,10 +342,10 @@ function writeDetailAggregation_(ss, paymentData, paymentHeaders, budgetSheet) {
   }
 
   // 支払データを予算箱ID別に集計
-  var boxIdx = paymentHeaders.indexOf('budget_box_id');
-  var amtIdx = paymentHeaders.indexOf('amount');
-  var offIdx = paymentHeaders.indexOf('offset');
-  var vendorIdx = paymentHeaders.indexOf('vendor');
+  var boxIdx = paymentHeaders.indexOf('予算箱ID');
+  var amtIdx = paymentHeaders.indexOf('支払金額');
+  var offIdx = paymentHeaders.indexOf('相殺額');
+  var vendorIdx = paymentHeaders.indexOf('支払先');
 
   var spentMap = {};  // boxId -> { total: number, vendors: {} }
 
@@ -480,10 +484,10 @@ function getSpentByBudgetBox(upToMonth) {
 
   var data = paymentSheet.getDataRange().getValues();
   var headers = data[0];
-  var boxIdx = headers.indexOf('budget_box_id');
-  var ymIdx  = headers.indexOf('year_month');
-  var amtIdx = headers.indexOf('amount');
-  var offIdx = headers.indexOf('offset');
+  var boxIdx = headers.indexOf('予算箱ID');
+  var ymIdx  = headers.indexOf('支払年月');
+  var amtIdx = headers.indexOf('支払金額');
+  var offIdx = headers.indexOf('相殺額');
 
   if (boxIdx < 0 || ymIdx < 0 || amtIdx < 0) return {};
 
