@@ -6,7 +6,8 @@
 - クライアント：(株)森組（土木工事業）
 - 担当：工事予算管理システム x Dify Cloud連携
 - 目的：自然言語からDify Cloudワークフローを自動生成 + GAS Web App連携
-- 実装済み：GAS 7ファイル（予実管理/月次集計/API/本社台帳）、PoC手順書
+- 実装済み：GAS 10ファイル（本体7本 + setup_project_data.gs + setup_demo_sites.gs + appsscript.json）、PoC手順書
+- デプロイ済み：Dify Cloud 2アプリ（本番稼働中 2026-02-22）
 - 言語：日本語
 - ワークフロー標準：Dify DSL (YAML v0.1.2)
 - 環境：Dify Cloud版
@@ -27,27 +28,27 @@
 
 ```
 Dify_project/
-├── CLAUDE.md                    # 本ファイル
+├── README.md                          # 初見者向け再現手順書
+├── CLAUDE.md                          # 本ファイル
 ├── .gitignore
 ├── .claude/
 │   └── skills/
-│       ├── dify-dsl-generator/  # DSL生成スキル（520行）
-│       ├── gas-webapp-generator/ # GAS生成スキル
-│       └── refresh-dify-token/  # トークン更新
+│       ├── dify-dsl-generator/        # DSL生成スキル（530行）
+│       ├── gas-webapp-generator/      # GAS生成スキル
+│       └── refresh-dify-token/        # トークン更新
 ├── dsl/
-│   ├── templates/               # 38テンプレート（重複解消済み）
-│   ├── exported/                # エクスポートDSL（手動管理）
+│   ├── templates/                     # 40テンプレート（リファレンス保持）
+│   ├── exported/                      # エクスポートDSL（手動管理、次回取得で森組DSLが入る）
 │   └── generated/
-│       ├── data_analysis_chatbot.yml
-│       └── manga/               # マンガDSL（10ファイル）
+│       ├── budget_inquiry_chatbot.yml  # 予実照会チャットボット（本番デプロイ済み）
+│       └── monthly_report_workflow.yml # 月次レポートワークフロー（本番デプロイ済み）
 ├── gas_templates/
-│   ├── budget_management/       # 工事予算管理GAS（7ファイル）
-│   ├── manga/                   # マンガ関連GAS
-│   └── misc/                    # その他
-├── output/                      # PoC成果物（11ファイル）
+│   └── budget_management/             # 工事予算管理GAS（10ファイル）
+├── output/                            # PoC成果物（15ファイル + スクショ7枚）
 └── scripts/
-    ├── export_dify_workflows.py # エクスポートスクリプト
-    ├── prepare_poc_data.py      # PoCテストデータ生成
+    ├── add_new_project.py             # 新工事登録スクリプト（再現性の核心）
+    ├── export_dify_workflows.py       # エクスポートスクリプト
+    ├── prepare_poc_data.py            # PoCテストデータ生成
     └── README.md
 ```
 
@@ -59,7 +60,7 @@ Dify_project/
 ユーザーが自然言語で実現したいワークフローを記述。
 
 ### Step 2: テンプレート選択
-38のテンプレートから類似ワークフローを選択：
+40のテンプレートから類似ワークフローを選択：
 ```
 dsl/templates/
 ├── agent/                # エージェント系（16テンプレート）
@@ -93,7 +94,7 @@ DSLをDify Cloudにインポートして動作確認。
 DSL生成時は以下の順で参照:
 1. `dsl/exported/` - 自分の動作確認済みワークフロー（最優先）
 2. `dsl/templates/_base_template_enhanced.yml` - 全11ノードタイプのテンプレート
-3. `dsl/templates/` - 38テンプレート集
+3. `dsl/templates/` - 40テンプレート集
 
 ### 必須フィールド
 
@@ -184,3 +185,16 @@ OK: 「PDFをアップロードし、内容に基づいて質問回答するRAG�
 # トークン更新スキルを呼び出し
 @refresh-dify-token
 ```
+
+---
+
+## デプロイ済みアプリ情報（2026-02-22 確認）
+
+| アプリ名 | App ID | DSLファイル |
+|---------|--------|------------|
+| 予実照会チャットボット | dcaca55b-0586-43b3-acaa-10189b624974 | dsl/generated/budget_inquiry_chatbot.yml |
+| 月次予算管理レポート | c4445a51-fe3f-4fa4-b252-dd72bb20e0da | dsl/generated/monthly_report_workflow.yml |
+
+- GAS_HUB_URL: `https://script.google.com/macros/s/AKfycbygy0ZX_cTbzxMgB8D-reGtIsGkQelzf_3M1iKgZM-rkPLPss2g_d4VpG0W9frGE-xs/exec`
+- GAS_API_URL: `https://script.google.com/macros/s/AKfycbyMhtCFlRxe6T_qtAzKbllaq99uHdvgHfqwyKmJs_6vgs5wlNWXxRkSZESMw6SW2fRYcg/exec`
+- 本番移行条件: hub.gs の `_C_スプレッドシート一覧` に各現場 SS の SSID を登録するだけ
