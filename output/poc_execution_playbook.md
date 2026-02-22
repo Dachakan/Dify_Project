@@ -71,10 +71,15 @@
 |------------|---|------|
 | API_KEY | 任意の文字列（例: poc_key_20260301） | API認証キー |
 | ALERT_EMAIL | テスト用メールアドレス | 予算超過時の通知先 |
+| SPREADSHEET_ID | スプレッドシートのID（URLの /d/ と /edit の間の文字列） | **Phase B方法1（setup_project_data.gs方式）を使う場合のみ必要** |
 
 - 成功時: 「プロパティが正常に保存されました」と表示される
 
 ### A-4. テンプレート生成
+
+**Phase B方法1（setup_project_data.gs方式）を選択する場合、A-4はスキップ可能。** setup_project_data.gsのstep 13でtestInit()を実行する。
+
+**方法2（TSV手動貼り付け）を選択する場合のみ実施。**
 
 - [ ] 5. Apps Scriptエディタに以下のテストスクリプトを一時的に追加:
 
@@ -125,7 +130,68 @@ function testInit() {
 
 ---
 
-## Phase B: データ投入（1.5h）
+## Phase B: データ投入
+
+### B-0. 方法選択
+
+| 方法 | 所要時間 | 手順 | 備考 |
+|------|---------|------|------|
+| 方法1: setup_project_data.gs方式 | 約10分 | GASスクリプト5関数を順に実行 | 推奨。A-3でSPREADSHEET_IDを設定済みであること |
+| 方法2: TSV手動貼り付け方式 | 約30分 | TSV 3ファイルをコピー&ペースト | 方法1が使えない場合の代替 |
+
+**どちらを選んでもPhase Cは同じ手順。** setup_project_data.gsはPoC専用ファイルなので、完了後は削除すること。
+
+---
+
+### B方法1: setup_project_data.gs方式（推奨）
+
+**前提**: A-3のスクリプトプロパティに`SPREADSHEET_ID`が設定済みであること。
+`SPREADSHEET_ID`の値: スプレッドシートのURL `https://docs.google.com/spreadsheets/d/{ここがID}/edit` の中の文字列。
+
+- [ ] 11. Apps Scriptエディタで「+」->「スクリプト」を選択し、ファイル名を「setup_project_data」にして作成
+  - コピー元: gas_templates/budget_management/setup_project_data.gs の全内容
+  - 全コードをコピー&ペーストして保存
+  - 成功時: エディタ左側に7番目のファイル「setup_project_data.gs」が表示される
+
+- [ ] 12. setupProjectData()を実行（_M工事シートにP004データ作成）
+  - エディタ上部の関数選択ドロップダウンで「setupProjectData」を選択し、実行ボタン（▶）をクリック
+  - 成功時: ログに「_M工事シート作成完了: P004 海潟漁港R7-1工区」と表示される
+
+- [ ] 13. testInit()を実行（9シート生成）
+  - 関数選択を「testInit」に切り替えて実行（Phase A-4のtestInit関数）
+  - 初回実行時: Googleアカウントの認証許可が求められる -> 「許可」をクリック
+  - 成功時: スプレッドシートに9シートが自動生成される
+  - **A-5の9シート確認チェックリストで生成結果を照合すること**
+
+- [ ] 14. setupBudget()を実行（実行予算13行投入）
+  - 関数選択を「setupBudget」に切り替えて実行
+  - 成功時: ログに「_実行予算テーブル投入完了: 13行」と表示される
+
+- [ ] 15. setupVendors()を実行（取引先マスタ29行投入）
+  - 関数選択を「setupVendors」に切り替えて実行
+  - 成功時: ログに「_M取引先投入完了: 29行」と表示される
+
+- [ ] 16. setupPaymentDetails()を実行（支払明細82行投入）
+  - 関数選択を「setupPaymentDetails」に切り替えて実行
+  - 処理時間: 10秒程度かかる場合がある
+  - 成功時: ログに「支払明細入力投入完了: 82行」と表示される
+
+- [ ] 17. setupProgressRate()を実行（出来高率投入）
+  - 関数選択を「setupProgressRate」に切り替えて実行
+  - 成功時: ログに「_月次調整 出来高率投入完了: 3行」と表示される
+
+- [ ] 18. setup_project_data.gsを削除（PoC専用ファイルは本番環境に残さない）
+  - エディタ左側のファイル一覧で「setup_project_data」を右クリック -> 「削除」
+  - 確認ダイアログで「削除」を選択
+  - 成功時: エディタに6ファイルのみ残る
+
+**方法1完了。Phase Cへ進む（以下のB-1〜B-4は不要）。**
+
+---
+
+### B方法2: TSV手動貼り付け方式（代替）
+
+方法1を使えない場合のみ実施。Phase A-4のtestInit()が完了していること。
 
 TSV一括投入方式を採用。82件の手入力は非効率なため、コピー&ペーストで一括投入する。
 
@@ -764,8 +830,10 @@ P004の今月の状況を教えてください
 
 ---
 
-**文書バージョン**: 1.1
+**文書バージョン**: 1.2
 **作成日**: 2026-02-20
 **更新日**: 2026-02-22
-**更新内容**: GASプロジェクト分離手順（Phase 1-A）、_M工事台帳登録手順（Phase 1-C）、Dify DSLインポート手順（Phase 2）を追記
+**更新内容**:
+- v1.2: A-3にSPREADSHEET_IDプロパティを追加、Phase BにB-0方法選択セクションとB方法1（setup_project_data.gs方式）手順を追加
+- v1.1: GASプロジェクト分離手順（Phase 1-A）、_M工事台帳登録手順（Phase 1-C）、Dify DSLインポート手順（Phase 2）を追記
 **関連文書**: poc_deployment_guide.md（v1.0）、demo_scenario.md、presentation_slides.md
