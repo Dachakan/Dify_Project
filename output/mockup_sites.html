@@ -1685,7 +1685,7 @@ async function initDashboard() {
     var data = await resp.json();
     if (!data.success) throw new Error(data.error || 'cross_health APIエラー');
 
-    var projects = data.projects || [];
+    var projects = (data.data && data.data.projects) ? data.data.projects : [];
     projects.forEach(function(p) { _allProjectsData[p.project_id] = p; });
 
     renderProjectCards(projects);
@@ -1895,8 +1895,8 @@ function loadSiteData(projectId) {
   fetch(GAS_HUB_URL + '?mode=cross_health&month=' + DEMO_MONTH)
     .then(function(r) { return r.json(); })
     .then(function(data) {
-      if (data.success && data.projects) {
-        data.projects.forEach(function(p) { _allProjectsData[p.project_id] = p; });
+      if (data.success && data.data && data.data.projects) {
+        data.data.projects.forEach(function(p) { _allProjectsData[p.project_id] = p; });
         if (_allProjectsData[projectId]) updateSiteKpi(_allProjectsData[projectId]);
       }
     })
