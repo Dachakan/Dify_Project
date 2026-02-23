@@ -184,7 +184,7 @@ def generate_checklist(project: dict) -> str:
     lines.append(f"")
     lines.append(f"- [ ] 13. Dify Cloud（cloud.dify.ai）にログイン")
     lines.append(f"- [ ] 14. 「スタジオ」->「DSLファイルからインポート」")
-    lines.append(f"- [ ] 15. dsl/generated/budget_inquiry_chatbot.yml をアップロード")
+    lines.append(f"- [ ] 15. dsl/generated/budget_inquiry_chatbot.dsl をアップロード")
     lines.append(f"- [ ] 16. 環境変数を設定（設定 -> 環境変数）:")
     lines.append(f"  - GAS_HUB_URL: hub.gsのWebアプリURL")
     lines.append(f"  - GAS_ENDPOINT_URL: api.gsのWebアプリURL")

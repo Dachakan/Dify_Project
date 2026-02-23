@@ -40,8 +40,8 @@ Dify_project/
 │   ├── templates/                     # 40テンプレート（リファレンス保持）
 │   ├── exported/                      # エクスポートDSL（手動管理、次回取得で森組DSLが入る）
 │   └── generated/
-│       ├── budget_inquiry_chatbot.yml  # 予実照会チャットボット（本番デプロイ済み）
-│       └── monthly_report_workflow.yml # 月次レポートワークフロー（本番デプロイ済み）
+│       ├── budget_inquiry_chatbot.dsl  # 予実照会チャットボット（本番デプロイ済み）
+│       └── monthly_report_workflow.dsl # 月次レポートワークフロー（本番デプロイ済み）
 ├── gas_templates/
 │   └── budget_management/             # 工事予算管理GAS（14ファイル）
 │       ├── dashboard.html             # 本社横断ダッシュボード HTML本体（1,509行）
@@ -128,6 +128,12 @@ structured_output_enabled: false     # 必須（Qiita推奨）
 |----|-----|
 | `'1000000001'`（数字文字列） | `'start-1'`（文字列ID） |
 
+### ファイル拡張子
+| 用途 | 拡張子 |
+|------|--------|
+| Dify Cloud インポート用 | `.dsl`（必須。Dify Cloud は .dsl のみ受付） |
+| エクスポートバックアップ | `.yml`（export_dify_workflows.py の出力） |
+
 ### プレースホルダー禁止
 ```
 禁止: XXX, YYY, TBD, TODO, 未定, 検討中, 仮
@@ -191,12 +197,13 @@ OK: 「PDFをアップロードし、内容に基づいて質問回答するRAG�
 
 ---
 
-## デプロイ済みアプリ情報（2026-02-22 確認）
+## デプロイ済みアプリ情報（2026-02-23 確認）
 
 | アプリ名 | App ID | DSLファイル |
 |---------|--------|------------|
-| 予実照会チャットボット | dcaca55b-0586-43b3-acaa-10189b624974 | dsl/generated/budget_inquiry_chatbot.yml |
-| 月次予算管理レポート | c4445a51-fe3f-4fa4-b252-dd72bb20e0da | dsl/generated/monthly_report_workflow.yml |
+| 予実照会チャットボット | dcaca55b-0586-43b3-acaa-10189b624974 | dsl/generated/budget_inquiry_chatbot.dsl |
+| 月次予算管理レポート | c4445a51-fe3f-4fa4-b252-dd72bb20e0da | dsl/generated/monthly_report_workflow.dsl |
+| 本社向け経営分析チャットボット | Difyインポート後に確定 | dsl/generated/executive_report_chatbot.dsl |
 
 - GAS_HUB_URL: `https://script.google.com/macros/s/AKfycbygy0ZX_cTbzxMgB8D-reGtIsGkQelzf_3M1iKgZM-rkPLPss2g_d4VpG0W9frGE-xs/exec`
 - GAS_API_URL: `https://script.google.com/macros/s/AKfycbyMhtCFlRxe6T_qtAzKbllaq99uHdvgHfqwyKmJs_6vgs5wlNWXxRkSZESMw6SW2fRYcg/exec`

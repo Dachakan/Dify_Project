@@ -778,7 +778,7 @@ GAS API基盤が動作している状態で、Dify Cloudに予実照会チャッ
 - [ ] 3. 「DSLファイルからインポート」を実行
   - 「アプリを作成」ボタン -> 「DSLファイルからインポート」
   - または、画面右上の「インポート」ボタン
-  - アップロードするファイル: `dsl/generated/budget_inquiry_chatbot.yml`
+  - アップロードするファイル: `dsl/generated/budget_inquiry_chatbot.dsl`
   - 成功時: ワークフローエディタが開き、ノード構成が表示される
 
 - [ ] 4. 環境変数を設定

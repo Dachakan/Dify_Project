@@ -461,7 +461,7 @@ DSL生成後、以下を全て確認:
 ## 出力先
 
 ```
-Dify_project/dsl/generated/{workflow_name}.yml
+Dify_project/dsl/generated/{workflow_name}.dsl
 ```
 
 ---
@@ -477,7 +477,7 @@ Dify_project/dsl/generated/{workflow_name}.yml
 ```
 
 ### 出力
-`dsl/generated/data_analysis_workflow.yml`
+`dsl/generated/data_analysis_workflow.dsl`
 
 ---
 

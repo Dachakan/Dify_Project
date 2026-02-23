@@ -31,6 +31,7 @@
 - 本社横断ダッシュボード（HtmlService）でKPI・アラート・グラフを可視化
 - Dify Cloud チャットボットで自然言語による予実照会
 - Dify Cloud ワークフローで月次レポートを自動生成
+- ダッシュボードにDify AIチャットを統合（所長向け予実照会 / 本社向け経営分析の2パネル）
 
 ---
 
@@ -61,8 +62,9 @@ hub.gs（本社台帳 - 複数現場横断集計）
 
 | アプリ名 | App ID | DSLファイル | 用途 |
 |---------|--------|------------|------|
-| 予実照会チャットボット | dcaca55b-0586-43b3-acaa-10189b624974 | dsl/generated/budget_inquiry_chatbot.yml | advanced-chat形式。工事ID指定で消化率/出来高率/信号を照会 |
-| 月次予算管理レポート | c4445a51-fe3f-4fa4-b252-dd72bb20e0da | dsl/generated/monthly_report_workflow.yml | workflow形式。year_month指定で5セクション構成Markdownレポート生成 |
+| 予実照会チャットボット | dcaca55b-0586-43b3-acaa-10189b624974 | dsl/generated/budget_inquiry_chatbot.dsl | advanced-chat形式。工事ID指定で消化率/出来高率/信号を照会 |
+| 月次予算管理レポート | c4445a51-fe3f-4fa4-b252-dd72bb20e0da | dsl/generated/monthly_report_workflow.dsl | workflow形式。year_month指定で5セクション構成Markdownレポート生成 |
+| 本社向け経営分析チャットボット | Difyインポート後に確定 | dsl/generated/executive_report_chatbot.dsl | advanced-chat形式。全工事横断の月次レポート・経営分析質問に回答 |
 
 ### GAS Web App URL
 
@@ -89,8 +91,9 @@ Dify_project/
 │   ├── templates/                     # 40テンプレート（リファレンス保持）
 │   ├── exported/                      # エクスポートDSL（手動運用、次回取得で森組DSLが入る）
 │   └── generated/
-│       ├── budget_inquiry_chatbot.yml  # 予実照会チャットボット（本番デプロイ済み）
-│       └── monthly_report_workflow.yml # 月次レポートワークフロー（本番デプロイ済み）
+│       ├── budget_inquiry_chatbot.dsl      # 予実照会チャットボット（本番デプロイ済み）
+│       ├── monthly_report_workflow.dsl    # 月次レポートワークフロー（本番デプロイ済み）
+│       └── executive_report_chatbot.dsl   # 本社向け経営分析チャットボット
 ├── gas_templates/
 │   └── budget_management/             # GAS本体 14ファイル
 │       ├── dashboard.html             # 本社横断ダッシュボード HTML本体（1,509行）
@@ -145,8 +148,8 @@ Dify_project/
 
 1. Dify Cloud にログイン
 2. 「アプリを作成」>「DSLファイルをインポート」
-3. `dsl/generated/budget_inquiry_chatbot.yml` をインポート
-4. 同様に `dsl/generated/monthly_report_workflow.yml` をインポート
+3. `dsl/generated/budget_inquiry_chatbot.dsl` をインポート
+4. 同様に `dsl/generated/monthly_report_workflow.dsl` をインポート
 
 ### Step 3: Dify 環境変数に GAS_HUB_URL を設定
 

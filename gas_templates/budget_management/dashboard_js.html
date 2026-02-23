@@ -870,6 +870,16 @@ function initPage7Charts() {
   });
 }
 
+// ===== サジェストボタン: クリップボードコピー =====
+function copySuggest(el, text) {
+  if (navigator.clipboard) {
+    navigator.clipboard.writeText(text).then(function() {
+      el.classList.add('suggest-copied');
+      setTimeout(function() { el.classList.remove('suggest-copied'); }, 800);
+    });
+  }
+}
+
 // ===== UX-02: アラートフィルタ =====
 function filterAlerts(filter) {
   var rows = document.querySelectorAll('.alert-row');

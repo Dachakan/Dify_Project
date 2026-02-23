@@ -1148,89 +1148,65 @@
     <!-- PAGE 4: AIチャット -->
     <!-- ============================================================ -->
     <div id="page4" class="page-section">
-      <!-- 現場名ヘッダー + 工事セレクタ -->
+      <!-- ヘッダー -->
       <div class="bg-white border border-gray-200 rounded-lg p-4 mb-6">
         <div class="flex flex-wrap items-center justify-between gap-3">
           <div>
-            <p class="text-xs text-gray-400 mb-1">海潟漁港海岸保全施設整備連携工事(R7-1工区) | 現場代理人: 上村和弘</p>
-            <h2 class="text-xl md:text-2xl font-bold text-gray-900 mb-0">AIチャット</h2>
+            <p class="text-xs text-gray-400 mb-1">(株)森組 工事予算管理システム</p>
+            <h2 class="text-xl md:text-2xl font-bold text-gray-900 mb-0">AIアシスタント</h2>
           </div>
-          <select class="border border-gray-300 rounded-md px-3 py-2 text-sm bg-white" onchange="switchProject(this.value)">
-            <option selected>海潟漁港R7-1（上村）</option>
-            <option>野尻川除石（池田）</option>
-            <option>持木川中流部（中原）</option>
-            <option>境川R2-2（中村）[完了]</option>
-            <option>森林基幹道（中村）[完了]</option>
-            <option>境川2-1（中村）[完了]</option>
-          </select>
         </div>
         <div class="mt-2">
           <a href="#" onclick="showPage('page0', document.querySelector('.nav-item[data-page=&quot;page0&quot;]')); return false;" class="text-sm text-[#1565C0] hover:underline">&#x2190; 全現場サマリーに戻る</a>
         </div>
       </div>
 
-      <!-- UX-03: サジェストボタン -->
+      <!-- サジェストボタン（所長用 / 本社用） -->
       <div class="mb-4">
-        <p class="text-xs text-gray-500 mb-2">よくある質問:</p>
-        <div class="flex flex-wrap">
-          <span class="suggest-btn" onclick="alert('今月の利益率は?')">今月の利益率は?</span>
-          <span class="suggest-btn" onclick="alert('予算超過している費目は?')">予算超過している費目は?</span>
-          <span class="suggest-btn" onclick="alert('支払いが多い業者は?')">支払いが多い業者は?</span>
-          <span class="suggest-btn" onclick="alert('コスト削減の提案')">コスト削減の提案</span>
+        <div class="grid grid-cols-1 lg:grid-cols-2 gap-4">
+          <div>
+            <p class="text-xs text-gray-500 mb-2">所長向け質問例（左パネルへ）:</p>
+            <div class="flex flex-wrap">
+              <span class="suggest-btn" onclick="copySuggest(this, 'P004の今月の消化率は？')">P004の今月の消化率は？</span>
+              <span class="suggest-btn" onclick="copySuggest(this, '予算超過している費目は？')">予算超過している費目は？</span>
+              <span class="suggest-btn" onclick="copySuggest(this, '支払いが多い業者は？')">支払いが多い業者は？</span>
+            </div>
+          </div>
+          <div>
+            <p class="text-xs text-gray-500 mb-2">本社向け質問例（右パネルへ）:</p>
+            <div class="flex flex-wrap">
+              <span class="suggest-btn" onclick="copySuggest(this, '今月の全工事レポートを出して')">今月の全工事レポートを出して</span>
+              <span class="suggest-btn" onclick="copySuggest(this, '予算超過している工事はある？')">予算超過している工事はある？</span>
+              <span class="suggest-btn" onclick="copySuggest(this, 'コスト削減の提案')">コスト削減の提案</span>
+            </div>
+          </div>
         </div>
       </div>
 
       <div class="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-6">
-        <!-- Left: Data Analysis AI -->
+        <!-- 左パネル: 所長向けAI（予実照会チャットボット） -->
         <div class="bg-white border border-gray-200 rounded-lg overflow-hidden">
-          <div class="bg-[#1565C0] text-white px-5 py-3 font-semibold text-sm">データ分析AI</div>
-          <div class="p-5 flex flex-col gap-3" style="min-height:420px;">
-            <div class="flex justify-end">
-              <div class="chat-bubble chat-user text-sm">今月の支出はいくらですか？</div>
-            </div>
-            <div class="flex justify-start">
-              <div class="chat-bubble chat-ai text-sm">12月度の支出（税抜）は合計 4,332,077円です。内訳は以下の通りです：
-- (有)濱畑水道: 3,036,365円（外注費+常用分）
-- (株)加根又本店: 504,649円（材料費）
-- (株)グリーンクロス: 347,440円（材料費+安全対策費）
-- 桜島生コンクリート: 167,500円（材料費+産業廃棄物処理費）
-12月度は相殺なしです。</div>
-            </div>
-            <div class="flex justify-end">
-              <div class="chat-bubble chat-user text-sm">支払いが多い業者はどこ？</div>
-            </div>
-            <div class="flex justify-start">
-              <div class="chat-bubble chat-ai text-sm">3ヶ月間の支払額上位3社です。
-1. 川越建設: 9,667,000円（40.7%）
-2. 桜島生コンクリート: 5,205,650円（21.9%）
-3. (有)濱畑水道: 4,839,554円（20.4%）
-上位3社で全体の83%を占めています。</div>
-            </div>
-          </div>
+          <div class="bg-[#1565C0] text-white px-5 py-3 font-semibold text-sm">所長向けAI（予実照会）</div>
+          <iframe id="dify-site-ai"
+            src="https://udify.app/chatbot/8JW4EA9aJiBnEW1R"
+            style="width:100%; height:600px; border:none;"
+            allow="microphone">
+          </iframe>
         </div>
 
-        <!-- Right: Improvement AI -->
+        <!-- 右パネル: 本社向けAI（経営分析チャットボット） -->
         <div class="bg-white border border-gray-200 rounded-lg overflow-hidden">
           <div class="bg-[#2E7D32] text-white px-5 py-3">
-            <span class="font-semibold text-sm">改善提案AI</span>
-            <p class="text-xs text-green-100 mt-1">提案は建設業の実態（長期下請関係等）を考慮しています</p>
+            <span class="font-semibold text-sm">本社向けAI（経営分析）</span>
+            <p class="text-xs text-green-100 mt-1">全工事横断の月次レポート・改善提案</p>
           </div>
-          <div class="p-5 flex flex-col gap-3" style="min-height:420px;">
-            <div class="flex justify-end">
-              <div class="chat-bubble chat-user text-sm">コスト削減の余地はありますか？</div>
-            </div>
-            <div class="flex justify-start">
-              <div class="chat-bubble chat-ai text-sm">分析の結果、以下の改善余地があります：
-1. 法定福利費：消化率126.2%で予算超過中（+180,901円）。社会保険料の見積り見直しを推奨
-2. 地代家賃：消化率113.7%で予算超過中（+18,090円）。地代家賃の見直しを検討
-3. 外注費：川越建設1社に40.7%集中。取引先分散でリスク低減と交渉力向上の余地あり</div>
-            </div>
-          </div>
+          <!-- Dify Cloud インポート後に src を実際の embed URL に更新 -->
+          <iframe id="dify-hq-ai"
+            src="about:blank"
+            style="width:100%; height:600px; border:none;"
+            allow="microphone">
+          </iframe>
         </div>
-      </div>
-
-      <div class="bg-gray-100 rounded-lg p-4 text-center text-sm text-gray-500">
-        ※ 実際のシステムではDify AIワークフローが応答します
       </div>
     </div>
 
