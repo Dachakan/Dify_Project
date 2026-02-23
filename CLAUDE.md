@@ -7,7 +7,7 @@
 - 担当：工事予算管理システム x Dify Cloud連携
 - 目的：自然言語からDify Cloudワークフローを自動生成 + GAS Web App連携
 - 実装済み：GAS 14ファイル（本体7本 + セットアップ3本 + ダッシュボード3本 + appsscript.json）、PoC手順書
-- デプロイ済み：Dify Cloud 2アプリ（本番稼働中 2026-02-22）
+- デプロイ済み：Dify Cloud 3アプリ（本番稼働中 2026-02-23）
 - 言語：日本語
 - ワークフロー標準：Dify DSL (YAML v0.1.2)
 - 環境：Dify Cloud版
@@ -203,7 +203,7 @@ OK: 「PDFをアップロードし、内容に基づいて質問回答するRAG�
 |---------|--------|------------|
 | 予実照会チャットボット | dcaca55b-0586-43b3-acaa-10189b624974 | dsl/generated/budget_inquiry_chatbot.dsl |
 | 月次予算管理レポート | c4445a51-fe3f-4fa4-b252-dd72bb20e0da | dsl/generated/monthly_report_workflow.dsl |
-| 本社向け経営分析チャットボット | Difyインポート後に確定 | dsl/generated/executive_report_chatbot.dsl |
+| 本社向け経営分析チャットボット | 1ec5e80b-a7b4-42bf-a392-dd48a590b664 | dsl/generated/executive_report_chatbot.dsl |
 
 - GAS_HUB_URL: `https://script.google.com/macros/s/AKfycbygy0ZX_cTbzxMgB8D-reGtIsGkQelzf_3M1iKgZM-rkPLPss2g_d4VpG0W9frGE-xs/exec`
 - GAS_API_URL: `https://script.google.com/macros/s/AKfycbyMhtCFlRxe6T_qtAzKbllaq99uHdvgHfqwyKmJs_6vgs5wlNWXxRkSZESMw6SW2fRYcg/exec`
