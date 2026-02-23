@@ -185,33 +185,24 @@
         全現場サマリー
       </div>
 
-      <!-- 現場別 -->
+      <!-- 現場別（API動的生成対象） -->
       <div class="px-4 pt-4 pb-1">
         <span class="text-[10px] uppercase tracking-widest text-blue-300 font-semibold">現場別</span>
       </div>
-      <div class="nav-item flex items-center gap-3 px-5 py-2 text-xs" data-page="page1" onclick="showPage('page1', this)">
-        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="5" fill="#FDD835"/></svg>
-        <span>海潟漁港R7-1<span class="text-blue-300 ml-1">(上村)</span></span>
-      </div>
-      <div class="nav-item flex items-center gap-3 px-5 py-2 text-xs nav-site-stub" data-page="page1" onclick="showPage('page1', this)">
-        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="5" fill="#FDD835"/></svg>
-        <span>野尻川除石<span class="text-blue-300 ml-1">(池田)</span></span>
-      </div>
-      <div class="nav-item flex items-center gap-3 px-5 py-2 text-xs nav-site-stub" data-page="page1" onclick="showPage('page1', this)">
-        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="5" fill="#FDD835"/></svg>
-        <span>持木川中流部<span class="text-blue-300 ml-1">(中原)</span></span>
-      </div>
-      <div class="nav-item flex items-center gap-3 px-5 py-2 text-xs nav-site-stub" data-page="page1" onclick="showPage('page1', this)" style="opacity:0.5;">
-        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="5" fill="#9E9E9E"/></svg>
-        <span>境川R2-2<span class="text-blue-300 ml-1">(中村)</span> <span class="text-blue-400 text-[9px]">[完了]</span></span>
-      </div>
-      <div class="nav-item flex items-center gap-3 px-5 py-2 text-xs nav-site-stub" data-page="page1" onclick="showPage('page1', this)" style="opacity:0.5;">
-        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="5" fill="#9E9E9E"/></svg>
-        <span>森林基幹道<span class="text-blue-300 ml-1">(中村)</span> <span class="text-blue-400 text-[9px]">[完了]</span></span>
-      </div>
-      <div class="nav-item flex items-center gap-3 px-5 py-2 text-xs nav-site-stub" data-page="page1" onclick="showPage('page1', this)" style="opacity:0.5;">
-        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="5" fill="#9E9E9E"/></svg>
-        <span>境川2-1<span class="text-blue-300 ml-1">(中村)</span> <span class="text-blue-400 text-[9px]">[完了]</span></span>
+      <div id="sidebar-sites">
+        <!-- フォールバック: API失敗時にこのハードコード値を表示 -->
+        <div class="nav-item flex items-center gap-3 px-5 py-2 text-xs" data-page="page1" onclick="showPage('page1', this)">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="5" fill="#FDD835"/></svg>
+          <span>海潟漁港R7-1<span class="text-blue-300 ml-1">(上村)</span></span>
+        </div>
+        <div class="nav-item flex items-center gap-3 px-5 py-2 text-xs nav-site-stub" data-page="page1" onclick="showPage('page1', this)">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="5" fill="#FDD835"/></svg>
+          <span>野尻川除石<span class="text-blue-300 ml-1">(池田)</span></span>
+        </div>
+        <div class="nav-item flex items-center gap-3 px-5 py-2 text-xs nav-site-stub" data-page="page1" onclick="showPage('page1', this)">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="5" fill="#FDD835"/></svg>
+          <span>持木川中流部<span class="text-blue-300 ml-1">(中原)</span></span>
+        </div>
       </div>
     </div>
 
@@ -274,35 +265,35 @@
     <!-- ============================================================ -->
     <div id="page0" class="page-section active">
       <h2 class="text-xl md:text-2xl font-bold text-gray-900 mb-1">全現場サマリー</h2>
-      <p class="text-sm text-gray-500 mb-6">(株)森組 -- 全6工事の横断ビュー</p>
+      <p id="summary-subtitle" class="text-sm text-gray-500 mb-6">(株)森組 -- 全6工事の横断ビュー</p>
 
-      <!-- 全体KPI -->
+      <!-- 全体KPI（API動的更新対象） -->
       <div class="grid grid-cols-2 lg:grid-cols-4 gap-4 mb-8">
         <div class="kpi-card bg-white border border-gray-200 p-5">
           <p class="text-xs text-gray-500 mb-1">進行中工事</p>
-          <p class="text-3xl font-bold text-[#1565C0]">3<span class="text-base font-normal text-gray-500 ml-1">件</span></p>
+          <p id="summary-active" class="text-3xl font-bold text-[#1565C0]">3<span class="text-base font-normal text-gray-500 ml-1">件</span></p>
         </div>
         <div class="kpi-card bg-white border border-gray-200 p-5">
           <p class="text-xs text-gray-500 mb-1">完了工事</p>
-          <p class="text-3xl font-bold text-gray-500">3<span class="text-base font-normal text-gray-500 ml-1">件</span></p>
+          <p id="summary-completed" class="text-3xl font-bold text-gray-500">3<span class="text-base font-normal text-gray-500 ml-1">件</span></p>
         </div>
         <div class="kpi-card bg-white border border-gray-200 p-5">
           <p class="text-xs text-gray-500 mb-1">合計請負額</p>
-          <p class="text-3xl font-bold text-[#1565C0]">4.22<span class="text-base font-normal text-gray-500 ml-1">億円</span></p>
+          <p id="summary-total-amount" class="text-3xl font-bold text-[#1565C0]">4.22<span class="text-base font-normal text-gray-500 ml-1">億円</span></p>
         </div>
         <div class="kpi-card bg-white border border-gray-200 p-5">
           <p class="text-xs text-gray-500 mb-1">平均工事益率</p>
-          <p class="text-3xl font-bold text-[#1565C0]">20.8<span class="text-base font-normal text-gray-500 ml-1">%</span></p>
+          <p id="summary-avg-profit" class="text-3xl font-bold text-[#1565C0]">20.8<span class="text-base font-normal text-gray-500 ml-1">%</span></p>
         </div>
       </div>
 
-      <!-- 全体信号表示 -->
-      <div class="flex items-center gap-5 mb-8 bg-white border border-gray-200 rounded-lg p-4">
+      <!-- 全体信号表示（API動的更新対象） -->
+      <div id="summary-signal-bar" class="flex items-center gap-5 mb-8 bg-white border border-gray-200 rounded-lg p-4">
         <div class="flex items-center gap-3">
-          <div class="signal-large signal-yellow">!</div>
+          <div id="summary-signal-icon" class="signal-large signal-yellow">!</div>
           <div>
-            <p class="text-lg font-bold text-gray-800">全社ステータス: 注意</p>
-            <p class="text-xs text-gray-500">予算超過アラート: 合計5件（超過3件 / 注意2件）</p>
+            <p id="summary-signal-text" class="text-lg font-bold text-gray-800">全社ステータス: 注意</p>
+            <p id="summary-signal-detail" class="text-xs text-gray-500">予算超過アラート: 合計5件（超過3件 / 注意2件）</p>
           </div>
         </div>
       </div>
@@ -1688,6 +1679,8 @@ async function initDashboard() {
     var projects = (data.data && data.data.projects) ? data.data.projects : [];
     projects.forEach(function(p) { _allProjectsData[p.project_id] = p; });
 
+    renderSidebar(projects);
+    renderSummaryCards(projects);
     renderProjectCards(projects);
     renderAlertsTable(projects);
 
@@ -1696,6 +1689,192 @@ async function initDashboard() {
     }
   } catch (e) {
     console.log('initDashboard エラー（ハードコード値で表示継続）: ' + e.message);
+  }
+}
+
+/**
+ * サイドバーの現場別リストをAPIデータで動的生成
+ * @param {Array} projects - hub.gs cross_health から取得した工事配列
+ */
+function renderSidebar(projects) {
+  var container = document.getElementById('sidebar-sites');
+  if (!container || projects.length === 0) return;
+
+  var fragment = document.createDocumentFragment();
+
+  // active工事を先に、completed工事を後に表示
+  var sorted = projects.slice().sort(function(a, b) {
+    var sa = (a.status === 'completed' || a.status === '完了') ? 1 : 0;
+    var sb = (b.status === 'completed' || b.status === '完了') ? 1 : 0;
+    return sa - sb;
+  });
+
+  sorted.forEach(function(p) {
+    var isCompleted = (p.status === 'completed' || p.status === '完了');
+    var sig = p.signal || '';
+    var fillColor = isCompleted ? '#9E9E9E'
+      : sig === '超過' ? '#E53935'
+      : sig === '注意' ? '#FDD835'
+      : '#2E7D32';
+
+    var item = document.createElement('div');
+    item.className = 'nav-item flex items-center gap-3 px-5 py-2 text-xs' + (isCompleted ? '' : ' nav-site-stub');
+    item.setAttribute('data-page', 'page1');
+    if (isCompleted) item.style.opacity = '0.5';
+    item.addEventListener('click', (function(pid, el) {
+      return function() {
+        switchProject(pid);
+        showPage('page1', el);
+      };
+    })(p.project_id, item));
+
+    // 信号ドットSVG
+    var svgNS = 'http://www.w3.org/2000/svg';
+    var svg = document.createElementNS(svgNS, 'svg');
+    svg.setAttribute('width', '14');
+    svg.setAttribute('height', '14');
+    svg.setAttribute('viewBox', '0 0 24 24');
+    svg.setAttribute('fill', 'none');
+    svg.setAttribute('stroke', 'currentColor');
+    svg.setAttribute('stroke-width', '2');
+    var circle = document.createElementNS(svgNS, 'circle');
+    circle.setAttribute('cx', '12');
+    circle.setAttribute('cy', '12');
+    circle.setAttribute('r', '5');
+    circle.setAttribute('fill', fillColor);
+    svg.appendChild(circle);
+    item.appendChild(svg);
+
+    // 工事名 + 所長名
+    var nameSpan = document.createElement('span');
+    var nameText = document.createTextNode(p.project_name || p.project_id);
+    nameSpan.appendChild(nameText);
+    if (p.manager) {
+      var mgrSpan = document.createElement('span');
+      mgrSpan.className = 'text-blue-300 ml-1';
+      mgrSpan.textContent = '(' + p.manager + ')';
+      nameSpan.appendChild(mgrSpan);
+    }
+    if (isCompleted) {
+      var compSpan = document.createElement('span');
+      compSpan.className = 'text-blue-400 text-[9px] ml-1';
+      compSpan.textContent = '[完了]';
+      nameSpan.appendChild(compSpan);
+    }
+    item.appendChild(nameSpan);
+    fragment.appendChild(item);
+  });
+
+  while (container.firstChild) container.removeChild(container.firstChild);
+  container.appendChild(fragment);
+}
+
+/**
+ * page0 のサマリーカード（KPI 4枚 + 信号バー）をAPIデータで動的更新
+ * @param {Array} projects - hub.gs cross_health から取得した工事配列
+ */
+function renderSummaryCards(projects) {
+  if (projects.length === 0) return;
+
+  var activeProjects = projects.filter(function(p) {
+    return p.status !== 'completed' && p.status !== '完了';
+  });
+  var completedProjects = projects.filter(function(p) {
+    return p.status === 'completed' || p.status === '完了';
+  });
+
+  // 進行中工事数
+  var elActive = document.getElementById('summary-active');
+  if (elActive) {
+    elActive.textContent = '';
+    elActive.appendChild(document.createTextNode(activeProjects.length));
+    var unitA = document.createElement('span');
+    unitA.className = 'text-base font-normal text-gray-500 ml-1';
+    unitA.textContent = '件';
+    elActive.appendChild(unitA);
+  }
+
+  // 完了工事数
+  var elCompleted = document.getElementById('summary-completed');
+  if (elCompleted) {
+    elCompleted.textContent = '';
+    elCompleted.appendChild(document.createTextNode(completedProjects.length));
+    var unitC = document.createElement('span');
+    unitC.className = 'text-base font-normal text-gray-500 ml-1';
+    unitC.textContent = '件';
+    elCompleted.appendChild(unitC);
+  }
+
+  // 合計請負額（BAC合計、億円表示）
+  var totalBac = 0;
+  activeProjects.forEach(function(p) { totalBac += parseFloat(p.bac || 0); });
+  completedProjects.forEach(function(p) { totalBac += parseFloat(p.bac || 0); });
+  var elAmount = document.getElementById('summary-total-amount');
+  if (elAmount) {
+    var okuEn = (totalBac / 100000000).toFixed(2);
+    elAmount.textContent = '';
+    elAmount.appendChild(document.createTextNode(okuEn));
+    var unitM = document.createElement('span');
+    unitM.className = 'text-base font-normal text-gray-500 ml-1';
+    unitM.textContent = '億円';
+    elAmount.appendChild(unitM);
+  }
+
+  // 平均工事益率 = mean of (1 - ac/bac) for active projects
+  var profitRates = [];
+  activeProjects.forEach(function(p) {
+    var bac = parseFloat(p.bac || 0);
+    var ac  = parseFloat(p.ac  || 0);
+    if (bac > 0) profitRates.push((bac - ac) / bac * 100);
+  });
+  var avgProfit = profitRates.length > 0
+    ? (profitRates.reduce(function(a, b) { return a + b; }, 0) / profitRates.length).toFixed(1)
+    : '---';
+  var elProfit = document.getElementById('summary-avg-profit');
+  if (elProfit) {
+    elProfit.textContent = '';
+    elProfit.appendChild(document.createTextNode(avgProfit));
+    var unitP = document.createElement('span');
+    unitP.className = 'text-base font-normal text-gray-500 ml-1';
+    unitP.textContent = '%';
+    elProfit.appendChild(unitP);
+  }
+
+  // サブタイトル更新
+  var elSubtitle = document.getElementById('summary-subtitle');
+  if (elSubtitle) {
+    elSubtitle.textContent = '(株)森組 -- 全' + projects.length + '工事の横断ビュー';
+  }
+
+  // 全社信号ステータス更新
+  var overCount = 0;
+  var warnCount = 0;
+  projects.forEach(function(p) {
+    if (p.signal === '超過') overCount++;
+    else if (p.signal === '注意') warnCount++;
+  });
+  var totalAlerts = overCount + warnCount;
+
+  var sigIcon = document.getElementById('summary-signal-icon');
+  var sigText = document.getElementById('summary-signal-text');
+  var sigDetail = document.getElementById('summary-signal-detail');
+
+  if (sigIcon) {
+    sigIcon.className = 'signal-large';
+    if (overCount > 0)      { sigIcon.classList.add('signal-red');    sigIcon.textContent = '!'; }
+    else if (warnCount > 0) { sigIcon.classList.add('signal-yellow'); sigIcon.textContent = '!'; }
+    else                    { sigIcon.classList.add('signal-green');  sigIcon.textContent = 'OK'; }
+  }
+  if (sigText) {
+    var statusLabel = overCount > 0 ? '超過' : warnCount > 0 ? '注意' : '正常';
+    sigText.textContent = '全社ステータス: ' + statusLabel;
+  }
+  if (sigDetail) {
+    if (totalAlerts > 0) {
+      sigDetail.textContent = '予算超過アラート: 合計' + totalAlerts + '件（超過' + overCount + '件 / 注意' + warnCount + '件）';
+    } else {
+      sigDetail.textContent = '全工事が正常範囲内';
+    }
   }
 }
 
@@ -1774,7 +1953,7 @@ function renderProjectCards(projects) {
     card.appendChild(metricsDiv);
     fragment.appendChild(card);
   });
-  grid.innerHTML = '';
+  while (grid.firstChild) grid.removeChild(grid.firstChild);
   grid.appendChild(fragment);
 }
 
@@ -1825,7 +2004,7 @@ function renderAlertsTable(projects) {
     tr.appendChild(td4);
     fragment.appendChild(tr);
   });
-  tbody.innerHTML = '';
+  while (tbody.firstChild) tbody.removeChild(tbody.firstChild);
   tbody.appendChild(fragment);
 }
 

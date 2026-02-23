@@ -67,7 +67,7 @@ function setupHubRegistry() {
       'P001', '境川河川改修', '中村竜一',
       185000000, '2025-04', '2026-03',
       '河川', '鹿児島県', '材料調達力が高い。外注と材料のバランス型',
-      '1hkeW97Dc8GPhESLhD656nocwX7NLoTtkC5Q5Iedk13c', 20.0,
+      '1hkeW97Dc8GPhESLhD656nocwX7NLoTtkC5Q5Iedkl3c', 20.0,
       '', 'active'
     ],
     [
@@ -81,7 +81,7 @@ function setupHubRegistry() {
       'P003', '野尻川除石', '中原輝竜',
       76600000, '2025-04', '2026-03',
       '砂防', '鹿児島県', '消化率110%で予算超過。追加費用の原因究明が急務',
-      '1K0DoekM18a3pYHQZIVoQau62zanPUSHqEyWyN1h2vTw', 15.0,
+      '1K0DoekMl8a3pYHQZIVoQau62zanPUSHqEyWyN1h2vTw', 15.0,
       '', 'active'
     ],
     [

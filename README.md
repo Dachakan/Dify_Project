@@ -90,7 +90,7 @@ Dify_project/
 │       ├── budget_inquiry_chatbot.yml  # 予実照会チャットボット（本番デプロイ済み）
 │       └── monthly_report_workflow.yml # 月次レポートワークフロー（本番デプロイ済み）
 ├── gas_templates/
-│   └── budget_management/             # GAS本体 10ファイル
+│   └── budget_management/             # GAS本体 11ファイル
 │       ├── config.gs                  # シート保護/メニュー/定数（434行）
 │       ├── budget_health.gs           # 消化率/出来高率/信号算出（617行）
 │       ├── template.gs                # テンプレート生成（1125行）
@@ -100,6 +100,7 @@ Dify_project/
 │       ├── hub.gs                     # 本社管理台帳（573行）
 │       ├── setup_project_data.gs      # 現場SS初期データ投入
 │       ├── setup_demo_sites.gs        # デモ用SS作成（P002/P003）
+│       ├── setup_hub_registry.gs      # _M工事台帳セットアップ（163行）
 │       └── appsscript.json            # GASプロジェクト設定
 ├── output/                            # PoC成果物（15ファイル + スクショ7枚）
 │   ├── poc_test_data.tsv              # 支払明細テストデータ82件
@@ -126,12 +127,14 @@ Dify_project/
 
 ### Step 1: 本社台帳スプレッドシート作成
 
-1. Google スプレッドシートを新規作成
+1. Google スプレッドシートを新規作成（名前例: 森組_工事管理台帳）
 2. 拡張機能 > Apps Script を開く
 3. `gas_templates/budget_management/hub.gs` の内容を貼付
-4. `appsscript.json` の内容も貼付（マニフェスト設定）
-5. `initHubData()` 関数を実行（シート雛形を自動作成）
-6. Web App としてデプロイ（実行者: 自分、アクセス: 全員）
+4. `gas_templates/budget_management/setup_hub_registry.gs` の内容を貼付（別ファイルとして追加）
+5. `appsscript.json` の内容も貼付（マニフェスト設定）
+6. `initHubData()` 関数を実行（シート雛形を自動作成）
+7. `setupHubRegistry()` 関数を実行（_M工事台帳シートに工事データを投入）
+8. Web App としてデプロイ（実行者: 自分、アクセス: 全員）
 
 ### Step 2: Dify Cloud で DSL インポート
 
@@ -201,9 +204,10 @@ python scripts/add_new_project.py \
 | ステップ | 内容 |
 |---------|------|
 | 1 | `setup_demo_sites.gs` でデモ用SS（P002/P003）を自動作成 |
-| 2 | hub.gs の `_C_スプレッドシート一覧` に SS ID を登録 |
-| 3 | Dify チャットボットで工事IDを指定して予実照会 |
-| 4 | Dify ワークフローで year_month 指定して月次レポート生成 |
+| 2 | `setup_hub_registry.gs` で _M工事台帳シートを作成（4工事データ投入） |
+| 3 | hub.gs の mode=cross_health で API 疎通確認 |
+| 4 | Dify チャットボットで工事IDを指定して予実照会 |
+| 5 | Dify ワークフローで year_month 指定して月次レポート生成 |
 
 ---
 
@@ -231,7 +235,7 @@ python scripts/export_dify_workflows.py
 | Dify で「未接続」と表示 | hub.gs の `_C_スプレッドシート一覧` に SSID 未登録 | 該当工事の SSID を登録 |
 | API 呼び出しが失敗する | GAS トークン期限切れ / Web App 未デプロイ | `@refresh-dify-token` 実行 / GAS 再デプロイ |
 | 集計値が 0 になる | `aggregation.gs` の月次集計未実行 | 対象月の月次集計を手動実行 |
-| 工事が認識されない | hub.gs の cross_health で対象 SSID が未登録 | `_C_スプレッドシート一覧` に SSID を追記 |
+| 工事が認識されない | _M工事台帳 に工事行が未登録 | `setup_hub_registry.gs` を実行、または _M工事台帳 に手動で行追加 |
 
 ### GAS ファイル更新時の注意
 
