@@ -1,0 +1,133 @@
+<style>
+  body { font-family: 'Segoe UI', 'Hiragino Kaku Gothic ProN', 'Meiryo', sans-serif; }
+  .sidebar { transition: transform 0.3s ease; }
+  .nav-item { cursor: pointer; transition: background-color 0.2s; }
+  .nav-item:hover { background-color: rgba(255,255,255,0.1); }
+  .nav-item.active { background-color: #1565C0; }
+  .page-section { display: none; }
+  .page-section.active { display: block; }
+  .kpi-card { border-radius: 8px; box-shadow: 0 2px 8px rgba(0,0,0,0.08); }
+  .chat-bubble { max-width: 85%; border-radius: 12px; padding: 12px 16px; margin-bottom: 12px; line-height: 1.6; white-space: pre-line; }
+  .chat-user { background-color: #1565C0; color: white; margin-left: auto; }
+  .chat-ai { background-color: #F1F3F4; color: #333; margin-right: auto; }
+  .view-toggle {
+    display: flex;
+    gap: 4px;
+    background: rgba(255,255,255,0.15);
+    border-radius: 20px;
+    padding: 3px;
+    margin-top: 10px;
+  }
+  .view-btn {
+    flex: 1;
+    text-align: center;
+    font-size: 10px;
+    padding: 4px 8px;
+    border-radius: 16px;
+    border: none;
+    cursor: pointer;
+    color: rgba(255,255,255,0.8);
+    background: transparent;
+    transition: background-color 0.2s, color 0.2s;
+    font-weight: 600;
+    white-space: nowrap;
+  }
+  .view-btn:hover {
+    background: rgba(255,255,255,0.1);
+  }
+  .view-btn.active {
+    background: #ffffff;
+    color: #1565C0;
+  }
+  .signal-large {
+    width: 60px;
+    height: 60px;
+    border-radius: 50%;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    font-weight: bold;
+    font-size: 14px;
+    color: #fff;
+    border: 3px solid rgba(0,0,0,0.1);
+  }
+  .signal-red { background-color: #E53935; }
+  .signal-yellow { background-color: #FDD835; color: #333; }
+  .signal-green { background-color: #2E7D32; }
+  .suggest-btn {
+    display: inline-block;
+    padding: 8px 16px;
+    margin: 4px;
+    border-radius: 20px;
+    background: #E3F2FD;
+    border: 1px solid #90CAF9;
+    cursor: pointer;
+    font-size: 14px;
+    transition: background-color 0.2s;
+  }
+  .suggest-btn:hover {
+    background: #BBDEFB;
+  }
+  .status-label {
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+    padding: 1px 8px;
+    border-radius: 4px;
+    font-size: 12px;
+    font-weight: 600;
+  }
+  .status-over { background-color: #E53935; color: #fff; }
+  .status-warn { background-color: #FDD835; color: #333; }
+  .status-normal { background-color: #2E7D32; color: #fff; }
+  .status-watch { background-color: #E0E0E0; color: #555; }
+  .site-cards-grid {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 16px;
+    margin-bottom: 32px;
+  }
+  @media (max-width: 1023px) {
+    .site-cards-grid {
+      grid-template-columns: repeat(2, 1fr);
+    }
+  }
+  @media (max-width: 639px) {
+    .site-cards-grid {
+      grid-template-columns: 1fr;
+    }
+  }
+  @media (max-width: 767px) {
+    .sidebar { transform: translateX(-100%); position: fixed; z-index: 50; height: 100vh; }
+    .sidebar.open { transform: translateX(0); }
+  }
+  @media (min-width: 768px) {
+    .sidebar { transform: translateX(0) !important; }
+    .hamburger-btn { display: none !important; }
+  }
+  .high-contrast .signal-red { background-color: #B71C1C; border-color: #000; }
+  .high-contrast .signal-yellow { background-color: #E65100; color: #fff; border-color: #000; }
+  .high-contrast .signal-green { background-color: #1B5E20; border-color: #000; }
+  .high-contrast .status-over { background-color: #B71C1C; color: #fff; border: 2px solid #000; }
+  .high-contrast .status-warn { background-color: #E65100; color: #fff; border: 2px solid #000; }
+  .high-contrast .status-normal { background-color: #1B5E20; color: #fff; border: 2px solid #000; }
+  .high-contrast .status-watch { background-color: #424242; color: #fff; border: 2px solid #000; }
+  .high-contrast .kpi-card { border: 2px solid #333; }
+  .high-contrast .bg-red-50 { background-color: #FFCDD2; }
+  .high-contrast .bg-yellow-50 { background-color: #FFE0B2; }
+  .high-contrast .text-gray-500 { color: #333; }
+  .high-contrast .text-gray-400 { color: #555; }
+  .hc-toggle {
+    font-size: 11px;
+    padding: 4px 10px;
+    border-radius: 14px;
+    border: 1px solid rgba(255,255,255,0.4);
+    background: transparent;
+    color: rgba(255,255,255,0.8);
+    cursor: pointer;
+    transition: background 0.2s;
+    white-space: nowrap;
+  }
+  .hc-toggle:hover { background: rgba(255,255,255,0.15); }
+  .hc-toggle.active { background: #fff; color: #0D47A1; border-color: #fff; }
+</style>

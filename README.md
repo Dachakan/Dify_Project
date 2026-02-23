@@ -28,6 +28,7 @@
 - 費目別・工種別で月次集計・スナップショット保存
 - 消化率・出来高率・予算信号（青/黄/赤）を自動算出
 - 本社台帳（hub.gs）で複数現場を横断管理
+- 本社横断ダッシュボード（HtmlService）でKPI・アラート・グラフを可視化
 - Dify Cloud チャットボットで自然言語による予実照会
 - Dify Cloud ワークフローで月次レポートを自動生成
 
@@ -69,6 +70,7 @@ hub.gs（本社台帳 - 複数現場横断集計）
 |------|-----|
 | 現場API（api.gs） | `https://script.google.com/macros/s/AKfycbyMhtCFlRxe6T_qtAzKbllaq99uHdvgHfqwyKmJs_6vgs5wlNWXxRkSZESMw6SW2fRYcg/exec` |
 | 本社台帳（hub.gs） | `https://script.google.com/macros/s/AKfycbygy0ZX_cTbzxMgB8D-reGtIsGkQelzf_3M1iKgZM-rkPLPss2g_d4VpG0W9frGE-xs/exec` |
+| ダッシュボード | 上記HUB URLにパラメータなしでアクセス（デフォルトモード） |
 
 ---
 
@@ -90,14 +92,17 @@ Dify_project/
 │       ├── budget_inquiry_chatbot.yml  # 予実照会チャットボット（本番デプロイ済み）
 │       └── monthly_report_workflow.yml # 月次レポートワークフロー（本番デプロイ済み）
 ├── gas_templates/
-│   └── budget_management/             # GAS本体 11ファイル
+│   └── budget_management/             # GAS本体 14ファイル
+│       ├── dashboard.html             # 本社横断ダッシュボード HTML本体（1,509行）
+│       ├── dashboard_css.html         # ダッシュボード CSS（133行）
+│       ├── dashboard_js.html          # ダッシュボード JS（906行）
 │       ├── config.gs                  # シート保護/メニュー/定数（434行）
 │       ├── budget_health.gs           # 消化率/出来高率/信号算出（617行）
 │       ├── template.gs                # テンプレート生成（1125行）
 │       ├── validation_extended.gs     # カスケードDD/数量制御（466行）
 │       ├── aggregation.gs             # 月次集計/スナップショット（539行）
 │       ├── api.gs                     # Web App API（717行）
-│       ├── hub.gs                     # 本社管理台帳（573行）
+│       ├── hub.gs                     # 本社管理台帳（644行）
 │       ├── setup_project_data.gs      # 現場SS初期データ投入
 │       ├── setup_demo_sites.gs        # デモ用SS作成（P002/P003）
 │       ├── setup_hub_registry.gs      # _M工事台帳セットアップ（163行）

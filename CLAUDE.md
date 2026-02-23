@@ -6,7 +6,7 @@
 - クライアント：(株)森組（土木工事業）
 - 担当：工事予算管理システム x Dify Cloud連携
 - 目的：自然言語からDify Cloudワークフローを自動生成 + GAS Web App連携
-- 実装済み：GAS 11ファイル（本体7本 + setup_project_data.gs + setup_demo_sites.gs + setup_hub_registry.gs + appsscript.json）、PoC手順書
+- 実装済み：GAS 14ファイル（本体7本 + セットアップ3本 + ダッシュボード3本 + appsscript.json）、PoC手順書
 - デプロイ済み：Dify Cloud 2アプリ（本番稼働中 2026-02-22）
 - 言語：日本語
 - ワークフロー標準：Dify DSL (YAML v0.1.2)
@@ -43,7 +43,10 @@ Dify_project/
 │       ├── budget_inquiry_chatbot.yml  # 予実照会チャットボット（本番デプロイ済み）
 │       └── monthly_report_workflow.yml # 月次レポートワークフロー（本番デプロイ済み）
 ├── gas_templates/
-│   └── budget_management/             # 工事予算管理GAS（11ファイル）
+│   └── budget_management/             # 工事予算管理GAS（14ファイル）
+│       ├── dashboard.html             # 本社横断ダッシュボード HTML本体（1,509行）
+│       ├── dashboard_css.html         # ダッシュボード CSS（133行）
+│       ├── dashboard_js.html          # ダッシュボード JS（906行）
 ├── output/                            # PoC成果物（15ファイル + スクショ7枚）
 └── scripts/
     ├── add_new_project.py             # 新工事登録スクリプト（再現性の核心）
@@ -199,3 +202,4 @@ OK: 「PDFをアップロードし、内容に基づいて質問回答するRAG�
 - GAS_API_URL: `https://script.google.com/macros/s/AKfycbyMhtCFlRxe6T_qtAzKbllaq99uHdvgHfqwyKmJs_6vgs5wlNWXxRkSZESMw6SW2fRYcg/exec`
 - hub用SS: 森組_工事管理台帳（SS ID: 1F_CvQj5...）、_M工事台帳シートが工事レジストリの正本
 - 本番移行条件: _M工事台帳 に工事行を追加するだけ（setup_hub_registry.gs または手動で行追加）
+- ダッシュボード: `{HUB_URL}` パラメータなしでアクセス（Phase J: HtmlService化済み、デフォルトモード）

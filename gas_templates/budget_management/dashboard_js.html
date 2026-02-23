@@ -1,0 +1,906 @@
+<script>
+/* ===================================================================
+ * Phase J: GAS HtmlService 用 JavaScript
+ * google.script.run で同一プロジェクト内の getDashboardData() を呼び出す
+ * =================================================================== */
+
+var DEMO_MONTH = '<?= defaultMonth ?>';
+
+// プロジェクトデータキャッシュ: { project_id: healthオブジェクト }
+var _allProjectsData = {};
+
+/** GAS応答の文字列をHTMLエスケープする（XSS対策） */
+function _esc(str) {
+  return String(str)
+    .replace(/&/g, '&amp;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;')
+    .replace(/"/g, '&quot;')
+    .replace(/'/g, '&#39;');
+}
+
+/**
+ * ダッシュボード初期化
+ * DOMContentLoaded 時に呼び出す。hub.gs getDashboardData() から全工事の予実データを取得
+ */
+function initDashboard() {
+  google.script.run
+    .withSuccessHandler(function(result) {
+      if (!result || !result.success) {
+        console.log('initDashboard: APIエラー');
+        return;
+      }
+      var projects = (result.data && result.data.projects) ? result.data.projects : [];
+      projects.forEach(function(p) { _allProjectsData[p.project_id] = p; });
+
+      renderSidebar(projects);
+      renderSummaryCards(projects);
+      renderProjectCards(projects);
+      renderAlertsTable(projects);
+
+      if (_allProjectsData['P001']) {
+        updateSiteKpi(_allProjectsData['P001']);
+      }
+    })
+    .withFailureHandler(function(e) {
+      console.log('initDashboard エラー（ハードコード値で表示継続）: ' + (e.message || e));
+    })
+    .getDashboardData(DEMO_MONTH);
+}
+
+/**
+ * サイドバーの現場別リストをAPIデータで動的生成
+ * @param {Array} projects - hub.gs cross_health から取得した工事配列
+ */
+function renderSidebar(projects) {
+  var container = document.getElementById('sidebar-sites');
+  if (!container || projects.length === 0) return;
+
+  var fragment = document.createDocumentFragment();
+
+  // active工事を先に、completed工事を後に表示
+  var sorted = projects.slice().sort(function(a, b) {
+    var sa = (a.status === 'completed' || a.status === '完了') ? 1 : 0;
+    var sb = (b.status === 'completed' || b.status === '完了') ? 1 : 0;
+    return sa - sb;
+  });
+
+  sorted.forEach(function(p) {
+    var isCompleted = (p.status === 'completed' || p.status === '完了');
+    var sig = p.signal || '';
+    var fillColor = isCompleted ? '#9E9E9E'
+      : sig === '超過' ? '#E53935'
+      : sig === '注意' ? '#FDD835'
+      : '#2E7D32';
+
+    var item = document.createElement('div');
+    item.className = 'nav-item flex items-center gap-3 px-5 py-2 text-xs' + (isCompleted ? '' : ' nav-site-stub');
+    item.setAttribute('data-page', 'page1');
+    if (isCompleted) item.style.opacity = '0.5';
+    item.addEventListener('click', (function(pid, el) {
+      return function() {
+        switchProject(pid);
+        showPage('page1', el);
+      };
+    })(p.project_id, item));
+
+    // 信号ドットSVG
+    var svgNS = 'http://www.w3.org/2000/svg';
+    var svg = document.createElementNS(svgNS, 'svg');
+    svg.setAttribute('width', '14');
+    svg.setAttribute('height', '14');
+    svg.setAttribute('viewBox', '0 0 24 24');
+    svg.setAttribute('fill', 'none');
+    svg.setAttribute('stroke', 'currentColor');
+    svg.setAttribute('stroke-width', '2');
+    var circle = document.createElementNS(svgNS, 'circle');
+    circle.setAttribute('cx', '12');
+    circle.setAttribute('cy', '12');
+    circle.setAttribute('r', '5');
+    circle.setAttribute('fill', fillColor);
+    svg.appendChild(circle);
+    item.appendChild(svg);
+
+    // 工事名 + 所長名
+    var nameSpan = document.createElement('span');
+    var nameText = document.createTextNode(p.project_name || p.project_id);
+    nameSpan.appendChild(nameText);
+    if (p.manager) {
+      var mgrSpan = document.createElement('span');
+      mgrSpan.className = 'text-blue-300 ml-1';
+      mgrSpan.textContent = '(' + p.manager + ')';
+      nameSpan.appendChild(mgrSpan);
+    }
+    if (isCompleted) {
+      var compSpan = document.createElement('span');
+      compSpan.className = 'text-blue-400 text-[9px] ml-1';
+      compSpan.textContent = '[完了]';
+      nameSpan.appendChild(compSpan);
+    }
+    item.appendChild(nameSpan);
+    fragment.appendChild(item);
+  });
+
+  while (container.firstChild) container.removeChild(container.firstChild);
+  container.appendChild(fragment);
+}
+
+/**
+ * page0 のサマリーカード（KPI 4枚 + 信号バー）をAPIデータで動的更新
+ * @param {Array} projects - hub.gs cross_health から取得した工事配列
+ */
+function renderSummaryCards(projects) {
+  if (projects.length === 0) return;
+
+  var activeProjects = projects.filter(function(p) {
+    return p.status !== 'completed' && p.status !== '完了';
+  });
+  var completedProjects = projects.filter(function(p) {
+    return p.status === 'completed' || p.status === '完了';
+  });
+
+  // 進行中工事数
+  var elActive = document.getElementById('summary-active');
+  if (elActive) {
+    elActive.textContent = '';
+    elActive.appendChild(document.createTextNode(activeProjects.length));
+    var unitA = document.createElement('span');
+    unitA.className = 'text-base font-normal text-gray-500 ml-1';
+    unitA.textContent = '件';
+    elActive.appendChild(unitA);
+  }
+
+  // 完了工事数
+  var elCompleted = document.getElementById('summary-completed');
+  if (elCompleted) {
+    elCompleted.textContent = '';
+    elCompleted.appendChild(document.createTextNode(completedProjects.length));
+    var unitC = document.createElement('span');
+    unitC.className = 'text-base font-normal text-gray-500 ml-1';
+    unitC.textContent = '件';
+    elCompleted.appendChild(unitC);
+  }
+
+  // 合計請負額（BAC合計、億円表示）
+  var totalBac = 0;
+  activeProjects.forEach(function(p) { totalBac += parseFloat(p.bac || 0); });
+  completedProjects.forEach(function(p) { totalBac += parseFloat(p.bac || 0); });
+  var elAmount = document.getElementById('summary-total-amount');
+  if (elAmount) {
+    var okuEn = (totalBac / 100000000).toFixed(2);
+    elAmount.textContent = '';
+    elAmount.appendChild(document.createTextNode(okuEn));
+    var unitM = document.createElement('span');
+    unitM.className = 'text-base font-normal text-gray-500 ml-1';
+    unitM.textContent = '億円';
+    elAmount.appendChild(unitM);
+  }
+
+  // 平均工事益率 = mean of (1 - ac/bac) for active projects
+  var profitRates = [];
+  activeProjects.forEach(function(p) {
+    var bac = parseFloat(p.bac || 0);
+    var ac  = parseFloat(p.ac  || 0);
+    if (bac > 0) profitRates.push((bac - ac) / bac * 100);
+  });
+  var avgProfit = profitRates.length > 0
+    ? (profitRates.reduce(function(a, b) { return a + b; }, 0) / profitRates.length).toFixed(1)
+    : '---';
+  var elProfit = document.getElementById('summary-avg-profit');
+  if (elProfit) {
+    elProfit.textContent = '';
+    elProfit.appendChild(document.createTextNode(avgProfit));
+    var unitP = document.createElement('span');
+    unitP.className = 'text-base font-normal text-gray-500 ml-1';
+    unitP.textContent = '%';
+    elProfit.appendChild(unitP);
+  }
+
+  // サブタイトル更新
+  var elSubtitle = document.getElementById('summary-subtitle');
+  if (elSubtitle) {
+    elSubtitle.textContent = '(株)森組 -- 全' + projects.length + '工事の横断ビュー';
+  }
+
+  // 全社信号ステータス更新
+  var overCount = 0;
+  var warnCount = 0;
+  projects.forEach(function(p) {
+    if (p.signal === '超過') overCount++;
+    else if (p.signal === '注意') warnCount++;
+  });
+  var totalAlerts = overCount + warnCount;
+
+  var sigIcon = document.getElementById('summary-signal-icon');
+  var sigText = document.getElementById('summary-signal-text');
+  var sigDetail = document.getElementById('summary-signal-detail');
+
+  if (sigIcon) {
+    sigIcon.className = 'signal-large';
+    if (overCount > 0)      { sigIcon.classList.add('signal-red');    sigIcon.textContent = '!'; }
+    else if (warnCount > 0) { sigIcon.classList.add('signal-yellow'); sigIcon.textContent = '!'; }
+    else                    { sigIcon.classList.add('signal-green');  sigIcon.textContent = 'OK'; }
+  }
+  if (sigText) {
+    var statusLabel = overCount > 0 ? '超過' : warnCount > 0 ? '注意' : '正常';
+    sigText.textContent = '全社ステータス: ' + statusLabel;
+  }
+  if (sigDetail) {
+    if (totalAlerts > 0) {
+      sigDetail.textContent = '予算超過アラート: 合計' + totalAlerts + '件（超過' + overCount + '件 / 注意' + warnCount + '件）';
+    } else {
+      sigDetail.textContent = '全工事が正常範囲内';
+    }
+  }
+}
+
+/**
+ * page0 の工事カードをリアルデータで動的生成
+ * @param {Array} projects - hub.gs cross_health から取得した工事配列
+ */
+function renderProjectCards(projects) {
+  var grid = document.getElementById('site-cards-grid');
+  if (!grid) return;
+
+  var active = projects.filter(function(p) {
+    return p.status !== '完了' && p.consumption_rate != null && p.consumption_rate > 0;
+  });
+  if (active.length === 0) return;
+
+  var fragment = document.createDocumentFragment();
+  active.forEach(function(p) {
+    var sig = p.signal || '';
+    var borderColor = sig === '超過' ? '#E53935' : sig === '注意' ? '#FDD835' : '#2E7D32';
+    var cr  = p.consumption_rate != null ? parseFloat(p.consumption_rate).toFixed(1) : '---';
+    var bac = parseFloat(p.bac || 0);
+    var ac  = parseFloat(p.ac  || 0);
+    var profitPct = bac > 0 ? ((bac - ac) / bac * 100).toFixed(1) : '---';
+
+    var card = document.createElement('div');
+    card.style.cssText = 'background:white;border-radius:8px;padding:16px;box-shadow:0 2px 4px rgba(0,0,0,0.1);border-left:4px solid ' + borderColor + ';cursor:pointer;';
+    card.addEventListener('click', (function(pid) { return function() { switchProject(pid); }; })(p.project_id));
+
+    var titleDiv = document.createElement('div');
+    titleDiv.style.cssText = 'font-weight:bold;font-size:15px;color:#333;';
+    titleDiv.textContent = p.project_name || p.project_id;
+    card.appendChild(titleDiv);
+
+    var mgrDiv = document.createElement('div');
+    mgrDiv.style.cssText = 'color:#666;font-size:12px;margin-top:2px;';
+    mgrDiv.textContent = (p.manager || '') + ' | 進行中';
+    card.appendChild(mgrDiv);
+
+    var bacDiv = document.createElement('div');
+    bacDiv.style.cssText = 'color:#888;font-size:11px;margin-top:4px;';
+    bacDiv.textContent = '請負額: ' + (bac > 0 ? bac.toLocaleString() : '---') + '円';
+    card.appendChild(bacDiv);
+
+    var metricsDiv = document.createElement('div');
+    metricsDiv.style.cssText = 'margin-top:10px;display:flex;justify-content:space-between;align-items:flex-end;';
+
+    function makeMetric(label, value) {
+      var d = document.createElement('div');
+      d.style.textAlign = 'center';
+      var lbl = document.createElement('div');
+      lbl.style.cssText = 'font-size:11px;color:#888;';
+      lbl.textContent = label;
+      var val = document.createElement('div');
+      val.style.cssText = 'font-weight:bold;font-size:16px;color:#1565C0;';
+      val.textContent = value;
+      d.appendChild(lbl);
+      d.appendChild(val);
+      return d;
+    }
+
+    var sigSpan = document.createElement('span');
+    sigSpan.className = sig === '超過' ? 'status-label status-over' : sig === '注意' ? 'status-label status-warn' : 'status-label status-normal';
+    sigSpan.textContent = sig === '超過' ? '超過' : sig === '注意' ? '注意' : '正常';
+    var sigWrap = document.createElement('div');
+    sigWrap.style.textAlign = 'center';
+    var sigLbl = document.createElement('div');
+    sigLbl.style.cssText = 'font-size:11px;color:#888;';
+    sigLbl.textContent = '信号';
+    sigWrap.appendChild(sigLbl);
+    sigWrap.appendChild(sigSpan);
+
+    metricsDiv.appendChild(makeMetric('工事益率', profitPct + '%'));
+    metricsDiv.appendChild(makeMetric('消化率', cr + '%'));
+    metricsDiv.appendChild(sigWrap);
+    card.appendChild(metricsDiv);
+    fragment.appendChild(card);
+  });
+  while (grid.firstChild) grid.removeChild(grid.firstChild);
+  grid.appendChild(fragment);
+}
+
+/**
+ * page0 の全現場アラートテーブルをリアルデータで更新
+ * @param {Array} projects - hub.gs cross_health から取得した工事配列
+ */
+function renderAlertsTable(projects) {
+  var tbody = document.getElementById('alerts-tbody');
+  if (!tbody) return;
+
+  var alerts = projects.filter(function(p) {
+    return p.signal && p.signal !== '正常' && p.signal !== '';
+  });
+  if (alerts.length === 0) return;
+
+  var fragment = document.createDocumentFragment();
+  alerts.forEach(function(p) {
+    var isOver = p.signal === '超過';
+    var tr = document.createElement('tr');
+    tr.className = isOver ? 'bg-red-50 alert-row alert-over' : 'bg-yellow-50 alert-row alert-warn';
+
+    var cr = p.consumption_rate != null ? parseFloat(p.consumption_rate).toFixed(1) : '---';
+
+    var td1 = document.createElement('td');
+    td1.className = 'py-2 px-3 font-medium text-gray-600';
+    td1.textContent = p.project_name || p.project_id;
+
+    var td2 = document.createElement('td');
+    td2.className = 'py-2 px-3 font-medium';
+    td2.textContent = '予算消化率';
+
+    var td3 = document.createElement('td');
+    td3.className = 'py-2 px-3 text-right font-bold';
+    td3.style.color = isOver ? '#E53935' : '#EF6C00';
+    td3.textContent = cr + '%';
+
+    var sigSpan = document.createElement('span');
+    sigSpan.className = isOver ? 'status-label status-over' : 'status-label status-warn';
+    sigSpan.textContent = isOver ? '超過' : '注意';
+    var td4 = document.createElement('td');
+    td4.className = 'py-2 px-3 text-center';
+    td4.appendChild(sigSpan);
+
+    tr.appendChild(td1);
+    tr.appendChild(td2);
+    tr.appendChild(td3);
+    tr.appendChild(td4);
+    fragment.appendChild(tr);
+  });
+  while (tbody.firstChild) tbody.removeChild(tbody.firstChild);
+  tbody.appendChild(fragment);
+}
+
+/**
+ * page1 の KPIカード・信号をリアルデータで更新
+ * @param {Object} p - 1工事分の health オブジェクト
+ */
+function updateSiteKpi(p) {
+  if (!p) return;
+  var cr  = parseFloat(p.consumption_rate || 0);
+  var bac = parseFloat(p.bac || 0);
+  var ac  = parseFloat(p.ac  || 0);
+  var sh  = parseFloat(p.shortage || 0);
+  var sig = p.signal || '';
+  var profitPct    = bac > 0 ? ((bac - ac) / bac * 100).toFixed(1) : '---';
+  var netProfitPct = bac > 0 ? ((bac - ac) / bac * 100 - 5).toFixed(1) : '---';
+
+  var el;
+  el = document.getElementById('kpi-profit-rate');
+  if (el) el.textContent = profitPct + '%';
+
+  el = document.getElementById('kpi-net-profit-rate');
+  if (el) el.textContent = netProfitPct + '%';
+
+  el = document.getElementById('kpi-consumption-rate');
+  if (el) el.textContent = cr.toFixed(1) + '%';
+
+  el = document.getElementById('kpi-consumption-bar');
+  if (el) el.style.width = Math.min(cr, 100) + '%';
+
+  el = document.getElementById('kpi-forecast-amount');
+  if (el) {
+    el.textContent = '';
+    var shK  = Math.round(sh / 1000);
+    var sign = shK >= 0 ? '+' : '';
+    var amtText = document.createTextNode(sign + shK.toLocaleString());
+    var unitSpan = document.createElement('span');
+    unitSpan.className = 'text-base font-normal text-gray-500 ml-1';
+    unitSpan.textContent = '千円';
+    el.appendChild(amtText);
+    el.appendChild(unitSpan);
+  }
+
+  var sigEl = document.getElementById('site-signal');
+  if (sigEl) {
+    sigEl.className = 'signal-large';
+    if (sig === '超過')      { sigEl.classList.add('signal-red');    sigEl.textContent = '!'; }
+    else if (sig === '注意') { sigEl.classList.add('signal-yellow'); sigEl.textContent = '!'; }
+    else                     { sigEl.classList.add('signal-green');  sigEl.textContent = 'OK'; }
+  }
+
+  var stEl = document.getElementById('site-status-text');
+  if (stEl) stEl.textContent = '全体ステータス: ' + (sig || '---');
+}
+
+/**
+ * page1 のKPIを指定工事IDのデータで更新する
+ * キャッシュ優先。キャッシュになければ hub から再取得
+ * @param {string} projectId - 工事ID（例: 'P001'）
+ */
+function loadSiteData(projectId) {
+  var cached = _allProjectsData[projectId];
+  if (cached) {
+    updateSiteKpi(cached);
+    return;
+  }
+  google.script.run
+    .withSuccessHandler(function(result) {
+      if (result && result.success && result.data && result.data.projects) {
+        result.data.projects.forEach(function(p) { _allProjectsData[p.project_id] = p; });
+        if (_allProjectsData[projectId]) updateSiteKpi(_allProjectsData[projectId]);
+      }
+    })
+    .withFailureHandler(function(e) {
+      console.log('loadSiteData 再取得エラー: ' + (e.message || e));
+    })
+    .getDashboardData(DEMO_MONTH);
+}
+
+/**
+ * 工事切替ドロップダウンのハンドラ
+ * @param {string} projectId - 工事IDまたは工事名テキスト
+ */
+function switchProject(projectId) {
+  if (!projectId) return;
+
+  var page1 = document.getElementById('page1');
+  if (page1 && !page1.classList.contains('active')) {
+    var navItem = document.querySelector('.nav-item[data-page="page1"]');
+    showPage('page1', navItem);
+  }
+
+  loadSiteData(projectId);
+
+  document.querySelectorAll('select').forEach(function(sel) {
+    for (var i = 0; i < sel.options.length; i++) {
+      var opt = sel.options[i];
+      if (opt.value === projectId || opt.text.indexOf(projectId) >= 0) {
+        sel.selectedIndex = i;
+        break;
+      }
+    }
+  });
+}
+
+// ===== View Toggle =====
+var currentView = 'executive'; // 'executive' or 'manager'
+
+function switchView(view) {
+  currentView = view;
+  document.querySelectorAll('.view-btn').forEach(function(b) { b.classList.remove('active'); });
+  document.querySelector('.view-btn[data-view="' + view + '"]').classList.add('active');
+
+  var execSection = document.getElementById('nav-section-executive');
+  var siteDetailSection = document.getElementById('nav-section-site-detail');
+  var diagSection = document.getElementById('nav-section-diagnosis');
+  var navHealthCheck = document.getElementById('nav-health-check');
+
+  if (view === 'manager') {
+    if (execSection) execSection.style.display = 'none';
+    if (siteDetailSection) siteDetailSection.style.display = 'block';
+    if (diagSection) diagSection.style.display = 'none';
+    if (navHealthCheck) navHealthCheck.style.display = 'flex';
+    document.querySelectorAll('#nav-section-site-detail .nav-item').forEach(function(item) {
+      var page = item.getAttribute('data-page');
+      if (['page4','page5','page6','page7'].indexOf(page) >= 0) {
+        item.style.display = 'none';
+      } else {
+        item.style.display = 'flex';
+      }
+    });
+  } else {
+    if (execSection) execSection.style.display = 'block';
+    if (siteDetailSection) siteDetailSection.style.display = 'block';
+    if (diagSection) diagSection.style.display = 'block';
+    if (navHealthCheck) navHealthCheck.style.display = 'none';
+    document.querySelectorAll('#nav-section-site-detail .nav-item').forEach(function(item) {
+      var page = item.getAttribute('data-page');
+      if (page === 'page35') {
+        item.style.display = 'none';
+      } else {
+        item.style.display = 'flex';
+      }
+    });
+  }
+
+  var execKPI = document.getElementById('kpi-executive');
+  var mgrKPI = document.getElementById('kpi-manager');
+  if (execKPI && mgrKPI) {
+    execKPI.style.display = (view === 'executive') ? 'grid' : 'none';
+    mgrKPI.style.display = (view === 'manager') ? 'grid' : 'none';
+  }
+
+  var p3Buttons = document.getElementById('p3-operation-buttons');
+  if (p3Buttons) {
+    p3Buttons.style.display = (view === 'manager') ? 'block' : 'none';
+  }
+
+  var currentPage = document.querySelector('.page-section.active');
+  if (currentPage) {
+    var pageId = currentPage.id;
+    if (view === 'manager') {
+      if (['page0','page4','page5','page6','page7'].indexOf(pageId) >= 0) {
+        showPage('page1', document.querySelector('#nav-section-site-detail .nav-item[data-page="page1"]'));
+      }
+    }
+    if (view === 'executive') {
+      if (pageId === 'page35') {
+        showPage('page0', document.querySelector('.nav-item[data-page="page0"]'));
+      }
+    }
+  }
+}
+
+// ===== Navigation =====
+function showPage(pageId, navElement) {
+  if (currentView === 'manager' && ['page0','page4','page5','page6','page7'].indexOf(pageId) >= 0) {
+    return;
+  }
+  if (currentView === 'executive' && pageId === 'page35') {
+    return;
+  }
+  document.querySelectorAll('.page-section').forEach(function(s) { s.classList.remove('active'); });
+  document.querySelectorAll('.nav-item').forEach(function(n) { n.classList.remove('active'); });
+  var pageEl = document.getElementById(pageId);
+  if (pageEl) pageEl.classList.add('active');
+  if (navElement) navElement.classList.add('active');
+  if (window.innerWidth < 768) {
+    document.getElementById('sidebar').classList.remove('open');
+    document.getElementById('overlay').classList.add('hidden');
+  }
+  initCharts(pageId);
+}
+
+function toggleSidebar() {
+  var sidebar = document.getElementById('sidebar');
+  var overlay = document.getElementById('overlay');
+  sidebar.classList.toggle('open');
+  overlay.classList.toggle('hidden');
+}
+
+// ===== Chart Initialization =====
+var chartInstances = {};
+
+function destroyChart(id) {
+  if (chartInstances[id]) {
+    chartInstances[id].destroy();
+    delete chartInstances[id];
+  }
+}
+
+function initCharts(pageId) {
+  switch(pageId) {
+    case 'page2': initPage2Charts(); break;
+    case 'page3': initPage3Charts(); break;
+    case 'page5': initPage5Charts(); break;
+    case 'page6': initPage6Charts(); break;
+    case 'page7': initPage7Charts(); break;
+  }
+}
+
+// ----- Page 2 Charts -----
+function initPage2Charts() {
+  destroyChart('chart-page2-line');
+  var ctxLine = document.getElementById('chart-page2-line').getContext('2d');
+  chartInstances['chart-page2-line'] = new Chart(ctxLine, {
+    type: 'line',
+    data: {
+      labels: ['10月', '11月', '12月'],
+      datasets: [{
+        label: '月別支出（円）',
+        data: [10933337, 8458604, 4332077],
+        borderColor: '#1565C0',
+        backgroundColor: 'rgba(21,101,192,0.12)',
+        fill: true,
+        tension: 0.3,
+        pointRadius: 5,
+        pointBackgroundColor: '#1565C0'
+      }]
+    },
+    options: {
+      responsive: true,
+      maintainAspectRatio: false,
+      plugins: {
+        legend: { display: false },
+        tooltip: {
+          callbacks: {
+            label: function(ctx) { return ctx.parsed.y.toLocaleString() + '円'; }
+          }
+        }
+      },
+      scales: {
+        y: {
+          beginAtZero: true,
+          ticks: { callback: function(v) { return (v / 1000000).toFixed(0) + 'M'; } },
+          title: { display: true, text: '支出額' }
+        }
+      }
+    }
+  });
+
+  destroyChart('chart-page2-bar');
+  var ctx = document.getElementById('chart-page2-bar').getContext('2d');
+  chartInstances['chart-page2-bar'] = new Chart(ctx, {
+    type: 'bar',
+    data: {
+      labels: ['直接工事費', '共通仮設費', '現場管理費'],
+      datasets: [
+        { label: '予算', data: [27095460, 1926588, 4859949], backgroundColor: '#1565C0' },
+        { label: '実績', data: [10789631, 907661, 3095040], backgroundColor: '#9E9E9E' }
+      ]
+    },
+    options: {
+      indexAxis: 'y',
+      responsive: true,
+      maintainAspectRatio: false,
+      plugins: {
+        tooltip: {
+          callbacks: {
+            label: function(ctx) { return ctx.dataset.label + ': ' + ctx.parsed.x.toLocaleString() + '円'; }
+          }
+        }
+      },
+      scales: {
+        x: { ticks: { callback: function(v) { return (v / 1000000).toFixed(1) + 'M'; } } }
+      }
+    }
+  });
+}
+
+// ----- Page 3 Charts -----
+function initPage3Charts() {
+  destroyChart('chart-page3-doughnut');
+  var ctx1 = document.getElementById('chart-page3-doughnut').getContext('2d');
+  chartInstances['chart-page3-doughnut'] = new Chart(ctx1, {
+    type: 'doughnut',
+    data: {
+      labels: ['直接工事費', '現場管理費', '共通仮設費'],
+      datasets: [{ data: [73, 21, 6], backgroundColor: ['#1565C0', '#EF6C00', '#2E7D32'], borderWidth: 2, borderColor: '#fff' }]
+    },
+    options: {
+      responsive: true, maintainAspectRatio: false,
+      plugins: { tooltip: { callbacks: { label: function(ctx) { return ctx.label + ': ' + ctx.parsed + '%'; } } } }
+    }
+  });
+
+  destroyChart('chart-page3-vendors');
+  var ctx2 = document.getElementById('chart-page3-vendors').getContext('2d');
+  chartInstances['chart-page3-vendors'] = new Chart(ctx2, {
+    type: 'bar',
+    data: {
+      labels: ['川越建設', '桜島生コンクリート', '(有)濱畑水道', '菱和コンクリート', '(株)グリーンクロス', '(株)ニシケン', '(有)大建測量設計', '(株)デザインアーク', '(株)コマロック', 'その他'],
+      datasets: [{ label: '支払額（円）', data: [9667000, 5205650, 4839554, 1910000, 432940, 173175, 170000, 150000, 145440, 230259], backgroundColor: '#1565C0' }]
+    },
+    options: {
+      indexAxis: 'y', responsive: true, maintainAspectRatio: false,
+      plugins: { legend: { display: false }, tooltip: { callbacks: { label: function(ctx) { return ctx.parsed.x.toLocaleString() + '円'; } } } },
+      scales: { x: { ticks: { callback: function(v) { return (v / 1000000).toFixed(1) + 'M'; } } } }
+    }
+  });
+
+  destroyChart('chart-page3-stacked');
+  var ctx3 = document.getElementById('chart-page3-stacked').getContext('2d');
+  chartInstances['chart-page3-stacked'] = new Chart(ctx3, {
+    type: 'bar',
+    data: {
+      labels: ['10月', '11月', '12月'],
+      datasets: [
+        { label: '直接工事費', data: [3162969, 3481347, 4145315], backgroundColor: '#1565C0' },
+        { label: '現場管理費', data: [1705863, 502357, 886821], backgroundColor: '#EF6C00' },
+        { label: '共通仮設費', data: [489566, 268154, 149941], backgroundColor: '#2E7D32' }
+      ]
+    },
+    options: {
+      responsive: true, maintainAspectRatio: false,
+      plugins: { tooltip: { callbacks: { label: function(ctx) { return ctx.dataset.label + ': ' + ctx.parsed.y.toLocaleString() + '円'; } } } },
+      scales: { x: { stacked: true }, y: { stacked: true, ticks: { callback: function(v) { return (v / 1000000).toFixed(0) + 'M'; } } } }
+    }
+  });
+
+  destroyChart('chart-page3-legal4');
+  var ctx4 = document.getElementById('chart-page3-legal4').getContext('2d');
+  chartInstances['chart-page3-legal4'] = new Chart(ctx4, {
+    type: 'doughnut',
+    data: {
+      labels: ['材料費', '労務費', '外注費', '経費'],
+      datasets: [{ data: [28.4, 7.0, 37.6, 27.0], backgroundColor: ['#1565C0', '#2E7D32', '#EF6C00', '#6A1B9A'], borderWidth: 2, borderColor: '#fff' }]
+    },
+    options: {
+      responsive: true, maintainAspectRatio: false,
+      plugins: {
+        legend: { position: 'bottom', labels: { font: { size: 11 } } },
+        tooltip: { callbacks: { label: function(ctx) { return ctx.label + ': ' + ctx.parsed + '%'; } } }
+      }
+    }
+  });
+}
+
+// ----- Page 5 Charts -----
+function initPage5Charts() {
+  destroyChart('chart-page5-sales');
+  var ctx1 = document.getElementById('chart-page5-sales').getContext('2d');
+  chartInstances['chart-page5-sales'] = new Chart(ctx1, {
+    type: 'bar',
+    data: {
+      labels: ['売上高', '売上原価', '粗利'],
+      datasets: [
+        { label: '前年度', data: [897900000, 821900000, 76000000], backgroundColor: '#9E9E9E' },
+        { label: '今年度', data: [1146800000, 1069500000, 77300000], backgroundColor: '#1565C0' }
+      ]
+    },
+    options: {
+      responsive: true, maintainAspectRatio: false,
+      plugins: { tooltip: { callbacks: { label: function(ctx) { return ctx.dataset.label + ': ' + (ctx.parsed.y / 1000000).toFixed(1) + 'M円'; } } } },
+      scales: { y: { ticks: { callback: function(v) { return (v / 1000000).toFixed(0) + 'M'; } } } }
+    }
+  });
+
+  destroyChart('chart-page5-profit');
+  var ctx2 = document.getElementById('chart-page5-profit').getContext('2d');
+  chartInstances['chart-page5-profit'] = new Chart(ctx2, {
+    type: 'bar',
+    data: {
+      labels: ['中村', '池田', '中原', '上村'],
+      datasets: [{ label: '粗利率（%）', data: [28.9, 25.6, 15.4, 14.0], backgroundColor: ['#1565C0', '#1565C0', '#EF6C00', '#E53935'] }]
+    },
+    options: {
+      indexAxis: 'y', responsive: true, maintainAspectRatio: false,
+      plugins: { legend: { display: false }, tooltip: { callbacks: { label: function(ctx) { return ctx.parsed.x + '%'; } } } },
+      scales: { x: { max: 35, ticks: { callback: function(v) { return v + '%'; } } } }
+    }
+  });
+}
+
+// ----- Page 6 Charts -----
+function initPage6Charts() {
+  destroyChart('chart-page6-ranking');
+  var ctx1 = document.getElementById('chart-page6-ranking').getContext('2d');
+  chartInstances['chart-page6-ranking'] = new Chart(ctx1, {
+    type: 'bar',
+    data: {
+      labels: ['中村竜一(境川)', '池田豊(野尻川)', '中原輝竜(持木川)', '上村和弘(海潟漁港)'],
+      datasets: [{ label: '粗利率（%）', data: [28.9, 25.6, 15.4, 14.0], backgroundColor: ['#1565C0', '#1565C0', '#EF6C00', '#E53935'] }]
+    },
+    options: {
+      indexAxis: 'y', responsive: true, maintainAspectRatio: false,
+      plugins: { legend: { display: false }, tooltip: { callbacks: { label: function(ctx) { return ctx.parsed.x + '%'; } } } },
+      scales: { x: { max: 35, ticks: { callback: function(v) { return v + '%'; } } } }
+    }
+  });
+
+  destroyChart('chart-page6-structure');
+  var ctx2 = document.getElementById('chart-page6-structure').getContext('2d');
+  chartInstances['chart-page6-structure'] = new Chart(ctx2, {
+    type: 'bar',
+    data: {
+      labels: ['池田', '中村', '上村', '中原'],
+      datasets: [
+        { label: '外注', data: [99.6, 58.3, 37.5, 61.9], backgroundColor: '#1565C0' },
+        { label: '材料', data: [0.0, 34.5, 30.3, 37.9], backgroundColor: '#2E7D32' },
+        { label: '労務', data: [0.0, 0.0, 12.0, 0.0], backgroundColor: '#FDD835' },
+        { label: 'その他', data: [0.4, 7.2, 20.2, 0.2], backgroundColor: '#9E9E9E' }
+      ]
+    },
+    options: {
+      indexAxis: 'y', responsive: true, maintainAspectRatio: false,
+      plugins: { tooltip: { callbacks: { label: function(ctx) { return ctx.dataset.label + ': ' + ctx.parsed.x + '%'; } } } },
+      scales: { x: { stacked: true, max: 100, ticks: { callback: function(v) { return v + '%'; } } }, y: { stacked: true } }
+    }
+  });
+}
+
+// ----- Page 7 Charts -----
+function initPage7Charts() {
+  destroyChart('chart-page7-gap');
+  var ctx1 = document.getElementById('chart-page7-gap').getContext('2d');
+  chartInstances['chart-page7-gap'] = new Chart(ctx1, {
+    type: 'bar',
+    data: {
+      labels: ['掘削工(ICT)', '土砂運搬'],
+      datasets: [
+        { label: '最安（池田）', data: [505, 844], backgroundColor: '#1565C0' },
+        { label: '最高（中原）', data: [850, 1500], backgroundColor: '#E53935' }
+      ]
+    },
+    options: {
+      responsive: true, maintainAspectRatio: false,
+      plugins: {
+        tooltip: { callbacks: { label: function(ctx) { return ctx.dataset.label + ': ' + ctx.parsed.y.toLocaleString() + '円'; } } },
+        annotation: undefined
+      },
+      scales: {
+        y: { beginAtZero: true, ticks: { callback: function(v) { return v.toLocaleString() + '円'; } }, title: { display: true, text: '単価（円）' } }
+      }
+    },
+    plugins: [{
+      afterDraw: function(chart) {
+        var ctx = chart.ctx;
+        var meta1 = chart.getDatasetMeta(1);
+        ctx.save();
+        ctx.font = 'bold 13px sans-serif';
+        ctx.fillStyle = '#E53935';
+        ctx.textAlign = 'center';
+        var gaps = ['1.68倍', '1.78倍'];
+        for (var i = 0; i < 2; i++) {
+          var bar1 = meta1.data[i];
+          ctx.fillText(gaps[i], bar1.x, bar1.y - 8);
+        }
+        ctx.restore();
+      }
+    }]
+  });
+
+  destroyChart('chart-page7-improvement');
+  var ctx2 = document.getElementById('chart-page7-improvement').getContext('2d');
+  chartInstances['chart-page7-improvement'] = new Chart(ctx2, {
+    type: 'bar',
+    data: {
+      labels: ['外注単価標準化', '工事特性考慮'],
+      datasets: [
+        { label: '最小見込み', data: [5000, 700], backgroundColor: 'rgba(21,101,192,0.4)', borderColor: '#1565C0', borderWidth: 1 },
+        { label: '最大見込み', data: [4000, 500], backgroundColor: 'rgba(21,101,192,0.8)', borderColor: '#1565C0', borderWidth: 1 }
+      ]
+    },
+    options: {
+      indexAxis: 'y', responsive: true, maintainAspectRatio: false,
+      plugins: {
+        tooltip: {
+          callbacks: {
+            label: function(ctx) {
+              if (ctx.datasetIndex === 0) {
+                var mins = [5000, 700];
+                return '最小: ' + mins[ctx.dataIndex].toLocaleString() + '万円/年';
+              } else {
+                var maxs = [9000, 1200];
+                return '最大: ' + maxs[ctx.dataIndex].toLocaleString() + '万円/年';
+              }
+            }
+          }
+        }
+      },
+      scales: {
+        x: { stacked: true, ticks: { callback: function(v) { return v.toLocaleString() + '万円'; } }, title: { display: true, text: '年間改善効果（万円/年）' } },
+        y: { stacked: true }
+      }
+    }
+  });
+}
+
+// ===== UX-02: アラートフィルタ =====
+function filterAlerts(filter) {
+  var rows = document.querySelectorAll('.alert-row');
+  rows.forEach(function(row) {
+    if (filter === 'all') {
+      row.style.display = '';
+    } else if (filter === 'over') {
+      row.style.display = row.classList.contains('alert-over') ? '' : 'none';
+    }
+  });
+  document.querySelectorAll('.alert-filter-btn').forEach(function(btn) {
+    if (btn.dataset.filter === filter) {
+      btn.classList.remove('bg-gray-200', 'text-gray-600');
+      btn.classList.add(filter === 'over' ? 'bg-[#E53935]' : 'bg-[#1565C0]', 'text-white');
+    } else {
+      btn.classList.remove('bg-[#E53935]', 'bg-[#1565C0]', 'text-white');
+      btn.classList.add('bg-gray-200', 'text-gray-600');
+    }
+  });
+}
+
+// ===== UX-04: 高コントラストモード =====
+function toggleHighContrast() {
+  var body = document.body;
+  var btn = document.getElementById('hc-toggle-btn');
+  body.classList.toggle('high-contrast');
+  btn.classList.toggle('active');
+}
+
+// ===== Initialize on load =====
+document.addEventListener('DOMContentLoaded', function() {
+  initDashboard();
+});
+</script>
